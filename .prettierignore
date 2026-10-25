@@ -1,0 +1,14 @@
+vendor
+node_modules
+public
+storage
+bootstrap/cache
+bootstrap/ssr
+composer.lock
+pnpm-lock.yaml
+.github
+resources/views
+resources/js/actions
+resources/js/routes
+resources/js/wayfinder
+resources/js/components/ui
