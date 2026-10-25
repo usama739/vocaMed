@@ -52,6 +52,29 @@ export const COLOR_GROUPS: { title: string; tokens: ColorToken[] }[] = [
         ],
     },
     {
+        title: 'Navy (landing band)',
+        tokens: [
+            {
+                name: 'navy',
+                cssVar: '--color-navy',
+                hex: '#0b2a5b',
+                use: 'Landing closing band',
+            },
+            {
+                name: 'navy-ink',
+                cssVar: '--color-navy-ink',
+                hex: '#d6e2f5',
+                use: 'Text on navy',
+            },
+            {
+                name: 'navy-line',
+                cssVar: '--color-navy-line',
+                hex: '#7c97c6',
+                use: 'Outline button on navy',
+            },
+        ],
+    },
+    {
         title: 'Text',
         tokens: [
             {
@@ -368,6 +391,18 @@ export const TYPE_SCALE = [
         use: 'Page titles (h1)',
     },
     {
+        cls: 'text-section',
+        cssVar: '--text-section',
+        size: '28–38px',
+        use: 'Landing section titles',
+    },
+    {
+        cls: 'text-display',
+        cssVar: '--text-display',
+        size: '30–42px',
+        use: 'Document page titles (privacy)',
+    },
+    {
         cls: 'text-hero',
         cssVar: '--text-hero',
         size: '34–56px',
@@ -450,6 +485,12 @@ export const SHADOWS = [
         cssVar: '--shadow-panel',
         value: '0 20px 50px rgba(7, 20, 55, 0.14)',
         use: 'Booking slide-over',
+    },
+    {
+        cls: 'shadow-glow',
+        cssVar: '--shadow-glow',
+        value: '0 6px 16px rgba(19, 102, 214, 0.28)',
+        use: 'Hovered primary button',
     },
     {
         cls: 'shadow-modal',

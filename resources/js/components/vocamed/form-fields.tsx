@@ -27,6 +27,8 @@ type FieldChrome = {
     /** Inline error text. Shown with an icon, never colour alone. */
     error?: string;
     optional?: boolean;
+    /** Sits opposite the label, e.g. a "Forgot password?" link. */
+    labelAction?: ReactNode;
     className?: string;
 };
 
@@ -39,6 +41,7 @@ export function FormField({
     hint,
     error,
     optional,
+    labelAction,
     className,
     children,
 }: FieldChrome & { children: (props: FieldControlProps) => ReactNode }) {
@@ -52,8 +55,15 @@ export function FormField({
             .join(' ') || undefined;
 
     return (
-        <div className={cn('flex flex-col gap-1.5', className)}>
-            <Label htmlFor={id}>
+        // A grid, so the optional label action ("Forgot password?") can sit beside the label
+        // visually while coming AFTER the control in the DOM: Tab goes label, field, then the link.
+        <div
+            className={cn(
+                'grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5',
+                className,
+            )}
+        >
+            <Label htmlFor={id} className="col-start-1 row-start-1">
                 {label}
                 {optional && (
                     <span className="ms-1.5 font-normal text-subtle">
@@ -61,13 +71,15 @@ export function FormField({
                     </span>
                 )}
             </Label>
-            {children({
-                id,
-                'aria-describedby': describedBy,
-                ...(error ? { 'aria-invalid': true as const } : {}),
-            })}
+            <div className="col-span-2 row-start-2">
+                {children({
+                    id,
+                    'aria-describedby': describedBy,
+                    ...(error ? { 'aria-invalid': true as const } : {}),
+                })}
+            </div>
             {hint && (
-                <p id={hintId} className="text-small text-subtle">
+                <p id={hintId} className="col-span-2 text-small text-subtle">
                     {hint}
                 </p>
             )}
@@ -75,7 +87,7 @@ export function FormField({
                 <p
                     id={errorId}
                     role="alert"
-                    className="flex items-start gap-1.5 text-label font-medium text-danger-ink"
+                    className="col-span-2 flex items-start gap-1.5 text-label font-medium text-danger-ink"
                 >
                     <CircleAlert
                         aria-hidden="true"
@@ -83,6 +95,11 @@ export function FormField({
                     />
                     {error}
                 </p>
+            )}
+            {labelAction && (
+                <div className="col-start-2 row-start-1 justify-self-end">
+                    {labelAction}
+                </div>
             )}
         </div>
     );
@@ -95,6 +112,7 @@ export function TextField({
     hint,
     error,
     optional,
+    labelAction,
     className,
     ...input
 }: FieldChrome & InputProps) {
@@ -104,6 +122,7 @@ export function TextField({
             hint={hint}
             error={error}
             optional={optional}
+            labelAction={labelAction}
             className={className}
         >
             {(control) => <Input {...control} {...input} />}
@@ -115,6 +134,7 @@ export function PasswordField({
     label,
     hint,
     error,
+    labelAction,
     className,
     ...input
 }: Omit<FieldChrome, 'optional'> & Omit<InputProps, 'type'>) {
@@ -126,10 +146,11 @@ export function PasswordField({
             label={label}
             hint={hint}
             error={error}
+            labelAction={labelAction}
             className={className}
         >
             {(control) => (
-                <div className="relative">
+                <div className="relative" dir="ltr">
                     <Input
                         {...control}
                         {...input}
@@ -292,28 +313,57 @@ export function CheckboxField({
     checked,
     onCheckedChange,
     disabled,
+    error,
     className,
+    ...checkbox
 }: {
-    label: string;
+    /** Text, or text with a link in it ("I agree to the terms"). */
+    label: ReactNode;
     checked: boolean;
     onCheckedChange: (checked: boolean) => void;
     disabled?: boolean;
+    /** Inline error shown under the box, with an icon. */
+    error?: string;
     className?: string;
-}) {
+} & Omit<
+    React.ComponentProps<typeof Checkbox>,
+    'checked' | 'onCheckedChange' | 'disabled' | 'className'
+>) {
+    const errorId = useId();
+
     return (
-        <label
-            className={cn(
-                'flex min-h-11 cursor-pointer items-center gap-3 text-control text-ink',
-                disabled && 'cursor-not-allowed opacity-50',
-                className,
+        <div className="flex flex-col gap-1">
+            <label
+                className={cn(
+                    'flex min-h-11 cursor-pointer items-start gap-3 py-2.5 text-control text-ink',
+                    disabled && 'cursor-not-allowed opacity-50',
+                    className,
+                )}
+            >
+                <Checkbox
+                    {...checkbox}
+                    checked={checked}
+                    disabled={disabled}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? errorId : undefined}
+                    onCheckedChange={(next) => onCheckedChange(next === true)}
+                    className="mt-px"
+                />
+                <span>{label}</span>
+            </label>
+            {error && (
+                <p
+                    id={errorId}
+                    role="alert"
+                    className="flex items-start gap-1.5 text-label font-medium text-danger-ink"
+                >
+                    <CircleAlert
+                        aria-hidden="true"
+                        className="mt-1 size-4 shrink-0"
+                    />
+                    {error}
+                </p>
             )}
-        >
-            <Checkbox
-                checked={checked}
-                disabled={disabled}
-                onCheckedChange={(next) => onCheckedChange(next === true)}
-            />
-            {label}
-        </label>
+        </div>
     );
 }

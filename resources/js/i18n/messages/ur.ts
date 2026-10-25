@@ -1,8 +1,8 @@
 import type en from './en';
-
-type DeepString<T> = {
-    -readonly [K in keyof T]: T[K] extends string ? string : DeepString<T[K]>;
-};
+import authUr from './auth-ur';
+import landingUr from './landing-ur';
+import privacyUr from './privacy-ur';
+import type { DeepString } from './types';
 
 /** Must mirror the keys of `en`; the type makes a missing translation a compile error. */
 const ur: DeepString<typeof en> = {
@@ -175,6 +175,9 @@ const ur: DeepString<typeof en> = {
         clearFilters: 'فلٹر ہٹائیں',
         rowActions: 'قطار کے اقدامات',
     },
+    auth: authUr,
+    landing: landingUr,
+    privacy: privacyUr,
 };
 
 export default ur;

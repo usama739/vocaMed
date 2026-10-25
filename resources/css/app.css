@@ -42,6 +42,18 @@
     --text-heading--line-height: 1.2;
     --text-hero: clamp(2.125rem, 5vw, 3.5rem); /* 34-56px  landing hero */
     --text-hero--line-height: 1.1;
+    --text-section: clamp(
+        1.75rem,
+        3.6vw,
+        2.375rem
+    ); /* 28-38px  landing section titles */
+    --text-section--line-height: 1.2;
+    --text-display: clamp(
+        1.875rem,
+        4vw,
+        2.625rem
+    ); /* 30-42px  document page titles */
+    --text-display--line-height: 1.15;
 
     /* ---- Radii ---- */
     --radius-xs: 6px; /* kbd keys */
@@ -58,9 +70,70 @@
     --shadow-menu: 0 12px 28px rgba(7, 20, 55, 0.12); /* dropdowns, toasts */
     --shadow-panel: 0 20px 50px rgba(7, 20, 55, 0.14); /* slide-over panel */
     --shadow-modal: 0 20px 50px rgba(7, 20, 55, 0.25); /* confirm dialog */
+    --shadow-glow: 0 6px 16px rgba(19, 102, 214, 0.28); /* hovered primary button */
 
     /* ---- Motion ---- */
+    --ease-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --animate-rise: rise 420ms var(--ease-out-soft) both;
+    --animate-fade: fade 240ms ease-out both;
+    --animate-pop: pop 480ms var(--ease-spring) both;
+    --animate-draw: draw 420ms 160ms ease-out both;
+    --animate-caret: caret 1s steps(1) infinite;
+    --animate-float: float 6s ease-in-out infinite;
     --animate-pulse-ring: pulse-ring 1.2s ease-out infinite;
+
+    @keyframes rise {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    @keyframes fade {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes pop {
+        from {
+            opacity: 0;
+            transform: scale(0.6);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    @keyframes draw {
+        from {
+            stroke-dashoffset: 30;
+        }
+        to {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    @keyframes caret {
+        50% {
+            opacity: 0;
+        }
+    }
+
+    @keyframes float {
+        50% {
+            transform: translateY(-6px);
+        }
+    }
 
     @keyframes pulse-ring {
         0% {
@@ -78,6 +151,11 @@
     --color-brand-tint: #eaf2fe; /* selected chip / pressed toggle */
     --color-brand-wash: #ddebfe;
     --color-brand-line: #bcd6fa;
+
+    /* ---- Navy (landing closing band) ---- */
+    --color-navy: #0b2a5b;
+    --color-navy-ink: #d6e2f5; /* text on navy */
+    --color-navy-line: #7c97c6; /* outline button on navy */
 
     /* ---- Ink and text ---- */
     --color-ink: #071437; /* headings, input text */
@@ -279,11 +357,57 @@
         line-height: 1.55;
     }
 
+    /* E-mail, password and phone values are Latin text: keep them in Inter even on Urdu pages. */
+    :lang(ur) :is(input, textarea)[dir='ltr'] {
+        font-family: var(--font-sans);
+    }
+
     /* Numbers, phone numbers and times stay left-to-right inside RTL text. */
     [dir='rtl']
         :is(input[type='tel'], input[type='email'], input[type='time']) {
         direction: ltr;
         text-align: end;
+    }
+}
+
+/* Scroll-in: sections and cards fade up once as they enter the viewport (see <Reveal>). */
+.reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+        opacity 600ms var(--ease-out-soft),
+        transform 600ms var(--ease-out-soft);
+    transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal[data-in='true'] {
+    opacity: 1;
+    transform: none;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* One switch for motion: anything animated or transitioned settles instantly. */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
+    }
+
+    .reveal {
+        opacity: 1;
+        transform: none;
     }
 }
 

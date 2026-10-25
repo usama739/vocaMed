@@ -52,6 +52,11 @@ export default defineConfig([
         rules: { '@typescript-eslint/no-unused-vars': 'off' },
     },
     {
+        // Message files hold copy, not class names ("right-to-left layout" is just a phrase).
+        files: ['resources/js/i18n/messages/**'],
+        rules: { 'no-restricted-syntax': 'off' },
+    },
+    {
         files: ['*.config.{js,ts}', 'e2e/**/*.ts'],
         languageOptions: { globals: globals.node },
     },

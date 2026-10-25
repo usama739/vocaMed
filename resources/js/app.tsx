@@ -11,11 +11,24 @@ const appName = import.meta.env.VITE_APP_NAME || 'VocaMed';
 
 setupI18n();
 
+const PAGES_WITH_OWN_SHELL = new Set([
+    'welcome',
+    'components',
+    'privacy',
+    'placeholder',
+    'auth/login',
+    'auth/register',
+    'auth/forgot-password',
+    'auth/reset-password',
+    'auth/invite',
+]);
+
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
-            case name === 'welcome' || name === 'components':
+            // Pages that bring their own shell (public layout, previews).
+            case PAGES_WITH_OWN_SHELL.has(name):
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

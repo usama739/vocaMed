@@ -1,8 +1,12 @@
+import type { AuthSource } from './auth';
+import { createMockAuth } from './auth-mock';
 import { createMockDataSource, createMockPatientLinks } from './mock';
 import { createSeedDatabase, DEMO_CLINIC_ID } from './seed';
 import type { DataSource, PatientLinkSource } from './source';
 
 export * from './types';
+export * from './auth';
+export { SAMPLE_ACCOUNTS, SAMPLE_PASSWORD } from './auth-mock';
 export type { DataSource, PatientLinkSource } from './source';
 export { SLOT_HOLD_SECONDS } from './mock';
 export { addDays as addDaysToDate, utcToZoned } from './time';
@@ -29,3 +33,8 @@ export const patientLinks: PatientLinkSource = createMockPatientLinks(
     database,
     { latencyMs },
 );
+
+/** Sign-in, password recovery, invitations and sign-up. Mock until the endpoints exist. */
+export const auth: AuthSource = createMockAuth({
+    latencyMs: import.meta.env.MODE === 'test' ? 0 : 600,
+});

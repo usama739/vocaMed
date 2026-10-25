@@ -1,4 +1,3 @@
-import { router } from '@inertiajs/react';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { DEFAULT_LOCALE, directionOf, isLocale, type Locale } from './locales';
@@ -43,15 +42,9 @@ export function setupI18n(): typeof i18n {
             returnNull: false,
         });
 
-        // The server owns the locale (cookie); follow it after every Inertia visit.
-        router.on('navigate', (event) => {
-            const locale = event.detail.page.props.locale;
-
-            if (isLocale(locale) && locale !== i18n.language) {
-                void i18n.changeLanguage(locale);
-            }
-        });
-
+        // The server's cookie decides the first paint (initialLocale reads <html lang>); after
+        // that the switch (useLocale) changes the language itself and saves the cookie. Following
+        // every Inertia visit's props here would let a stale first response undo a quick click.
         i18n.on('languageChanged', (lng) => {
             if (isLocale(lng)) {
                 applyDocumentLocale(lng);

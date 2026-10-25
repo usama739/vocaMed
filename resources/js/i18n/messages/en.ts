@@ -1,3 +1,7 @@
+import authEn from './auth-en';
+import landingEn from './landing-en';
+import privacyEn from './privacy-en';
+
 const en = {
     common: {
         appName: 'VocaMed',
@@ -168,6 +172,9 @@ const en = {
         clearFilters: 'Clear filters',
         rowActions: 'Row actions',
     },
+    auth: authEn,
+    landing: landingEn,
+    privacy: privacyEn,
 } as const;
 
 export default en;

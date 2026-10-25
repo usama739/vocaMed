@@ -22,7 +22,10 @@ export function useLocale(): {
         dir,
         isRtl: dir === 'rtl',
         setLocale: (next) => {
-            // Persisted server-side in a cookie so Blade renders the right <html dir> on first paint.
+            // Switch at once, so the page never waits on the server to change language...
+            void i18n.changeLanguage(next);
+
+            // ...then persist it in a cookie so Blade renders the right <html dir> on first paint.
             router.post(
                 '/locale',
                 { locale: next },

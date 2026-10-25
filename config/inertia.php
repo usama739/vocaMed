@@ -16,7 +16,9 @@ return [
     */
 
     'ssr' => [
-        'enabled' => true,
+        // Off while the UI is client-rendered: the server would render before i18n starts and ship
+        // untranslated text that React then has to throw away. Set INERTIA_SSR_ENABLED=true to try it.
+        'enabled' => (bool) env('INERTIA_SSR_ENABLED', false),
         'url' => 'http://127.0.0.1:13714',
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 

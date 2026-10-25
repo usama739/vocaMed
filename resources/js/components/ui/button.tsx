@@ -7,11 +7,12 @@ import { cn } from "@/lib/utils"
 // VocaMed: every size is at least 44px tall (front-desk tap targets). The focus ring is
 // global (see app.css), so no focus utilities here.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-control font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-[18px] [&_svg]:shrink-0 aria-invalid:border-danger",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-control font-semibold transition-[color,background-color,border-color,box-shadow,transform] duration-200 ease-out active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-[18px] [&_svg]:shrink-0 aria-invalid:border-danger",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-brand-hover",
+        default:
+          "bg-primary text-primary-foreground hover:-translate-y-px hover:bg-brand-hover hover:shadow-glow active:translate-y-0 active:shadow-none",
         destructive: "bg-danger text-white hover:bg-danger-ink",
         outline:
           "border border-line-strong bg-background text-ink hover:bg-surface-hover",

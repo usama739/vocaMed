@@ -35,6 +35,8 @@ The design only uses these sizes. Use the utility, not a pixel value.
 | `text-lead`    | 18px            | Empty-state titles, countdowns                            |
 | `text-title`   | 20px            | Panel and dialog titles                                   |
 | `text-heading` | 26px            | Page titles (h1)                                          |
+| `text-section` | 28–38px (fluid) | Landing section titles                                    |
+| `text-display` | 30–42px (fluid) | Document page titles (privacy)                            |
 | `text-hero`    | 34–56px (fluid) | Landing hero only                                         |
 
 ## Colour
@@ -49,6 +51,14 @@ The design only uses these sizes. Use the utility, not a pixel value.
 | `brand-tint`  | `#EAF2FE` | Selected chip, pressed toggle, hold banner          |
 | `brand-wash`  | `#DDEBFE` | Avatar background                                   |
 | `brand-line`  | `#BCD6FA` | Border of brand-tint surfaces                       |
+
+### Navy (landing band)
+
+| Token       | Hex       | Use                    |
+| ----------- | --------- | ---------------------- |
+| `navy`      | `#0B2A5B` | Landing closing band   |
+| `navy-ink`  | `#D6E2F5` | Text on navy           |
+| `navy-line` | `#7C97C6` | Outline button on navy |
 
 ### Text
 
@@ -150,14 +160,31 @@ The starter kit's components read semantic variables. They are mapped to the tok
 
 ## Shadows
 
-| Utility        | Value                               | Where              |
-| -------------- | ----------------------------------- | ------------------ |
-| `shadow-xs`    | `0 1px 2px rgba(7, 20, 55, 0.06)`   | Active nav item    |
-| `shadow-card`  | `0 3px 4px rgba(0, 0, 0, 0.03)`     | Resting cards      |
-| `shadow-lift`  | `0 10px 30px rgba(7, 20, 55, 0.07)` | Hovered cards      |
-| `shadow-menu`  | `0 12px 28px rgba(7, 20, 55, 0.12)` | Dropdowns, toasts  |
-| `shadow-panel` | `0 20px 50px rgba(7, 20, 55, 0.14)` | Booking slide-over |
-| `shadow-modal` | `0 20px 50px rgba(7, 20, 55, 0.25)` | Confirm dialog     |
+| Utility        | Value                                 | Where                  |
+| -------------- | ------------------------------------- | ---------------------- |
+| `shadow-xs`    | `0 1px 2px rgba(7, 20, 55, 0.06)`     | Active nav item        |
+| `shadow-card`  | `0 3px 4px rgba(0, 0, 0, 0.03)`       | Resting cards          |
+| `shadow-lift`  | `0 10px 30px rgba(7, 20, 55, 0.07)`   | Hovered cards          |
+| `shadow-menu`  | `0 12px 28px rgba(7, 20, 55, 0.12)`   | Dropdowns, toasts      |
+| `shadow-panel` | `0 20px 50px rgba(7, 20, 55, 0.14)`   | Booking slide-over     |
+| `shadow-glow`  | `0 6px 16px rgba(19, 102, 214, 0.28)` | Hovered primary button |
+| `shadow-modal` | `0 20px 50px rgba(7, 20, 55, 0.25)`   | Confirm dialog         |
+
+## Motion
+
+Utilities: `animate-rise` (fade up 12px, 420ms), `animate-fade`, `animate-pop` (spring scale-in),
+`animate-draw` (stroke draw), `animate-caret`, `animate-float`, `animate-pulse-ring`; the `.reveal`
+class plus `<Reveal>` fades sections in once as they scroll into view. Easing is `ease-out-soft`
+(`cubic-bezier(0.2, 0.7, 0.2, 1)`) and `ease-spring`. One rule in `app.css` makes every animation and
+transition settle instantly under `prefers-reduced-motion`.
+
+## Motion
+
+Utilities: `animate-rise` (fade up 12px, 420ms), `animate-fade`, `animate-pop` (spring scale-in),
+`animate-draw` (stroke draw), `animate-caret`, `animate-float`, `animate-pulse-ring`; the `.reveal`
+class plus `<Reveal>` fades sections in once as they scroll into view. Easing is `ease-out-soft`
+(`cubic-bezier(0.2, 0.7, 0.2, 1)`) and `ease-spring`. One rule in `app.css` makes every animation and
+transition settle instantly under `prefers-reduced-motion`.
 
 ## Focus ring
 

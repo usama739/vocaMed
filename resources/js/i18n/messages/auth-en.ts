@@ -1,0 +1,120 @@
+const authEn = {
+    errors: {
+        required: 'This field is required.',
+        email: 'Enter a valid email address.',
+        passwordRule: 'Use at least 10 characters, with letters and numbers.',
+        mismatch: 'The two passwords do not match.',
+        terms: 'Tick the box to continue.',
+        taken: 'An account already exists for this email.',
+        server: 'Something went wrong on our side. Try again in a moment.',
+    },
+    strength: {
+        label: 'Password strength',
+        empty: 'Not set',
+        weak: 'Weak',
+        fair: 'Fair',
+        strong: 'Strong',
+    },
+    common: {
+        signIn: 'Sign in',
+        logIn: 'Log in',
+        backToSignIn: 'Back to sign in',
+        submitting: 'Please wait…',
+        passwordHint: 'At least 10 characters, with letters and numbers.',
+        privacy: 'Privacy and terms',
+        emailPlaceholder: 'name@yourclinic.com',
+    },
+    login: {
+        title: 'Welcome back',
+        sub: 'Sign in to your clinic workspace.',
+        email: 'Email',
+        password: 'Password',
+        forgot: 'Forgot password?',
+        remember: 'Remember me on this computer',
+        signin: 'Sign in',
+        invalid:
+            'That email and password do not match. Check them and try again.',
+        throttled: 'Too many attempts. Try again in {{time}}.',
+        throttledSr:
+            'Too many attempts. Please wait a moment before trying again.',
+        newClinic: 'New to VocaMed?',
+        start: 'Start your clinic',
+        invited: 'Joining a clinic? Use the invitation link in your email.',
+    },
+    register: {
+        title: 'Start your clinic',
+        sub: 'Create a workspace for your clinic. You will be its first admin.',
+        clinic: 'Clinic name',
+        country: 'Country',
+        timezone: 'Timezone',
+        admin: 'Your full name',
+        email: 'Work email',
+        password: 'Password',
+        termsPre: 'I agree to the',
+        termsLink: 'terms and privacy policy',
+        create: 'Create clinic workspace',
+        note: 'Each clinic gets its own isolated workspace. Times and phone formats follow the country and timezone you choose.',
+        have: 'Already have a workspace?',
+        sentTitle: 'Check your email',
+        sentText:
+            'We sent a link to confirm your address and open your clinic workspace.',
+        sentHelp:
+            'Nothing arrived? Look in your spam folder, or go back and check the address.',
+        wrong: 'Use a different email',
+    },
+    countries: {
+        PK: 'Pakistan',
+        AE: 'United Arab Emirates',
+        SA: 'Saudi Arabia',
+        GB: 'United Kingdom',
+        OTHER: 'Other',
+    },
+    forgot: {
+        title: 'Reset your password',
+        sub: 'Enter the email you sign in with and we will send you a reset link.',
+        email: 'Email',
+        send: 'Send reset link',
+        sentTitle: 'Check your email',
+        sentText:
+            'If an account exists for that email, a reset link is on its way.',
+        sentHelp:
+            'The link works once and expires soon. Nothing arrived? Check your spam folder.',
+    },
+    reset: {
+        title: 'Choose a new password',
+        sub: 'You will use it the next time you sign in.',
+        newPw: 'New password',
+        confirm: 'Confirm new password',
+        save: 'Save new password',
+        doneTitle: 'Password updated',
+        doneText: 'Your password has been changed. Sign in with the new one.',
+        expTitle: 'This link has expired',
+        expText:
+            'Reset links work once and only for a short time. Ask for a new one and we will email it to you.',
+        expBtn: 'Request a new link',
+    },
+    invite: {
+        title: 'You have been invited to join a clinic',
+        clinicLabel: 'Clinic',
+        roleLabel: 'Your role',
+        name: 'Your full name',
+        password: 'Choose a password',
+        accept: 'Accept invitation and continue',
+        terms: 'By continuing you agree to the',
+        termsLink: 'terms and privacy policy',
+        doneTitle: 'Welcome aboard',
+        doneText: 'Your account is ready. Sign in to open your workspace.',
+        expTitle: 'This invitation has expired',
+        expText:
+            'Invitations only last for a short time. Ask your clinic admin to send you a new one.',
+        usedTitle: 'This invitation was already used',
+        usedText:
+            'An account has already been created from this link. Sign in with your email and password.',
+    },
+    placeholder: {
+        title: 'Signed in as {{role}}',
+        text: 'This page is built in a later module.',
+    },
+} as const;
+
+export default authEn;
