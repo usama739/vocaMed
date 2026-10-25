@@ -11,5 +11,8 @@ export default defineConfig({
         setupFiles: ['resources/js/test/setup.ts'],
         include: ['resources/js/**/*.test.{ts,tsx}'],
         css: false,
+        // jsdom start-up is slow on busy machines; keep the worker count modest.
+        maxWorkers: 4,
+        testTimeout: 20_000,
     },
 });

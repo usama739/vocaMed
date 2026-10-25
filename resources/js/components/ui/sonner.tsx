@@ -1,9 +1,11 @@
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { useAppearance } from '@/hooks/use-appearance';
+import { useT } from '@/i18n/scope';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
 function Toaster({ ...props }: ToasterProps) {
     const { appearance } = useAppearance();
+    const { dir } = useT();
 
     useFlashToast();
 
@@ -11,7 +13,9 @@ function Toaster({ ...props }: ToasterProps) {
         <Sonner
             theme={appearance}
             className="toaster group"
-            position="bottom-right"
+            // Centred so it does not jump sides between left-to-right and right-to-left layouts.
+            position="bottom-center"
+            dir={dir}
             style={
                 {
                     '--normal-bg': 'var(--popover)',

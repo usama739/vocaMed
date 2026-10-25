@@ -10,7 +10,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * VocaMed design tokens. Source of truth: the "VocaMed Frontend" design canvas.
+ * Values are documented, with where each is used, in docs/design-tokens.md.
+ */
 @theme {
+    /* ---- Typeface ---- */
     --font-sans:
         'Inter Variable', 'Noto Naskh Arabic Variable', ui-sans-serif,
         system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
@@ -18,10 +23,112 @@
     --font-urdu:
         'Noto Naskh Arabic Variable', 'Inter Variable', ui-serif, serif;
 
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
+    /* ---- Type scale (the design only ever uses these sizes) ---- */
+    --text-caption: 0.75rem; /* 12px  kbd hints, table counters */
+    --text-caption--line-height: 1.5;
+    --text-small: 0.8125rem; /* 13px  table headers, helper text */
+    --text-small--line-height: 1.5;
+    --text-label: 0.875rem; /* 14px  field labels, secondary text */
+    --text-label--line-height: 1.5;
+    --text-control: 0.9375rem; /* 15px  buttons, nav items, table cells */
+    --text-control--line-height: 1.5;
+    --text-body: 1rem; /* 16px  body, inputs (also stops iOS zoom) */
+    --text-body--line-height: 1.6;
+    --text-lead: 1.125rem; /* 18px  empty-state titles, timers */
+    --text-lead--line-height: 1.4;
+    --text-title: 1.25rem; /* 20px  panel and dialog titles */
+    --text-title--line-height: 1.3;
+    --text-heading: 1.625rem; /* 26px  page titles (h1) */
+    --text-heading--line-height: 1.2;
+    --text-hero: clamp(2.125rem, 5vw, 3.5rem); /* 34-56px  landing hero */
+    --text-hero--line-height: 1.1;
 
+    /* ---- Radii ---- */
+    --radius-xs: 6px; /* kbd keys */
+    --radius-sm: 8px; /* menu items, segmented buttons */
+    --radius-md: 10px; /* every control: buttons, inputs, chips */
+    --radius-lg: 12px; /* alerts, popovers, toasts */
+    --radius-xl: 14px; /* tables, cards inside panels */
+    --radius-2xl: 16px; /* page cards, dialogs, slide-over */
+
+    /* ---- Shadows ---- */
+    --shadow-xs: 0 1px 2px rgba(7, 20, 55, 0.06); /* active nav item */
+    --shadow-card: 0 3px 4px rgba(0, 0, 0, 0.03); /* resting cards */
+    --shadow-lift: 0 10px 30px rgba(7, 20, 55, 0.07); /* hovered cards */
+    --shadow-menu: 0 12px 28px rgba(7, 20, 55, 0.12); /* dropdowns, toasts */
+    --shadow-panel: 0 20px 50px rgba(7, 20, 55, 0.14); /* slide-over panel */
+    --shadow-modal: 0 20px 50px rgba(7, 20, 55, 0.25); /* confirm dialog */
+
+    /* ---- Motion ---- */
+    --animate-pulse-ring: pulse-ring 1.2s ease-out infinite;
+
+    @keyframes pulse-ring {
+        0% {
+            box-shadow: 0 0 0 0 rgba(180, 21, 63, 0.35);
+        }
+        100% {
+            box-shadow: 0 0 0 22px rgba(180, 21, 63, 0);
+        }
+    }
+
+    /* ---- Brand (blue) ---- */
+    --color-brand: #1366d6;
+    --color-brand-hover: #0f55b3;
+    --color-brand-deep: #0b4491; /* text on brand tint */
+    --color-brand-tint: #eaf2fe; /* selected chip / pressed toggle */
+    --color-brand-wash: #ddebfe;
+    --color-brand-line: #bcd6fa;
+
+    /* ---- Ink and text ---- */
+    --color-ink: #071437; /* headings, input text */
+    --color-ink-soft: #2f3a56; /* chip text */
+    --color-copy: #4b5675; /* paragraphs, secondary buttons */
+    --color-subtle: #5b6781; /* captions, placeholders, icons */
+    --color-mute: #7a869f; /* disabled microphone */
+
+    /* ---- Surfaces and lines ---- */
+    --color-canvas: #f6f7f9; /* behind the app card, sidebar */
+    --color-surface-subtle: #f9fafb; /* filter bars, table headers */
+    --color-surface-hover: #f4f6fa; /* secondary button hover */
+    --color-surface-row: #fafbfc; /* table row hover */
+    --color-surface-held: #f1f3f8; /* slot held by someone else */
+    --color-line: #e4e7ee; /* card and table borders */
+    --color-line-strong: #d5d9e3; /* control borders */
+    --color-line-soft: #eef0f5; /* dividers inside cards */
+    --color-line-dashed: #9aa6bf; /* "add new" dashed buttons */
+    --color-overlay: rgba(7, 20, 55, 0.45);
+
+    /* ---- Feedback ---- */
+    --color-danger: #b4153f; /* solid destructive button */
+    --color-danger-ink: #9b1239; /* destructive text */
+    --color-danger-deep: #7a0e2e; /* text on danger surface */
+    --color-danger-surface: #fdebef;
+    --color-danger-line: #f1a3b5;
+    --color-warning-surface: #fff6e0;
+    --color-warning-line: #f1c36b;
+    --color-warning-ink: #6b4300;
+    --color-warning-accent: #c98a00; /* low-confidence field border */
+    --color-success-surface: #eaf7ee;
+    --color-success-line: #9cd3ab;
+    --color-success-ink: #14532d;
+
+    /* ---- Appointment and message status (background / text) ---- */
+    --color-status-booked: #e8ecf4;
+    --color-status-booked-ink: #2f3a56;
+    --color-status-confirmed: #ddebfe;
+    --color-status-confirmed-ink: #0b4491;
+    --color-status-arrived: #d9f2ea;
+    --color-status-arrived-ink: #0a5c4a;
+    --color-status-consult: #ebe3fc;
+    --color-status-consult-ink: #4c22a0;
+    --color-status-done: #dff3e4;
+    --color-status-done-ink: #14532d;
+    --color-status-cancelled: #fbe3ea;
+    --color-status-cancelled-ink: #9b1239;
+    --color-status-noshow: #fdebc8;
+    --color-status-noshow-ink: #7a4a00;
+
+    /* ---- shadcn/ui semantic names, mapped to the variables below ---- */
     --color-background: var(--background);
     --color-foreground: var(--foreground);
 
@@ -67,41 +174,47 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
+    --background: #ffffff;
+    --foreground: #071437;
+    --card: #ffffff;
+    --card-foreground: #071437;
+    --popover: #ffffff;
+    --popover-foreground: #071437;
+    --primary: #1366d6;
+    --primary-foreground: #ffffff;
+    --secondary: #f4f6fa;
+    --secondary-foreground: #071437;
+    --muted: #f9fafb;
+    --muted-foreground: #5b6781;
+    --accent: #f4f6fa;
+    --accent-foreground: #071437;
+    --destructive: #b4153f;
+    --destructive-foreground: #ffffff;
+    --border: #e4e7ee;
+    --input: #d5d9e3;
+    --ring: #1366d6;
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --sidebar: #f6f7f9;
+    --sidebar-foreground: #3f4b66;
+    --sidebar-primary: #1366d6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #ffffff;
+    --sidebar-accent-foreground: #071437;
+    --sidebar-border: #e4e7ee;
+    --sidebar-ring: #1366d6;
+
+    /* Focus ring: 3px solid brand, 2px off the element (all interactive elements). */
+    --focus-ring-width: 3px;
+    --focus-ring-offset: 2px;
 }
 
+/* The design is light only. The dark values below are the starter kit's, kept so the
+   existing appearance switch keeps working; they are not part of the VocaMed design. */
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
@@ -109,8 +222,8 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.145 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
+    --primary: #5b9bf0;
+    --primary-foreground: oklch(0.145 0 0);
     --secondary: oklch(0.269 0 0);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);
@@ -121,7 +234,7 @@
     --destructive-foreground: oklch(0.637 0.237 25.331);
     --border: oklch(0.269 0 0);
     --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
+    --ring: #5b9bf0;
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
     --chart-3: oklch(0.769 0.188 70.08);
@@ -129,12 +242,12 @@
     --chart-5: oklch(0.645 0.246 16.439);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-primary: #5b9bf0;
+    --sidebar-primary-foreground: oklch(0.145 0 0);
     --sidebar-accent: oklch(0.269 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    --sidebar-ring: #5b9bf0;
 }
 
 @layer base {
@@ -144,12 +257,26 @@
 
     body {
         @apply bg-background text-foreground;
+        font-size: var(--text-body);
+        line-height: 1.6;
     }
 
-    /* Urdu is set in Naskh, with a taller line box for its tall ascenders. */
+    h1,
+    h2,
+    h3 {
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+    }
+
+    /* Urdu is set in Naskh with a taller line box for its tall ascenders; Latin tracking is off. */
     :lang(ur) {
         font-family: var(--font-urdu);
-        line-height: 1.8;
+        line-height: 2;
+    }
+
+    :lang(ur) :is(h1, h2, h3) {
+        letter-spacing: 0;
+        line-height: 1.55;
     }
 
     /* Numbers, phone numbers and times stay left-to-right inside RTL text. */
@@ -158,4 +285,15 @@
         direction: ltr;
         text-align: end;
     }
+}
+
+/*
+ * Visible focus ring on every interactive element. It is deliberately unlayered so it
+ * beats the `outline-none` / `ring` utilities baked into the shadcn/ui components, which
+ * would otherwise draw a second, fainter ring.
+ */
+:is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: var(--focus-ring-width) solid var(--ring);
+    outline-offset: var(--focus-ring-offset);
+    --tw-ring-shadow: 0 0 #0000 !important;
 }

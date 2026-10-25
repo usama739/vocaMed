@@ -46,3 +46,33 @@ yarn-error.log
 /boost.json
 /opencode.json
 /opencode.jsonc
+/.github
+# Environment files (keep .env.example tracked)
+.env.*
+!.env.example
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.swp
+*~
+
+# Logs and package manager debug output
+*.log
+pnpm-debug.log*
+.pnpm-debug.log*
+.pnpm-store
+
+# Tooling caches and test output
+.eslintcache
+.prettiercache
+*.tsbuildinfo
+.vite
+/test-results
+/storage/app/playwright
+/.phpstan.cache
+/.phpstan
+
+# Local editor settings
+*.code-workspace

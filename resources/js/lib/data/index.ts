@@ -5,6 +5,8 @@ import type { DataSource, PatientLinkSource } from './source';
 export * from './types';
 export type { DataSource, PatientLinkSource } from './source';
 export { SLOT_HOLD_SECONDS } from './mock';
+export { addDays as addDaysToDate, utcToZoned } from './time';
+export { DEMO_CLINIC_ID } from './seed';
 
 /**
  * The swap point. Pages import `data` and `patientLinks` from here and nowhere else.

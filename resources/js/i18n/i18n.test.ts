@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { directionOf, isLocale, LOCALES } from './locales';
 import en from './messages/en';

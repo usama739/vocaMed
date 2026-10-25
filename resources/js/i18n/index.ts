@@ -37,6 +37,8 @@ export function setupI18n(): typeof i18n {
             lng: initialLocale(),
             fallbackLng: DEFAULT_LOCALE,
             defaultNS,
+            // Resources are bundled, so load them synchronously: no first render of raw keys.
+            initAsync: false,
             interpolation: { escapeValue: false },
             returnNull: false,
         });
