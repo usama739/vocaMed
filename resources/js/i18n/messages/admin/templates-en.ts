@@ -1,0 +1,51 @@
+/** Clinic admin: Notification templates copy (D7). */
+const copy = {
+    templates: {
+        title: 'Notification templates',
+        sub: 'The messages patients receive. Edit the wording for each message, channel and language.',
+        loading: 'Loading the message templates',
+        kinds: {
+            confirmation: 'Confirmation',
+            reminder: 'Reminder',
+            reschedule: 'Reschedule',
+            cancellation: 'Cancellation',
+        },
+        channel: 'Channel',
+        msgLang: 'Message language',
+        sms: 'SMS',
+        whatsapp: 'WhatsApp',
+        english: 'English',
+        urdu: 'اردو',
+        waNote: 'WhatsApp templates need approval before they can be used, so SMS is the channel to start with.',
+        message: 'Message',
+        customised: 'Customised',
+        unsavedDot: 'unsaved changes',
+        counter: '{{count}} characters',
+        parts_one: '{{count}} message part',
+        parts_other: '{{count}} message parts',
+        gsm: 'Standard characters',
+        uni: 'Urdu text uses shorter parts (70 characters)',
+        variables: 'Insert a variable',
+        varHint:
+            'Variables are replaced with the real details for each patient.',
+        reset: 'Reset to default',
+        save: 'Save template',
+        saved: 'Template saved.',
+        resetDone: 'The message is back to the default wording.',
+        saveFailed: 'Could not save the template. Try again.',
+        resetFailed: 'Could not reset the template. Try again.',
+        emptyError: 'Write a message before saving.',
+        unknownVar:
+            'Unknown variable {{name}}. Insert one from the list below.',
+        previewTitle: 'Preview',
+        previewSub: 'With sample details, as the patient would see it.',
+        previewAria: 'Message preview',
+        test: 'Send a test',
+        testPhone: 'Send to this phone',
+        sendTest: 'Send test message',
+        testDone: 'Test sent to {{phone}}',
+        testFailed: 'Could not send the test. Try again.',
+    },
+};
+
+export default copy;

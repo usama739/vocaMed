@@ -8,10 +8,14 @@ import type {
     ClinicSettings,
     Doctor,
     DoctorAvailability,
+    DoctorProfileDraft,
     Id,
     IsoDate,
     IsoDateTime,
+    NotificationKind,
     NotificationLogEntry,
+    Channel,
+    Locale,
     Page,
     Patient,
     RescheduleRequest,
@@ -199,6 +203,11 @@ export interface AvailabilityView {
     preview: AvailabilityPreview;
 }
 
+/** `doctorId` is for the clinic admin; a doctor always gets their own. */
+export interface AvailabilityParams {
+    doctorId?: Id;
+}
+
 export interface RequestRow {
     request: RescheduleRequest;
     row: AppointmentRow;
@@ -217,11 +226,235 @@ export interface DoctorShellView {
     pendingRequests: number;
 }
 
+// ---- Clinic admin ----
+
+export type AdminPeriod = 'last7' | 'month' | 'last3months';
+
+/** A number for this period and the same number for the period before it. */
+export interface KpiValue {
+    value: number;
+    previous: number;
+}
+
+export interface TrendPoint {
+    /** The day, or the Monday of the week when the trend is weekly. */
+    date: IsoDate;
+    current: number;
+    previous: number;
+}
+
+export interface AdminOverviewView {
+    clinic: Clinic;
+    today: IsoDate;
+    period: {
+        id: AdminPeriod;
+        from: IsoDate;
+        to: IsoDate;
+        previousFrom: IsoDate;
+        previousTo: IsoDate;
+    };
+    /** Counts are whole numbers; the rates and utilisation are percentages with one decimal. */
+    kpis: {
+        booked: KpiValue;
+        done: KpiValue;
+        cancellationRate: KpiValue;
+        noShowRate: KpiValue;
+        newPatients: KpiValue;
+        reminderDelivery: KpiValue;
+        confirmed: KpiValue;
+        doctorTimeUsed: KpiValue;
+    };
+    trend: { granularity: 'day' | 'week'; points: TrendPoint[] };
+    /** Appointments per weekday, Monday first. */
+    weekdays: number[];
+    outcomes: {
+        done: number;
+        upcoming: number;
+        cancelled: number;
+        noShow: number;
+    };
+    sources: { voice: number; manual: number };
+    doctorUse: {
+        doctorId: Id;
+        name: string;
+        /** 0 to 1. */
+        utilisation: number;
+        booked: number;
+    }[];
+    services: {
+        serviceId: Id;
+        name: string;
+        /** 0 to 1. */
+        share: number;
+        booked: number;
+    }[];
+    todayDoctors: {
+        doctor: Doctor;
+        booked: number;
+        arrived: number;
+        inConsultation: number;
+        done: number;
+        nextFree: Slot | null;
+    }[];
+    alerts: {
+        /** Messages whose last attempt failed and that nobody has sent again. */
+        failedMessages: number;
+        doctorsWithoutHours: { id: Id; name: string }[];
+    };
+}
+
+export interface AdminDoctorsParams {
+    q?: string;
+    status: 'all' | 'active' | 'inactive';
+}
+
+export interface AdminDoctorRow {
+    doctor: Doctor;
+    nextFree: Slot | null;
+    upcoming: number;
+}
+
+export interface AdminDoctorsView {
+    clinic: Clinic;
+    today: IsoDate;
+    /** All doctors, before the search and status filter (for "Showing 3 of 4"). */
+    total: number;
+    rows: AdminDoctorRow[];
+}
+
+export interface DoctorSignIn {
+    state: 'none' | 'invited' | 'expired' | 'active';
+    /** The invited or signed-in email. */
+    email: string | null;
+    invitationId: Id | null;
+}
+
+export interface AdminDoctorView {
+    clinic: Clinic;
+    today: IsoDate;
+    /** `null` id means a doctor who has not been created yet. */
+    id: Id | null;
+    profile: DoctorProfileDraft;
+    /** Every service, so the doctor's offer can be ticked. */
+    services: Service[];
+    upcoming: number;
+    signIn: DoctorSignIn;
+    draft: AvailabilityDraft;
+    preview: AvailabilityPreview;
+}
+
+export type StaffRole = 'receptionist' | 'clinic_admin';
+export type StaffStatus = 'active' | 'invited' | 'expired' | 'deactivated';
+
+export interface StaffRow {
+    /** A user id, or an invitation id when `status` is invited or expired. */
+    id: Id;
+    name: string | null;
+    email: string;
+    role: StaffRole;
+    status: StaffStatus;
+    isYou: boolean;
+    /** The server decides, including "not yourself" and "not the last admin". */
+    allowed: {
+        resend: boolean;
+        revoke: boolean;
+        deactivate: boolean;
+        reactivate: boolean;
+    };
+}
+
+export interface AdminStaffView {
+    clinic: Clinic;
+    rows: StaffRow[];
+}
+
+export interface ServiceRow {
+    service: Service;
+    doctorIds: Id[];
+}
+
+export interface AdminServicesView {
+    clinic: Clinic;
+    services: ServiceRow[];
+    doctors: Doctor[];
+}
+
+export interface AdminSettingsView {
+    clinic: Clinic;
+    settings: ClinicSettings;
+}
+
+export interface AdminTemplate {
+    kind: NotificationKind;
+    channel: Channel;
+    locale: Locale;
+    body: string;
+    /** What "Reset to default" restores. */
+    defaultBody: string;
+    isCustom: boolean;
+}
+
+export interface AdminTemplatesView {
+    clinic: Clinic;
+    templates: AdminTemplate[];
+    /** The placeholders a message may use. */
+    variables: string[];
+    /** Example values, per message language, for the preview. */
+    sample: Record<Locale, Record<string, string>>;
+}
+
+export type AuditCategory =
+    'booking' | 'edit' | 'cancel' | 'login' | 'settings' | 'invite';
+
+export interface AuditParams {
+    /** 1 means today only. */
+    days: 1 | 7 | 30;
+    userId?: Id;
+    category?: AuditCategory;
+    page: number;
+}
+
+export interface AuditRow {
+    id: Id;
+    at: IsoDateTime;
+    actor: Actor;
+    category: AuditCategory;
+    action: AuditEntry['action'];
+    meta: AuditEntry['meta'];
+    /** Joined for appointment entries, so the details can name the patient and doctor. */
+    appointment?: {
+        patientName: string;
+        doctorName: string;
+        startsAt: IsoDateTime;
+    };
+}
+
+export interface AuditView {
+    clinic: Clinic;
+    today: IsoDate;
+    total: number;
+    page: number;
+    perPage: number;
+    rows: AuditRow[];
+    users: { id: Id; name: string }[];
+}
+
 export interface ViewSource {
+    adminOverview(params: { period: AdminPeriod }): Promise<AdminOverviewView>;
+    adminDoctors(params: AdminDoctorsParams): Promise<AdminDoctorsView>;
+    /** `doctorId: 'new'` is the blank form; `null` when the doctor does not exist. */
+    adminDoctor(params: {
+        doctorId: Id | 'new';
+    }): Promise<AdminDoctorView | null>;
+    adminStaff(): Promise<AdminStaffView>;
+    adminServices(): Promise<AdminServicesView>;
+    adminSettings(): Promise<AdminSettingsView>;
+    adminTemplates(): Promise<AdminTemplatesView>;
+    adminAudit(params: AuditParams): Promise<AuditView>;
     doctorOverview(): Promise<DoctorOverviewView>;
     /** The doctor's own appointments, shaped like the reception calendar so one calendar serves both. */
     doctorSchedule(params: DoctorScheduleParams): Promise<CalendarViewData>;
-    availability(): Promise<AvailabilityView>;
+    availability(params?: AvailabilityParams): Promise<AvailabilityView>;
     requests(): Promise<RequestsView>;
     doctorShell(): Promise<DoctorShellView>;
     today(): Promise<TodayView>;

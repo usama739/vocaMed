@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import en from './messages/en';
 import ur from './messages/ur';
 
-// `reception.*` and `doctor.*` keys are not checked by the compiler (see ReceptionT in scope.tsx), so this does
+// `reception.*`, `doctor.*` and `admin.*` keys are not checked by the compiler (see ReceptionT in scope.tsx), so this does
 // it: every key written out in the source must exist in English and Urdu.
 const ROOT = join(__dirname, '..');
 
@@ -48,7 +48,7 @@ for (const file of sources(ROOT)) {
     const text = readFileSync(file, 'utf8');
 
     for (const match of text.matchAll(
-        /\bt\(\s*['`]((?:reception|doctor)\.[\w.]+)['`]/g,
+        /\bt\(\s*['`]((?:reception|doctor|admin)\.[\w.]+)['`]/g,
     )) {
         used.set(match[1], file.replace(ROOT, ''));
     }
@@ -81,5 +81,6 @@ describe('reception copy', () => {
 
         expect(flat(ur.reception).sort()).toEqual(flat(en.reception).sort());
         expect(flat(ur.doctor).sort()).toEqual(flat(en.doctor).sort());
+        expect(flat(ur.admin).sort()).toEqual(flat(en.admin).sort());
     });
 });

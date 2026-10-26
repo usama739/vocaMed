@@ -141,6 +141,24 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
             locale: 'ur',
         },
         {
+            id: 'u_recep2',
+            clinicId: DEMO_CLINIC_ID,
+            name: 'Hira Nawaz',
+            email: 'hira@shifa.example',
+            role: 'receptionist',
+            active: true,
+            locale: 'ur',
+        },
+        {
+            id: 'u_recep3',
+            clinicId: DEMO_CLINIC_ID,
+            name: 'Kamran Ali',
+            email: 'kamran@shifa.example',
+            role: 'receptionist',
+            active: false,
+            locale: 'en',
+        },
+        {
             id: 'u_noor_admin',
             clinicId: OTHER_CLINIC_ID,
             name: 'Farah Siddiqui',
@@ -151,6 +169,8 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
         },
     ];
 
+    const daysFromNow = (days: number) =>
+        new Date(now.getTime() + days * 86_400_000).toISOString();
     const invitations: Invitation[] = [
         {
             id: 'inv_1',
@@ -158,7 +178,17 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
             email: 'newdesk@shifa.example',
             role: 'receptionist',
             status: 'pending',
-            sentAt: iso,
+            sentAt: daysFromNow(-1),
+            expiresAt: daysFromNow(6),
+        },
+        {
+            id: 'inv_2',
+            clinicId: DEMO_CLINIC_ID,
+            email: 'weekend.desk@shifa.example',
+            role: 'receptionist',
+            status: 'pending',
+            sentAt: daysFromNow(-10),
+            expiresAt: daysFromNow(-3),
         },
     ];
 
@@ -773,24 +803,183 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
             return confirmed ? [confirmed, created] : [created];
         });
 
-    const templates: NotificationTemplate[] = (['en', 'ur'] as const).flatMap(
-        (locale) =>
-            (['confirmation', 'reminder'] as const).map((kind) => ({
-                id: `t_${kind}_${locale}`,
-                clinicId: DEMO_CLINIC_ID,
-                kind,
-                channel: 'sms' as const,
-                locale,
-                body:
-                    locale === 'en'
-                        ? kind === 'confirmation'
-                            ? 'Hello {patient_name}, your appointment with {doctor} is booked for {time}.'
-                            : 'Reminder: {patient_name}, you have an appointment with {doctor} at {time}.'
-                        : kind === 'confirmation'
-                          ? 'السلام علیکم {patient_name}، {doctor} کے ساتھ آپ کی اپائنٹمنٹ {time} پر بک ہو گئی ہے۔'
-                          : 'یاد دہانی: {patient_name}، {doctor} کے ساتھ آپ کی اپائنٹمنٹ {time} پر ہے۔',
-            })),
-    );
+    // Only the messages this clinic has edited are stored; every other one uses the built-in wording.
+    const templates: NotificationTemplate[] = [
+        {
+            id: 't_reminder_sms_en',
+            clinicId: DEMO_CLINIC_ID,
+            kind: 'reminder',
+            channel: 'sms',
+            locale: 'en',
+            body: 'Reminder from {clinic_name}: {patient_name}, you are booked with {doctor} at {time}. Confirm or change it here: {link}',
+        },
+    ];
+
+    // A month of activity by the clinic's staff, so the audit log has something to filter.
+    const staffActivity = (
+        id: string,
+        daysAgo: number,
+        time: string,
+        actorId: Id,
+        action: string,
+        subjectType: AuditEntry['subjectType'],
+        subjectId: Id,
+        meta: AuditEntry['meta'] = {},
+    ): AuditEntry => ({
+        id: `au_seed_${id}`,
+        clinicId: DEMO_CLINIC_ID,
+        actorId,
+        action,
+        subjectType,
+        subjectId,
+        at: zonedToUtc(addDays(today, -daysAgo), time, tz).toISOString(),
+        meta,
+    });
+    const staffAudit: AuditEntry[] = [
+        staffActivity(
+            'l1',
+            0,
+            '08:02',
+            'u_recep',
+            'auth.login',
+            'user',
+            'u_recep',
+        ),
+        staffActivity(
+            'l2',
+            0,
+            '08:20',
+            'u_recep2',
+            'auth.login',
+            'user',
+            'u_recep2',
+        ),
+        staffActivity(
+            'l3',
+            1,
+            '08:15',
+            'u_admin',
+            'auth.login',
+            'user',
+            'u_admin',
+        ),
+        staffActivity(
+            'l4',
+            1,
+            '08:31',
+            'u_recep',
+            'auth.login',
+            'user',
+            'u_recep',
+        ),
+        staffActivity(
+            'l5',
+            5,
+            '08:44',
+            'u_recep2',
+            'auth.login',
+            'user',
+            'u_recep2',
+        ),
+        staffActivity(
+            'l6',
+            21,
+            '08:55',
+            'u_recep',
+            'auth.login',
+            'user',
+            'u_recep',
+            { newDevice: true },
+        ),
+        staffActivity(
+            's1',
+            1,
+            '16:40',
+            'u_admin',
+            'settings.updated',
+            'settings',
+            DEMO_CLINIC_ID,
+            { section: 'reminders' },
+        ),
+        staffActivity(
+            's2',
+            9,
+            '17:12',
+            'u_admin',
+            'settings.updated',
+            'settings',
+            DEMO_CLINIC_ID,
+            { section: 'hours' },
+        ),
+        staffActivity(
+            's3',
+            12,
+            '11:05',
+            'u_admin',
+            'template.updated',
+            'template',
+            't_reminder_sms_en',
+            { kind: 'reminder', channel: 'sms', locale: 'en' },
+        ),
+        staffActivity(
+            's4',
+            17,
+            '10:20',
+            'u_admin',
+            'service.updated',
+            'service',
+            's_followup',
+        ),
+        staffActivity(
+            's5',
+            24,
+            '14:00',
+            'u_admin',
+            'doctor.updated',
+            'doctor',
+            'd_hina',
+        ),
+        staffActivity(
+            'i1',
+            3,
+            '11:20',
+            'u_admin',
+            'user.invited',
+            'user',
+            'inv_1',
+            { email: 'newdesk@shifa.example', role: 'receptionist' },
+        ),
+        staffActivity(
+            'i2',
+            10,
+            '09:30',
+            'u_admin',
+            'user.invited',
+            'user',
+            'inv_2',
+            { email: 'weekend.desk@shifa.example', role: 'receptionist' },
+        ),
+        staffActivity(
+            'i3',
+            27,
+            '13:10',
+            'u_admin',
+            'user.revoked',
+            'user',
+            'inv_0',
+            { email: 'locum@shifa.example', role: 'receptionist' },
+        ),
+        staffActivity(
+            'i4',
+            28,
+            '12:00',
+            'u_admin',
+            'user.deactivated',
+            'user',
+            'u_recep3',
+            { email: 'kamran@shifa.example' },
+        ),
+    ];
 
     const links = new Map<
         string,
@@ -824,7 +1013,9 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
         replies,
         requests,
         templates,
-        audit: auditLog,
+        audit: [...auditLog, ...staffAudit].sort((a, b) =>
+            b.at.localeCompare(a.at),
+        ),
         links,
         seq: 1000,
     };

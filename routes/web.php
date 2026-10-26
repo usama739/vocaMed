@@ -14,8 +14,19 @@ Route::inertia('privacy', 'privacy')->name('privacy');
 Route::get('invite/{token}', fn (string $token) => Inertia::render('auth/invite', ['token' => $token]))
     ->name('invite');
 
-// Where a successful sign-in lands until the role areas are built. No access control yet.
-Route::inertia('admin', 'placeholder', ['role' => 'clinic_admin'])->name('placeholder.admin');
+// Clinic admin. UI only for now: each route just renders its page, with no access control yet.
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::inertia('/', 'admin/overview')->name('overview');
+    Route::inertia('doctors', 'admin/doctors')->name('doctors');
+    // `new` is the blank form for a doctor who does not exist yet.
+    Route::get('doctors/{id}', fn (string $id) => Inertia::render('admin/doctor', ['id' => $id]))
+        ->name('doctor');
+    Route::inertia('staff', 'admin/staff')->name('staff');
+    Route::inertia('services', 'admin/services')->name('services');
+    Route::inertia('settings', 'admin/settings')->name('settings');
+    Route::inertia('templates', 'admin/templates')->name('templates');
+    Route::inertia('audit', 'admin/audit')->name('audit');
+});
 
 // Doctor workspace. UI only for now: each route just renders its page, with no access control yet.
 Route::prefix('doctor')->name('doctor.')->group(function () {

@@ -49,7 +49,8 @@ export interface ClinicSettings {
     businessHours: BusinessHours[];
     holidays: { date: IsoDate; name: string }[];
     reminderHoursBefore: number[]; // e.g. [24, 2]
-    cancellationWindowHours: number;
+    /** Patients may cancel or move from their link until this long before; null means no limit. */
+    cancellationWindowHours: number | null;
     rescheduleRequiresApproval: boolean;
     voiceEnabled: boolean;
     voiceAudioRetentionDays: number;
@@ -70,8 +71,11 @@ export interface Invitation {
     clinicId: Id;
     email: string;
     role: Role;
+    /** Set when the invitation is a doctor's sign-in access (the doctor it links to). */
+    doctorId?: Id | null;
     status: 'pending' | 'accepted' | 'revoked' | 'expired';
     sentAt: IsoDateTime;
+    expiresAt: IsoDateTime;
 }
 
 export interface Service {
@@ -83,13 +87,16 @@ export interface Service {
     active: boolean;
 }
 
+/** Languages a doctor speaks: data about the doctor, not the screen language (`Locale`). */
+export type DoctorLanguage = 'en' | 'ur' | 'pa' | 'ps';
+
 export interface Doctor {
     id: Id;
     clinicId: Id;
     userId: Id | null;
     name: string;
     specialty: string;
-    languages: Locale[];
+    languages: DoctorLanguage[];
     serviceIds: Id[];
     active: boolean;
 }
@@ -272,13 +279,68 @@ export type TimelineItem =
     | { type: 'message'; id: Id; at: IsoDateTime; entry: NotificationLogEntry }
     | { type: 'reply'; id: Id; at: IsoDateTime; reply: PatientReply };
 
+/** The placeholders a message may use; the server replaces them for each patient. */
+export const TEMPLATE_VARIABLES = [
+    'patient_name',
+    'doctor',
+    'time',
+    'clinic_name',
+    'link',
+] as const;
+export type TemplateVariable = (typeof TEMPLATE_VARIABLES)[number];
+
+/** A message the clinic has edited; messages it has not edited use the built-in default. */
 export interface NotificationTemplate {
     id: Id;
     clinicId: Id;
     kind: NotificationKind;
     channel: Channel;
     locale: Locale;
-    body: string; // supports {patient_name}, {doctor}, {time}
+    body: string; // supports the TEMPLATE_VARIABLES
+}
+
+export interface TemplateKey {
+    kind: NotificationKind;
+    channel: Channel;
+    locale: Locale;
+}
+
+// ---- Clinic admin: what the admin pages send ----
+
+export interface DoctorProfileDraft {
+    name: string;
+    specialty: string;
+    languages: DoctorLanguage[];
+    serviceIds: Id[];
+    active: boolean;
+}
+
+/** `POST /admin/doctors` and `PUT /admin/doctors/{id}`: profile, services and weekly availability together. */
+export interface DoctorSaveInput {
+    profile: DoctorProfileDraft;
+    availability: AvailabilityDraft;
+}
+
+export interface StaffInviteInput {
+    email: string;
+    role: 'receptionist' | 'clinic_admin';
+}
+
+export interface ServiceInput {
+    name: string;
+    durationMin: number;
+    bufferMin: number;
+    /** Doctors who offer it. */
+    doctorIds: Id[];
+}
+
+/** `PUT /admin/settings`: the clinic's details and everything in `ClinicSettings`, saved together. */
+export interface SettingsDraft {
+    clinic: Pick<
+        Clinic,
+        'name' | 'phone' | 'address' | 'timezone' | 'defaultLocale'
+    >;
+    settings: Omit<ClinicSettings, 'clinicId'>;
 }
 
 export interface AuditEntry {
@@ -292,6 +354,7 @@ export interface AuditEntry {
         | 'doctor'
         | 'service'
         | 'settings'
+        | 'template'
         | 'user'
         | 'notification';
     subjectId: Id;
@@ -385,6 +448,10 @@ export type DataErrorCode =
     | 'VALIDATION'
     | 'INVALID_PHONE'
     | 'DUPLICATE_PHONE'
+    | 'DUPLICATE_EMAIL'
+    | 'DUPLICATE_NAME'
+    | 'LAST_ADMIN'
+    | 'UNKNOWN_VARIABLE'
     | 'FORBIDDEN';
 
 export class DataError extends Error {
@@ -393,17 +460,21 @@ export class DataError extends Error {
     readonly alternatives: Slot[];
     /** The form field the error belongs to, when it belongs to one. */
     readonly field: string | null;
+    /** A value the message needs, such as the unknown template variable. */
+    readonly detail: string | null;
 
     constructor(
         code: DataErrorCode,
         message: string,
         alternatives: Slot[] = [],
         field: string | null = null,
+        detail: string | null = null,
     ) {
         super(message);
         this.name = 'DataError';
         this.code = code;
         this.alternatives = alternatives;
         this.field = field;
+        this.detail = detail;
     }
 }

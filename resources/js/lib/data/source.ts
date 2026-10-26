@@ -9,6 +9,7 @@ import type {
     ClinicSettings,
     Doctor,
     DoctorAvailability,
+    DoctorSaveInput,
     Id,
     Invitation,
     IsoDate,
@@ -25,6 +26,10 @@ import type {
     RescheduleRequest,
     PatientPatch,
     Service,
+    ServiceInput,
+    SettingsDraft,
+    StaffInviteInput,
+    TemplateKey,
     Slot,
     SlotHold,
     SlotQuery,
@@ -68,12 +73,59 @@ export interface DataSource {
         nextFreeSlot(doctorId: Id, serviceId: Id): Promise<Slot | null>;
         /** The doctor linked to the signed-in user. Rejects with NOT_FOUND for other roles. */
         me(): Promise<Doctor>;
-        /** `PUT /doctor/availability`: replaces weekly hours, time off and blocked times together. */
-        saveAvailability(draft: AvailabilityDraft): Promise<void>;
-        /** What a draft would produce, computed with the server's slot rules (nothing is saved). */
+        /**
+         * `PUT /doctor/availability` (and `PUT /admin/doctors/{id}/availability` for the admin):
+         * replaces weekly hours, time off and blocked times together. A doctor always saves their own.
+         */
+        saveAvailability(
+            draft: AvailabilityDraft,
+            doctorId?: Id,
+        ): Promise<void>;
+        /**
+         * What a draft would produce, computed with the server's slot rules (nothing is saved).
+         * The admin passes the doctor, or `'new'` for one that does not exist yet.
+         */
         previewAvailability(
             draft: AvailabilityDraft,
+            doctorId?: Id | 'new',
         ): Promise<AvailabilityPreview>;
+        /** `POST /admin/doctors`. */
+        create(input: DoctorSaveInput): Promise<Doctor>;
+        /** `PUT /admin/doctors/{id}`: profile, services and availability in one request. */
+        save(id: Id, input: DoctorSaveInput): Promise<Doctor>;
+        /** `PATCH /admin/doctors/{id}`: hides or shows the doctor in booking; appointments stay. */
+        setActive(id: Id, active: boolean): Promise<Doctor>;
+        /** `POST /admin/doctors/{id}/invite`: sign-in access for this doctor. */
+        invite(id: Id, email: string): Promise<Invitation>;
+    };
+
+    staff: {
+        /** `POST /admin/staff/invite`. */
+        invite(input: StaffInviteInput): Promise<Invitation>;
+        /** `POST /admin/staff/{id}/resend`; the id is an invitation's. */
+        resend(invitationId: Id): Promise<Invitation>;
+        /** `DELETE /admin/staff/{id}/invite`. */
+        revoke(invitationId: Id): Promise<void>;
+        /** `PATCH /admin/staff/{id}/deactivate`; refused for yourself and for the last admin. */
+        setActive(userId: Id, active: boolean): Promise<User>;
+    };
+
+    settings: {
+        /** `PUT /admin/settings`. */
+        save(draft: SettingsDraft): Promise<void>;
+    };
+
+    templates: {
+        /** `PUT /admin/templates`: saves the clinic's own wording for one message. */
+        save(key: TemplateKey, body: string): Promise<void>;
+        /** `DELETE /admin/templates`: back to the built-in wording. */
+        reset(key: TemplateKey): Promise<void>;
+        /** `POST /admin/templates/test`: sends the text, filled with sample details, to one phone. */
+        testSend(
+            key: TemplateKey,
+            body: string,
+            phone: string,
+        ): Promise<{ sentTo: string }>;
     };
 
     requests: {
@@ -83,6 +135,12 @@ export interface DataSource {
 
     services: {
         list(options?: { activeOnly?: boolean }): Promise<Service[]>;
+        /** `POST /admin/services`. */
+        create(input: ServiceInput): Promise<Service>;
+        /** `PUT /admin/services/{id}`. */
+        update(id: Id, input: ServiceInput): Promise<Service>;
+        /** `PATCH /admin/services/{id}`: off hides it from booking; appointments are kept. */
+        setActive(id: Id, active: boolean): Promise<Service>;
     };
 
     patients: {

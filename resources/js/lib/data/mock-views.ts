@@ -1,3 +1,5 @@
+import { createAdminViews } from './mock-admin-views';
+import { draftOf } from './availability-draft';
 import { rangeOf } from './calendar-range';
 import type { MockDatabase } from './seed';
 import type { DataSource } from './source';
@@ -7,7 +9,6 @@ import {
     DataError,
     type Appointment,
     type AppointmentQuery,
-    type AvailabilityDraft,
     type DoctorAvailability,
     type Id,
     type Patient,
@@ -175,42 +176,12 @@ export function createMockViews(
             (r) => r.doctorId === doctorId && r.status === 'pending',
         ).length;
 
-    /** Monday-first weekdays, as the availability page lists them. */
-    const WEEK = [1, 2, 3, 4, 5, 6, 0];
-
-    const draftOf = (stored: DoctorAvailability): AvailabilityDraft => ({
-        days: WEEK.map((weekday) => {
-            const window = stored.windows.find((w) => w.weekday === weekday);
-
-            return window
-                ? {
-                      weekday,
-                      on: true,
-                      start: window.start,
-                      end: window.end,
-                      lunch: window.breaks.length > 0,
-                  }
-                : {
-                      weekday,
-                      on: false,
-                      start: '09:00',
-                      end: '13:00',
-                      lunch: false,
-                  };
-        }),
-        timeOff: stored.timeOff.map((t) => ({
-            id: t.id,
-            startDate: t.startDate,
-            endDate: t.endDate,
-            reason: t.reason,
-        })),
-        blocked: stored.blocked ?? [],
-    });
-
     const notFound = (caught: unknown) =>
         caught instanceof DataError && caught.code === 'NOT_FOUND';
 
     const views: ViewSource = {
+        ...createAdminViews(core, { now, actorId, db }),
+
         async today() {
             const { clinic, date, weekday } = await today();
             const ctx = await context();
@@ -514,20 +485,26 @@ export function createMockViews(
             });
         },
 
-        async availability() {
-            const me = await core.doctors.me();
+        async availability(params) {
+            // A doctor always gets their own; the clinic admin names the doctor.
+            const doctor = params?.doctorId
+                ? await core.doctors.get(params.doctorId)
+                : await core.doctors.me();
             const { clinic, date } = await today();
             const stored: DoctorAvailability = await core.doctors.availability(
-                me.id,
+                doctor.id,
             );
             const draft = draftOf(stored);
 
             return {
                 clinic,
                 today: date,
-                doctor: me,
+                doctor,
                 draft,
-                preview: await core.doctors.previewAvailability(draft),
+                preview: await core.doctors.previewAvailability(
+                    draft,
+                    params?.doctorId,
+                ),
             };
         },
 

@@ -35,12 +35,12 @@ export function LocaleScope({
 
 /** `t` bound to the scoped locale (or the page locale outside any scope). */
 /**
- * Keys under `reception.` and `doctor.` are checked by parity (Urdu must define every English key) and by tests,
+ * Keys under `reception.`, `doctor.` and `admin.` are checked by parity (Urdu must define every English key) and by tests,
  * but not by the compiler: typing several hundred more keys made the whole-project type check
  * many times slower. The loose overload comes first, so those calls skip the heavy key types.
  */
 type ReceptionT = (
-    key: `reception.${string}` | `doctor.${string}`,
+    key: `reception.${string}` | `doctor.${string}` | `admin.${string}`,
     options?: Record<string, unknown>,
 ) => string;
 type TypedT = ReturnType<

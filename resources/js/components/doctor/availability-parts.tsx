@@ -1,47 +1,8 @@
 import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
-/**
- * An on/off switch with a 44px touch target. The visible track is the designed 52 by 30; the
- * button around it is what the finger hits.
- */
-export function DaySwitch({
-    checked,
-    label,
-    onChange,
-}: {
-    checked: boolean;
-    /** The day it controls, e.g. "Monday". */
-    label: string;
-    onChange: (checked: boolean) => void;
-}) {
-    return (
-        <button
-            type="button"
-            role="switch"
-            aria-checked={checked}
-            aria-label={label}
-            onClick={() => onChange(!checked)}
-            className="relative inline-flex h-11 w-[60px] shrink-0 items-center justify-center rounded-full"
-        >
-            <span
-                aria-hidden="true"
-                className={cn(
-                    'relative h-[30px] w-[52px] rounded-full transition-colors duration-200 ease-out',
-                    checked ? 'bg-brand' : 'bg-[#aeb6c8]',
-                )}
-            >
-                <span
-                    className={cn(
-                        'absolute top-[3px] size-6 rounded-full bg-white shadow-xs transition-[inset] duration-200 ease-out',
-                        checked ? 'end-[3px]' : 'start-[3px]',
-                    )}
-                />
-            </span>
-        </button>
-    );
-}
+// The day switch is the shared 44px-target switch; it keeps its old name here.
+export { ToggleSwitch as DaySwitch } from '@/components/vocamed/toggle-switch';
 
 /** "From 09:00" with minus and plus buttons that move it by half an hour. */
 export function TimeStepper({

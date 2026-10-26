@@ -1,3 +1,4 @@
+import { createAdminMutations } from './mock-admin';
 import { createMockViews } from './mock-views';
 import type { MockDatabase } from './seed';
 import type { DataSource, PatientLinkSource } from './source';
@@ -368,6 +369,32 @@ function buildCore(
         return found;
     };
 
+    const isAdmin = () => actor()?.role === 'clinic_admin';
+    function assertAdmin() {
+        if (!isAdmin()) {
+            throw new DataError(
+                'FORBIDDEN',
+                'Only the clinic admin can do this',
+            );
+        }
+    }
+
+    /**
+     * Whose availability a call is about: a doctor always their own; the clinic admin the one named
+     * (or nobody, for a doctor not created yet). Anyone else is turned away.
+     */
+    function availabilityOwner(doctorId?: Id): Doctor | null {
+        if (isAdmin()) {
+            if (doctorId === 'new') {
+                return null;
+            }
+
+            return find(db.doctors, doctorId ?? '', 'Doctor');
+        }
+
+        return myDoctor();
+    }
+
     const service = (id: Id) => find(db.services, id, 'Service');
 
     function checkDraft(draft: AvailabilityDraft) {
@@ -466,6 +493,43 @@ function buildCore(
         return appointment;
     }
 
+    function persistAvailability(doctor: Doctor, draft: AvailabilityDraft) {
+        const stored = db.availability.find((a) => a.doctorId === doctor.id);
+        const next = {
+            doctorId: doctor.id,
+            windows: draft.days
+                .filter((d) => d.on)
+                .map((d) => ({
+                    weekday: d.weekday,
+                    start: d.start,
+                    end: d.end,
+                    breaks:
+                        d.lunch && toMin(d.end) > LUNCH[1]
+                            ? [
+                                  {
+                                      start: fromMin(LUNCH[0]),
+                                      end: fromMin(LUNCH[1]),
+                                  },
+                              ]
+                            : [],
+                })),
+            timeOff: draft.timeOff.map((t) => ({
+                id: t.id ?? nextId('to'),
+                doctorId: doctor.id,
+                startDate: t.startDate,
+                endDate: t.endDate,
+                reason: t.reason,
+            })),
+            blocked: draft.blocked,
+        };
+
+        if (stored) {
+            Object.assign(stored, next);
+        } else {
+            db.availability.push(next);
+        }
+    }
+
     const paginate = <T>(items: T[], page = 1, perPage = 20) => ({
         items: items.slice((page - 1) * perPage, page * perPage),
         total: items.length,
@@ -473,8 +537,28 @@ function buildCore(
         perPage,
     });
 
+    const admin = createAdminMutations({
+        db,
+        clinicId,
+        actorId,
+        now,
+        call,
+        own,
+        find,
+        nextId,
+        audit,
+        clinic,
+        assertAdmin,
+        normalisePhone,
+        checkDraft,
+        persistAvailability,
+    });
+
     return {
         clinicId,
+        staff: admin.staff,
+        settings: admin.settings,
+        templates: admin.templates,
 
         clinic: {
             get: () => call(() => clinic()),
@@ -515,54 +599,24 @@ function buildCore(
                     return found ?? { doctorId: id, windows: [], timeOff: [] };
                 }),
             me: () => call(() => myDoctor()),
+            ...admin.doctors,
 
-            saveAvailability: (draft) =>
+            saveAvailability: (draft, doctorId) =>
                 call(() => {
-                    const doctor = myDoctor();
-                    checkDraft(draft);
-                    const stored = db.availability.find(
-                        (a) => a.doctorId === doctor.id,
-                    );
-                    const next = {
-                        doctorId: doctor.id,
-                        windows: draft.days
-                            .filter((d) => d.on)
-                            .map((d) => ({
-                                weekday: d.weekday,
-                                start: d.start,
-                                end: d.end,
-                                breaks:
-                                    d.lunch && toMin(d.end) > LUNCH[1]
-                                        ? [
-                                              {
-                                                  start: fromMin(LUNCH[0]),
-                                                  end: fromMin(LUNCH[1]),
-                                              },
-                                          ]
-                                        : [],
-                            })),
-                        timeOff: draft.timeOff.map((t) => ({
-                            id: t.id ?? nextId('to'),
-                            doctorId: doctor.id,
-                            startDate: t.startDate,
-                            endDate: t.endDate,
-                            reason: t.reason,
-                        })),
-                        blocked: draft.blocked,
-                    };
+                    const doctor = availabilityOwner(doctorId);
 
-                    if (stored) {
-                        Object.assign(stored, next);
-                    } else {
-                        db.availability.push(next);
+                    if (!doctor) {
+                        throw new DataError('NOT_FOUND', 'Doctor not found');
                     }
 
+                    checkDraft(draft);
+                    persistAvailability(doctor, draft);
                     audit('availability.updated', 'doctor', doctor.id);
                 }),
 
-            previewAvailability: (draft) =>
+            previewAvailability: (draft, doctorId) =>
                 call(() => {
-                    const doctor = myDoctor();
+                    const doctor = availabilityOwner(doctorId);
                     checkDraft(draft);
                     const open = (day: DayHours, m: number) =>
                         day.on &&
@@ -590,6 +644,7 @@ function buildCore(
                     const affected = own(db.appointments)
                         .filter(
                             (a) =>
+                                doctor !== null &&
                                 a.doctorId === doctor.id &&
                                 (a.status === 'booked' ||
                                     a.status === 'confirmed') &&
@@ -671,6 +726,7 @@ function buildCore(
                         (s: Service) => !opts?.activeOnly || s.active,
                     ),
                 ),
+            ...admin.services,
         },
 
         patients: {
@@ -1255,6 +1311,14 @@ export function createMockDataSource(
             availability: delayed(views.availability),
             requests: delayed(views.requests),
             doctorShell: delayed(views.doctorShell),
+            adminOverview: delayed(views.adminOverview),
+            adminDoctors: delayed(views.adminDoctors),
+            adminDoctor: delayed(views.adminDoctor),
+            adminStaff: delayed(views.adminStaff),
+            adminServices: delayed(views.adminServices),
+            adminSettings: delayed(views.adminSettings),
+            adminTemplates: delayed(views.adminTemplates),
+            adminAudit: delayed(views.adminAudit),
         },
     };
 }

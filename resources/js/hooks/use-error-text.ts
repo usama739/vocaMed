@@ -28,6 +28,16 @@ export function useErrorText() {
                     return t('reception.errors.invalidTransition');
                 case 'FORBIDDEN':
                     return t('reception.errors.forbidden');
+                case 'DUPLICATE_EMAIL':
+                    return t('reception.errors.duplicateEmail');
+                case 'DUPLICATE_NAME':
+                    return t('reception.errors.duplicateName');
+                case 'LAST_ADMIN':
+                    return t('reception.errors.lastAdmin');
+                case 'UNKNOWN_VARIABLE':
+                    return t('reception.errors.unknownVariable', {
+                        name: error.detail ?? '',
+                    });
             }
         }
 

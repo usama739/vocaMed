@@ -3,6 +3,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import { setupI18n } from '@/i18n';
+import AdminLayout from '@/layouts/admin-layout';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import DoctorLayout from '@/layouts/doctor-layout';
@@ -32,6 +33,8 @@ void createInertiaApp({
             // Pages that bring their own shell (public layout, previews).
             case PAGES_WITH_OWN_SHELL.has(name):
                 return null;
+            case name.startsWith('admin/'):
+                return AdminLayout;
             case name.startsWith('doctor/'):
                 return DoctorLayout;
             case name.startsWith('reception/'):
