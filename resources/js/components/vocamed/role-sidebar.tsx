@@ -12,6 +12,7 @@ export function RoleSidebar({
     active,
     clinicName,
     searchRef,
+    onSearch,
     onNavigate,
     className,
 }: {
@@ -21,6 +22,8 @@ export function RoleSidebar({
     /** Defaults to the bracketed placeholder until the clinic name comes from the server. */
     clinicName?: string;
     searchRef?: Ref<HTMLInputElement>;
+    /** Receptionist quick lookup: called with the typed text when Enter is pressed. */
+    onSearch?: (query: string) => void;
     /** Called after a link is chosen; the mobile drawer uses it to close itself. */
     onNavigate?: () => void;
     className?: string;
@@ -52,7 +55,25 @@ export function RoleSidebar({
                 </span>
             </Link>
 
-            <div className="relative">
+            <form
+                role="search"
+                className="relative"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    const input = event.currentTarget.elements.namedItem(
+                        'q',
+                    ) as HTMLInputElement | null;
+                    const query = input?.value.trim() ?? '';
+
+                    if (query && onSearch) {
+                        onSearch(query);
+                        onNavigate?.();
+                        if (input) {
+                            input.value = '';
+                        }
+                    }
+                }}
+            >
                 <label htmlFor={searchId} className="sr-only">
                     {t('shell.searchMenu')}
                 </label>
@@ -62,6 +83,7 @@ export function RoleSidebar({
                 />
                 <input
                     id={searchId}
+                    name="q"
                     ref={searchRef}
                     type="search"
                     placeholder={t('shell.searchMenu')}
@@ -73,7 +95,7 @@ export function RoleSidebar({
                 >
                     /
                 </kbd>
-            </div>
+            </form>
 
             <ul className="flex flex-col gap-1">
                 {NAV[role].map((entry) => {

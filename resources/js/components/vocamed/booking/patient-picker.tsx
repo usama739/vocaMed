@@ -44,11 +44,16 @@ export function PatientPicker({
         return () => window.clearTimeout(timer);
     }, [query]);
 
-    const { value: results } = useAsyncValue(`patients:${debounced}`, () =>
+    const { value: found } = useAsyncValue(`patients:${debounced}`, () =>
         debounced
             ? source.patients.search(debounced, 5)
             : source.patients.recent(3),
     );
+    // A patient chosen before the picker opened (from their profile) is always listed.
+    const results =
+        selected && found && !found.some((p) => p.id === selected.id)
+            ? [selected, ...found]
+            : found;
 
     return (
         <div className="flex flex-col gap-1.5">

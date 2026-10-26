@@ -15,6 +15,8 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { HoldBanner, useHold } from '@/components/vocamed/booking/hold';
+import { RescheduleBody } from '@/components/vocamed/booking/reschedule';
+import { TakenNotice } from '@/components/vocamed/booking/taken-notice';
 import {
     formatClock,
     formatDay,
@@ -35,6 +37,7 @@ import {
 } from '@/components/vocamed/voice-capture-button';
 import { useAsyncValue } from '@/hooks/use-async-value';
 import { useShortcut } from '@/hooks/use-shortcut';
+import { clockNow } from '@/lib/clock';
 import { useT } from '@/i18n/scope';
 import {
     addDaysToDate,
@@ -107,6 +110,8 @@ export type BookingPanelInitial = {
     done?: boolean;
     doctorId?: Id;
     startsAt?: IsoDateTime;
+    /** Open the Manual tab with this patient already chosen ("Book appointment" on a profile). */
+    patient?: Patient;
 };
 
 const DAYS_AHEAD = 3;
@@ -167,44 +172,6 @@ function Tabs({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) {
     );
 }
 
-function TakenNotice({
-    time,
-    alternatives,
-    timeZone,
-    onPick,
-}: {
-    time: string;
-    alternatives: Slot[];
-    timeZone: string;
-    onPick: (slot: Slot) => void;
-}) {
-    const { t } = useT();
-
-    return (
-        <div
-            role="alert"
-            className="flex flex-col gap-2.5 rounded-lg border border-warning-line bg-warning-surface px-4 py-3.5 text-control text-warning-ink"
-        >
-            <strong>{t('booking.takenTitle', { time })}</strong>
-            <span>{t('booking.takenBody')}</span>
-            <div className="flex flex-wrap gap-2">
-                {alternatives.map((slot) => (
-                    <Button
-                        key={slot.startsAt}
-                        variant="outline"
-                        className="min-w-[84px] font-bold"
-                        onClick={() => onPick(slot)}
-                    >
-                        <span dir="ltr">
-                            {formatClock(slot.startsAt, timeZone)}
-                        </span>
-                    </Button>
-                ))}
-            </div>
-        </div>
-    );
-}
-
 /**
  * The booking panel's content: a Voice tab and a Manual tab over the same data source.
  * Nothing is booked until Confirm is pressed. Use `BookingPanel` (slide-over) in the app.
@@ -242,12 +209,13 @@ export function BookingPanelBody({
         source.clinic.get().then((c) =>
             new Intl.DateTimeFormat('en-CA', {
                 timeZone: c.timezone,
-            }).format(new Date()),
+            }).format(clockNow()),
         ),
     ).value;
 
     const [tab, setTab] = useState<Tab>(
-        initial.tab ?? (initial.doctorId ? 'manual' : 'voice'),
+        initial.tab ??
+            (initial.doctorId || initial.patient ? 'manual' : 'voice'),
     );
     const [phase, setPhase] = useState<Phase>(
         initial.phase === 'review' || initial.phase === 'taken'
@@ -263,7 +231,7 @@ export function BookingPanelBody({
 
     const [manual, setManual] = useState({
         query: '',
-        patient: null as Patient | null,
+        patient: (initial.patient ?? null) as Patient | null,
         creating: false,
         newName: '',
         newPhone: '',
@@ -343,6 +311,37 @@ export function BookingPanelBody({
             }
         }
     };
+
+    // Opened on a calendar slot: hold that slot for this receptionist, as if they had tapped it.
+    const seededHold = useRef(false);
+    const startHold = hold.start;
+
+    useEffect(() => {
+        if (
+            seededHold.current ||
+            !ready ||
+            !initial.startsAt ||
+            !initial.doctorId ||
+            !mServiceId
+        ) {
+            return;
+        }
+
+        seededHold.current = true;
+        const startsAt = initial.startsAt;
+        const doctorId = initial.doctorId;
+        const serviceId = mServiceId;
+
+        startHold({ doctorId, serviceId, startsAt }).catch(
+            (caught: unknown) => {
+                if (caught instanceof DataError) {
+                    setAlternatives(caught.alternatives);
+                    setError('taken');
+                    setManual((m) => ({ ...m, slotStart: null }));
+                }
+            },
+        );
+    }, [ready, initial.startsAt, initial.doctorId, mServiceId, startHold]);
 
     const finish = (appointment: Appointment, patientName: string) => {
         const doctor = doctors?.find((d) => d.id === appointment.doctorId);
@@ -1225,13 +1224,16 @@ export function BookingPanel({
     prefill,
     interpret,
     onBooked,
+    reschedule,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     source?: DataSource;
-    prefill?: { doctorId: Id; startsAt: IsoDateTime };
+    prefill?: BookingPanelInitial;
     interpret?: Interpret;
     onBooked?: (appointment: Appointment) => void;
+    /** Move this appointment instead of booking a new one. */
+    reschedule?: Appointment | null;
 }) {
     const { t, locale, dir } = useT();
 
@@ -1245,17 +1247,31 @@ export function BookingPanel({
                 className="w-full gap-0 overflow-y-auto p-0 sm:max-w-[480px]"
             >
                 <SheetHeader className="border-b border-line-soft p-5 pe-16">
-                    <SheetTitle>{t('booking.title')}</SheetTitle>
+                    <SheetTitle>
+                        {reschedule
+                            ? t('booking.rescheduleTitle')
+                            : t('booking.title')}
+                    </SheetTitle>
                 </SheetHeader>
-                <BookingPanelBody
-                    source={source}
-                    interpret={interpret}
-                    initial={prefill}
-                    onBooked={onBooked}
-                    onClose={() => onOpenChange(false)}
-                    enableShortcuts
-                    refreshSlotsMs={5000}
-                />
+                {reschedule ? (
+                    <RescheduleBody
+                        source={source ?? defaultSource}
+                        appointment={reschedule}
+                        onMoved={onBooked}
+                        onClose={() => onOpenChange(false)}
+                        refreshSlotsMs={5000}
+                    />
+                ) : (
+                    <BookingPanelBody
+                        source={source}
+                        interpret={interpret}
+                        initial={prefill}
+                        onBooked={onBooked}
+                        onClose={() => onOpenChange(false)}
+                        enableShortcuts
+                        refreshSlotsMs={5000}
+                    />
+                )}
             </SheetContent>
         </Sheet>
     );

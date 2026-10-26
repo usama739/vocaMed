@@ -388,7 +388,7 @@ describe('appointment lifecycle', () => {
             sort: '-startsAt',
         });
 
-        expect(page.total).toBe(6);
+        expect(page.total).toBe(7);
         expect(page.items).toHaveLength(3);
         expect(page.items[0].startsAt >= page.items[1].startsAt).toBe(true);
         expect(
@@ -424,5 +424,165 @@ describe('API boundary', () => {
         expect((await reception.patients.get('p_1')).name).toBe(
             'Muhammad Usman',
         );
+    });
+});
+
+describe('reception console additions', () => {
+    it('adds a walk-in even to a busy time, already arrived and without a confirmation', async () => {
+        const busy = (await reception.appointments.get('a_004')).startsAt;
+        const before = (await reception.notifications.list()).length;
+        const created = await reception.appointments.create({
+            patientId: 'p_7',
+            doctorId: 'd_sana',
+            serviceId: 's_general',
+            startsAt: busy,
+            source: 'walk_in',
+        });
+
+        expect(created.status).toBe('arrived');
+        expect(created.createdBy).toBe('u_recep');
+        expect((await reception.notifications.list()).length).toBe(before);
+    });
+
+    it('still refuses a normal booking into a busy time', async () => {
+        const busy = (await reception.appointments.get('a_004')).startsAt;
+
+        await expect(
+            reception.appointments.create({
+                patientId: 'p_7',
+                doctorId: 'd_sana',
+                serviceId: 's_general',
+                startsAt: busy,
+                source: 'manual',
+            }),
+        ).rejects.toMatchObject({ code: 'SLOT_UNAVAILABLE' });
+    });
+
+    it('creates a patient without a phone only when asked to', async () => {
+        const patient = await reception.patients.create({
+            name: 'Walk-in guest',
+            phone: '',
+            noPhone: true,
+        });
+
+        expect(patient.phone).toBe('');
+        await expect(
+            reception.patients.create({ name: 'No number', phone: '' }),
+        ).rejects.toMatchObject({ code: 'VALIDATION' });
+    });
+
+    it('updates a patient, normalises the phone and refuses a duplicate', async () => {
+        const updated = await reception.patients.update('p_1', {
+            phone: '0300 1234999',
+            consent: false,
+            notes: 'Prefers mornings',
+        });
+
+        expect(updated.phone).toBe('+923001234999');
+        expect(updated.consent).toBe(false);
+        await expect(
+            reception.patients.update('p_1', { phone: '+923121234568' }),
+        ).rejects.toMatchObject({ code: 'VALIDATION' });
+        await expect(
+            reception.patients.update('p_1', { name: '  ' }),
+        ).rejects.toMatchObject({ code: 'VALIDATION' });
+        expect(
+            (await reception.audit.list({ subjectId: 'p_1' })).some(
+                (e) => e.action === 'patient.updated',
+            ),
+        ).toBe(true);
+    });
+
+    it('lets a same-day status step back one stage', async () => {
+        await expect(
+            reception.appointments.undoStatus('a_003'),
+        ).resolves.toMatchObject({ status: 'confirmed' });
+        await expect(
+            reception.appointments.undoStatus('a_002'),
+        ).resolves.toMatchObject({ status: 'arrived' });
+        await expect(
+            reception.appointments.undoStatus('a_005'),
+        ).rejects.toMatchObject({ code: 'INVALID_TRANSITION' });
+    });
+
+    it('takes a no-show back off the patient’s count when undone', async () => {
+        const before = (await reception.patients.get('p_6')).noShowCount;
+        await reception.appointments.undoStatus('a_006');
+
+        expect((await reception.patients.get('p_6')).noShowCount).toBe(
+            Math.max(0, before - 1),
+        );
+    });
+
+    it('will not undo a status on another day', async () => {
+        clock = new Date(START.getTime() + 2 * 86_400_000);
+
+        await expect(
+            reception.appointments.undoStatus('a_003'),
+        ).rejects.toMatchObject({ code: 'INVALID_TRANSITION' });
+    });
+
+    it('records the previous status so history can show it', async () => {
+        await reception.appointments.setStatus('a_005', 'arrived');
+        const entry = (await reception.audit.list({ subjectId: 'a_005' })).find(
+            (e) => e.action === 'appointment.status_changed',
+        );
+
+        expect(entry?.meta).toMatchObject({
+            status: 'arrived',
+            from: 'booked',
+        });
+    });
+
+    it('lists an appointment’s messages and patient replies, newest first', async () => {
+        const timeline = await reception.appointments.timeline('a_004');
+
+        expect(timeline.some((i) => i.type === 'reply')).toBe(true);
+        expect(timeline.some((i) => i.type === 'message')).toBe(true);
+        expect(
+            timeline.every(
+                (item, index) =>
+                    index === 0 || timeline[index - 1].at >= item.at,
+            ),
+        ).toBe(true);
+    });
+
+    it('marks a failed message as resent and queues a new one, leaving the log append-only', async () => {
+        const failed = (await reception.notifications.list()).find(
+            (n) => n.status === 'failed' && !n.resentAt,
+        );
+
+        if (!failed) {
+            throw new Error('expected a failed message in the seed');
+        }
+
+        const next = await reception.notifications.resend(failed.id);
+        const log = await reception.notifications.list();
+
+        expect(next.status).toBe('queued');
+        expect(log.find((n) => n.id === failed.id)?.resentAt).toBeTruthy();
+        expect(log.find((n) => n.id === failed.id)?.status).toBe('failed');
+        expect(log[0].createdAt >= log.at(-1)!.createdAt).toBe(true);
+    });
+
+    it('lists the holds on a date', async () => {
+        const slot = await firstFreeSlot();
+        const hold = await reception.slots.hold({
+            doctorId: slot.doctorId,
+            serviceId: slot.serviceId,
+            startsAt: slot.startsAt,
+        });
+
+        expect((await reception.slots.holds(TODAY)).map((h) => h.id)).toContain(
+            hold.id,
+        );
+        expect(await reception.slots.holds(addDays(TODAY, 3))).toEqual([]);
+    });
+
+    it('filters appointments by patient', async () => {
+        const page = await reception.appointments.list({ patientId: 'p_1' });
+
+        expect(page.items.length).toBeGreaterThan(0);
+        expect(page.items.every((a) => a.patientId === 'p_1')).toBe(true);
     });
 });

@@ -16,8 +16,20 @@ Route::get('invite/{token}', fn (string $token) => Inertia::render('auth/invite'
 
 // Where a successful sign-in lands until the role areas are built. No access control yet.
 Route::inertia('admin', 'placeholder', ['role' => 'clinic_admin'])->name('placeholder.admin');
-Route::inertia('reception', 'placeholder', ['role' => 'receptionist'])->name('placeholder.reception');
 Route::inertia('doctor', 'placeholder', ['role' => 'doctor'])->name('placeholder.doctor');
+
+// Receptionist console. UI only for now: each route just renders its page, with no access control yet.
+Route::prefix('reception')->name('reception.')->group(function () {
+    Route::inertia('/', 'reception/today')->name('today');
+    Route::inertia('appointments', 'reception/appointments')->name('appointments');
+    Route::get('appointments/{id}', fn (string $id) => Inertia::render('reception/appointment', ['id' => $id]))
+        ->name('appointment');
+    Route::inertia('calendar', 'reception/calendar')->name('calendar');
+    Route::inertia('patients', 'reception/patients')->name('patients');
+    Route::get('patients/{id}', fn (string $id) => Inertia::render('reception/patient', ['id' => $id]))
+        ->name('patient');
+    Route::inertia('notifications', 'reception/notifications')->name('notifications');
+});
 
 // Developer preview of the shared components (en + ur). Not available in production.
 if (app()->environment(['local', 'testing'])) {

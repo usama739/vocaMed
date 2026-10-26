@@ -34,8 +34,21 @@ export function LocaleScope({
 }
 
 /** `t` bound to the scoped locale (or the page locale outside any scope). */
+/**
+ * Keys under `reception.` are checked by parity (Urdu must define every English key) and by tests,
+ * but not by the compiler: typing several hundred more keys made the whole-project type check
+ * many times slower. The loose overload comes first, so those calls skip the heavy key types.
+ */
+type ReceptionT = (
+    key: `reception.${string}`,
+    options?: Record<string, unknown>,
+) => string;
+type TypedT = ReturnType<
+    ReturnType<typeof useTranslation>['i18n']['getFixedT']
+>;
+
 export function useT(): {
-    t: ReturnType<ReturnType<typeof useTranslation>['i18n']['getFixedT']>;
+    t: ReceptionT & TypedT;
     locale: Locale;
     dir: Direction;
     isRtl: boolean;
@@ -44,7 +57,10 @@ export function useT(): {
     const { i18n } = useTranslation();
     const locale: Locale =
         scoped ?? (isLocale(i18n.language) ? i18n.language : DEFAULT_LOCALE);
-    const t = useMemo(() => i18n.getFixedT(locale), [i18n, locale]);
+    const t = useMemo(
+        () => i18n.getFixedT(locale) as unknown as ReceptionT & TypedT,
+        [i18n, locale],
+    );
     const dir = directionOf(locale);
 
     return { t, locale, dir, isRtl: dir === 'rtl' };

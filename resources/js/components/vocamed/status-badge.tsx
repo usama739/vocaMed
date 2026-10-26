@@ -84,6 +84,9 @@ const SPEC: Record<BadgeStatus, BadgeSpec> = {
     },
 };
 
+/** Icon, label key and colours per status, so other views (the calendar) draw the same look. */
+export const BADGE_SPEC = SPEC;
+
 export const BADGE_STATUSES = Object.keys(SPEC) as BadgeStatus[];
 
 export function StatusBadge({

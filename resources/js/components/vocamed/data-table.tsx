@@ -48,6 +48,9 @@ export function DataTable<T>({
     status = 'ready',
     onRetry,
     onClearFilters,
+    rowClassName,
+    emptyTitle,
+    emptyBody,
     className,
 }: {
     /** Accessible name of the table. */
@@ -63,6 +66,11 @@ export function DataTable<T>({
     status?: 'ready' | 'loading' | 'error';
     onRetry?: () => void;
     onClearFilters?: () => void;
+    /** Extra classes for a row, e.g. the flash on a row that just changed. */
+    rowClassName?: (row: T) => string | undefined;
+    /** Replace the generic empty-state copy ({@link EmptyState}) with the page's own. */
+    emptyTitle?: string;
+    emptyBody?: string;
     className?: string;
 }) {
     const { t } = useT();
@@ -159,7 +167,10 @@ export function DataTable<T>({
                         {rows.map((row) => (
                             <tr
                                 key={rowKey(row)}
-                                className="border-b border-line-soft last:border-b-0 hover:bg-surface-row"
+                                className={cn(
+                                    'border-b border-line-soft transition-colors duration-150 last:border-b-0 hover:bg-surface-row',
+                                    rowClassName?.(row),
+                                )}
                             >
                                 {columns.map((column) => (
                                     <td
@@ -189,8 +200,8 @@ export function DataTable<T>({
             {status === 'error' && onRetry && <ErrorState onRetry={onRetry} />}
             {status === 'ready' && rows.length === 0 && (
                 <EmptyState
-                    title={t('table.emptyTitle')}
-                    description={t('table.emptyBody')}
+                    title={emptyTitle ?? t('table.emptyTitle')}
+                    description={emptyBody ?? t('table.emptyBody')}
                     action={
                         onClearFilters && (
                             <Button variant="outline" onClick={onClearFilters}>
@@ -279,12 +290,16 @@ export function SearchInput({
     label,
     value,
     onChange,
+    id: givenId,
 }: {
     label: string;
     value: string;
     onChange: (value: string) => void;
+    /** Lets a page focus the box with its own shortcut. */
+    id?: string;
 }) {
-    const id = useId();
+    const generated = useId();
+    const id = givenId ?? generated;
 
     return (
         <div className="relative">

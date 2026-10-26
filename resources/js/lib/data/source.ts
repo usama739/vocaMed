@@ -19,10 +19,12 @@ import type {
     Page,
     Patient,
     PatientLinkResult,
+    PatientPatch,
     Service,
     Slot,
     SlotHold,
     SlotQuery,
+    TimelineItem,
     User,
 } from './types';
 
@@ -68,6 +70,8 @@ export interface DataSource {
         recent(limit?: number): Promise<Patient[]>;
         get(id: Id): Promise<Patient>;
         create(input: NewPatientInput): Promise<Patient>;
+        /** Validates the phone number and rejects one that belongs to another patient. */
+        update(id: Id, patch: PatientPatch): Promise<Patient>;
     };
 
     appointments: {
@@ -78,6 +82,13 @@ export interface DataSource {
         reschedule(id: Id, startsAt: IsoDateTime): Promise<Appointment>;
         cancel(id: Id): Promise<Appointment>;
         setStatus(id: Id, status: AppointmentStatus): Promise<Appointment>;
+        /**
+         * Steps a same-day status back one stage (the "press again to undo" on Today).
+         * Rejects with INVALID_TRANSITION for other days or statuses with nothing to undo.
+         */
+        undoStatus(id: Id): Promise<Appointment>;
+        /** Messages sent for this appointment and what the patient replied, newest first. */
+        timeline(id: Id): Promise<TimelineItem[]>;
     };
 
     slots: {
@@ -89,6 +100,8 @@ export interface DataSource {
             startsAt: IsoDateTime;
         }): Promise<SlotHold>;
         release(holdId: Id): Promise<void>;
+        /** Every hold on a clinic-local date, for striping held cells on the calendar. */
+        holds(date: IsoDate): Promise<SlotHold[]>;
         /** The nearest free slots to `startsAt`, same doctor and service. */
         alternatives(
             input: { doctorId: Id; serviceId: Id; startsAt: IsoDateTime },
@@ -107,6 +120,7 @@ export interface DataSource {
     audit: {
         list(filter?: {
             actorId?: Id;
+            subjectId?: Id;
             action?: string;
             from?: IsoDate;
             to?: IsoDate;

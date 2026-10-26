@@ -1,5 +1,6 @@
 import type { MockDatabase } from './seed';
 import type { DataSource, PatientLinkSource } from './source';
+import { PREVIOUS_STATUS, STATUS_TRANSITIONS } from './status';
 import { addDays, addMinutes, utcToZoned, weekdayOf, zonedToUtc } from './time';
 import {
     DataError,
@@ -15,6 +16,7 @@ import {
     type Service,
     type Slot,
     type SlotQuery,
+    type TimelineItem,
 } from './types';
 
 export const SLOT_HOLD_SECONDS = 120;
@@ -27,16 +29,6 @@ export interface MockOptions {
     /** Simulated network latency per call. 0 keeps tests instant. */
     latencyMs?: number;
 }
-
-const TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
-    booked: ['confirmed', 'arrived', 'cancelled', 'no_show'],
-    confirmed: ['arrived', 'cancelled', 'no_show'],
-    arrived: ['in_consultation', 'cancelled'],
-    in_consultation: ['done'],
-    done: [],
-    cancelled: [],
-    no_show: [],
-};
 
 const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 const fromMin = (m: number) =>
@@ -338,7 +330,7 @@ export function createMockDataSource(
     }
 
     function transition(appointment: Appointment, status: AppointmentStatus) {
-        if (!TRANSITIONS[appointment.status].includes(status)) {
+        if (!STATUS_TRANSITIONS[appointment.status].includes(status)) {
             throw new DataError(
                 'INVALID_TRANSITION',
                 `Cannot change ${appointment.status} to ${status}`,
@@ -481,9 +473,15 @@ export function createMockDataSource(
                         throw new DataError('VALIDATION', 'Name is required');
                     }
 
-                    const phone = normalisePhone(input.phone);
+                    const phone =
+                        input.noPhone && !input.phone.trim()
+                            ? ''
+                            : normalisePhone(input.phone);
 
-                    if (own(db.patients).some((p) => p.phone === phone)) {
+                    if (
+                        phone &&
+                        own(db.patients).some((p) => p.phone === phone)
+                    ) {
                         throw new DataError(
                             'VALIDATION',
                             'A patient with this phone number already exists',
@@ -508,6 +506,44 @@ export function createMockDataSource(
 
                     return patient;
                 }),
+            update: (id, patch) =>
+                call(() => {
+                    const patient = find(db.patients, id, 'Patient');
+                    const next = { ...patch };
+
+                    if (next.name !== undefined) {
+                        next.name = next.name.trim();
+
+                        if (!next.name) {
+                            throw new DataError(
+                                'VALIDATION',
+                                'Name is required',
+                            );
+                        }
+                    }
+
+                    if (next.phone !== undefined) {
+                        next.phone = normalisePhone(next.phone);
+
+                        if (
+                            own(db.patients).some(
+                                (p) => p.id !== id && p.phone === next.phone,
+                            )
+                        ) {
+                            throw new DataError(
+                                'VALIDATION',
+                                'A patient with this phone number already exists',
+                            );
+                        }
+                    }
+
+                    Object.assign(patient, next);
+                    audit('patient.updated', 'patient', id, {
+                        fields: Object.keys(next).join(','),
+                    });
+
+                    return patient;
+                }),
         },
 
         appointments: {
@@ -528,6 +564,8 @@ export function createMockDataSource(
                             (!query.to || local <= query.to) &&
                             (!query.doctorId ||
                                 a.doctorId === query.doctorId) &&
+                            (!query.patientId ||
+                                a.patientId === query.patientId) &&
                             (!query.status || a.status === query.status) &&
                             (!needle ||
                                 patient?.name.toLowerCase().includes(needle) ||
@@ -563,7 +601,12 @@ export function createMockDataSource(
                         'Doctor',
                     );
 
-                    assertBookable(doctor.id, service.id, input.startsAt);
+                    // A walk-in is already at the desk, so a busy or past slot never refuses them.
+                    const walkIn = input.source === 'walk_in';
+
+                    if (!walkIn) {
+                        assertBookable(doctor.id, service.id, input.startsAt);
+                    }
 
                     const appointment: Appointment = {
                         id: nextId('a'),
@@ -576,11 +619,12 @@ export function createMockDataSource(
                             new Date(input.startsAt),
                             service.durationMin,
                         ).toISOString(),
-                        status: 'booked',
+                        status: walkIn ? 'arrived' : 'booked',
                         source: input.source,
                         reason: input.reason ?? null,
                         notes: input.notes ?? null,
                         createdAt: now().toISOString(),
+                        createdBy: actorId,
                     };
                     db.appointments.push(appointment);
                     db.holds = db.holds.filter(
@@ -592,7 +636,11 @@ export function createMockDataSource(
                         clinicId,
                         expired: false,
                     });
-                    queueNotification(appointment, 'confirmation');
+
+                    if (!walkIn) {
+                        queueNotification(appointment, 'confirmation');
+                    }
+
                     audit(
                         'appointment.created',
                         'appointment',
@@ -641,6 +689,7 @@ export function createMockDataSource(
                         service.durationMin,
                     ).toISOString();
                     appointment.status = 'booked';
+                    db.holds = db.holds.filter((h) => h.heldBy !== actorId);
                     queueNotification(appointment, 'reschedule');
                     audit('appointment.rescheduled', 'appointment', id, {
                         from: previous,
@@ -671,6 +720,7 @@ export function createMockDataSource(
                         id,
                         'Appointment',
                     );
+                    const from = appointment.status;
                     transition(appointment, status);
 
                     if (status === 'no_show') {
@@ -683,9 +733,78 @@ export function createMockDataSource(
 
                     audit('appointment.status_changed', 'appointment', id, {
                         status,
+                        from,
                     });
 
                     return appointment;
+                }),
+
+            undoStatus: (id) =>
+                call(() => {
+                    const appointment = find(
+                        db.appointments,
+                        id,
+                        'Appointment',
+                    );
+                    const tz = clinic().timezone;
+                    const sameDay =
+                        utcToZoned(new Date(appointment.startsAt), tz).date ===
+                        utcToZoned(now(), tz).date;
+                    const previous = PREVIOUS_STATUS[appointment.status];
+
+                    if (!sameDay || !previous) {
+                        throw new DataError(
+                            'INVALID_TRANSITION',
+                            `Nothing to undo for a ${appointment.status} appointment`,
+                        );
+                    }
+
+                    const from = appointment.status;
+
+                    if (from === 'no_show') {
+                        const patient = find(
+                            db.patients,
+                            appointment.patientId,
+                            'Patient',
+                        );
+                        patient.noShowCount = Math.max(
+                            0,
+                            patient.noShowCount - 1,
+                        );
+                    }
+
+                    appointment.status = previous;
+                    audit('appointment.status_reverted', 'appointment', id, {
+                        status: previous,
+                        from,
+                    });
+
+                    return appointment;
+                }),
+
+            timeline: (id) =>
+                call(() => {
+                    find(db.appointments, id, 'Appointment');
+                    const items: TimelineItem[] = [
+                        ...own(db.notifications)
+                            .filter((n) => n.appointmentId === id)
+                            .map((entry) => ({
+                                type: 'message' as const,
+                                id: entry.id,
+                                at: entry.createdAt,
+                                entry,
+                            })),
+                        ...own(db.replies)
+                            .filter((r) => r.appointmentId === id)
+                            .map((reply) => ({
+                                type: 'reply' as const,
+                                id: reply.id,
+                                at: reply.at,
+                                reply,
+                            })),
+                    ];
+
+                    return items.sort((a, b) => b.at.localeCompare(a.at));
                 }),
         },
 
@@ -729,6 +848,17 @@ export function createMockDataSource(
                     );
                 }),
 
+            holds: (date) =>
+                call(() => {
+                    pruneHolds();
+                    const tz = clinic().timezone;
+
+                    return own(db.holds).filter(
+                        (h) =>
+                            utcToZoned(new Date(h.startsAt), tz).date === date,
+                    );
+                }),
+
             alternatives: (input, count = 3) =>
                 call(() =>
                     alternativesFor(
@@ -743,9 +873,12 @@ export function createMockDataSource(
         notifications: {
             list: (filter) =>
                 call(() =>
-                    own(db.notifications).filter(
-                        (n) => !filter?.status || n.status === filter.status,
-                    ),
+                    own(db.notifications)
+                        .filter(
+                            (n) =>
+                                !filter?.status || n.status === filter.status,
+                        )
+                        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
                 ),
 
             resend: (id) =>
@@ -757,6 +890,15 @@ export function createMockDataSource(
                         'Appointment',
                     );
                     const entry = queueNotification(appointment, original.kind);
+                    original.resentAt = entry.createdAt;
+                    audit(
+                        'appointment.message_resent',
+                        'appointment',
+                        appointment.id,
+                        {
+                            kind: original.kind,
+                        },
+                    );
                     audit('notification.resent', 'notification', entry.id, {
                         of: id,
                     });
@@ -777,6 +919,8 @@ export function createMockDataSource(
 
                         return (
                             (!filter.actorId || e.actorId === filter.actorId) &&
+                            (!filter.subjectId ||
+                                e.subjectId === filter.subjectId) &&
                             (!filter.action || e.action === filter.action) &&
                             (!filter.from || local >= filter.from) &&
                             (!filter.to || local <= filter.to)

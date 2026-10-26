@@ -2,6 +2,7 @@ import type en from './en';
 import authUr from './auth-ur';
 import landingUr from './landing-ur';
 import privacyUr from './privacy-ur';
+import receptionUr from './reception-ur';
 import type { DeepString } from './types';
 
 /** Must mirror the keys of `en`; the type makes a missing translation a compile error. */
@@ -153,6 +154,11 @@ const ur: DeepString<typeof en> = {
         errName: 'مریض کا نام درج کریں۔',
         today: 'آج',
         tomorrow: 'کل',
+        rescheduleTitle: 'وقت بدلیں',
+        currently: 'موجودہ وقت',
+        confirmMove: 'نیا وقت کنفرم کریں',
+        movedTitle: 'اپائنٹمنٹ منتقل ہو گئی',
+        movedBody: 'مریض کو نیا وقت بھیج دیا جائے گا۔',
     },
     states: {
         loading: 'لوڈ ہو رہا ہے…',
@@ -178,6 +184,7 @@ const ur: DeepString<typeof en> = {
     auth: authUr,
     landing: landingUr,
     privacy: privacyUr,
+    reception: receptionUr,
 };
 
 export default ur;

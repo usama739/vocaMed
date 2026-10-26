@@ -1,6 +1,7 @@
 import authEn from './auth-en';
 import landingEn from './landing-en';
 import privacyEn from './privacy-en';
+import receptionEn from './reception-en';
 
 const en = {
     common: {
@@ -150,6 +151,11 @@ const en = {
         errName: 'Enter the patient’s name.',
         today: 'Today',
         tomorrow: 'Tomorrow',
+        rescheduleTitle: 'Reschedule',
+        currently: 'Currently',
+        confirmMove: 'Confirm new time',
+        movedTitle: 'Appointment moved',
+        movedBody: 'The patient will be sent the new time.',
     },
     states: {
         loading: 'Loading…',
@@ -175,6 +181,7 @@ const en = {
     auth: authEn,
     landing: landingEn,
     privacy: privacyEn,
+    reception: receptionEn,
 } as const;
 
 export default en;

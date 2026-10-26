@@ -112,7 +112,7 @@ test.describe('every page, in both languages', () => {
 });
 
 test.describe('A3 login', () => {
-    test('signs a receptionist in and lands on the placeholder for their role', async ({
+    test('signs a receptionist in and lands on Today', async ({
         page,
     }) => {
         await gotoIn(page, '/login', 'en');
@@ -124,7 +124,7 @@ test.describe('A3 login', () => {
 
         await expect(page).toHaveURL(/\/reception$/);
         await expect(
-            page.getByRole('heading', { name: 'Signed in as Receptionist' }),
+            page.getByRole('heading', { level: 1, name: 'Today' }),
         ).toBeVisible();
     });
 

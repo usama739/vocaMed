@@ -27,6 +27,7 @@ export function ClinicShell({
     user,
     clinicName,
     onNewBooking,
+    onSearch,
     onLocaleChange,
     onSignOut,
     banner,
@@ -39,6 +40,8 @@ export function ClinicShell({
     user: ShellUser;
     clinicName?: string;
     onNewBooking?: () => void;
+    /** Sidebar quick search (Enter): the receptionist console opens Patients with the text. */
+    onSearch?: (query: string) => void;
     onLocaleChange?: (locale: Locale) => void;
     onSignOut?: () => void;
     /** Full-width strip above the page content, e.g. the reconnecting banner. */
@@ -90,6 +93,7 @@ export function ClinicShell({
                     active={active}
                     clinicName={clinicName}
                     searchRef={searchRef}
+                    onSearch={onSearch}
                 />
             </aside>
 
@@ -105,7 +109,7 @@ export function ClinicShell({
                         <Button
                             variant="outline"
                             size="icon"
-                            className="lg:hidden"
+                            className="shrink-0 lg:hidden"
                             aria-label={t('shell.openMenu')}
                             onClick={() => setMenuOpen(true)}
                         >
@@ -138,6 +142,7 @@ export function ClinicShell({
                         role={role}
                         active={active}
                         clinicName={clinicName}
+                        onSearch={onSearch}
                         onNavigate={() => setMenuOpen(false)}
                     />
                 </SheetContent>

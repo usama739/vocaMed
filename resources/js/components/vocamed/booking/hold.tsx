@@ -2,13 +2,14 @@ import { Clock, TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/scope';
+import { clockMs } from '@/lib/clock';
 import type { DataSource, Id, IsoDateTime, SlotHold } from '@/lib/data';
 import { formatCountdown } from './format';
 
 /** One slot hold per user, with a live countdown. Picking another slot replaces it. */
 export function useHold(source: DataSource) {
     const [hold, setHold] = useState<SlotHold | null>(null);
-    const [now, setNow] = useState(() => Date.now());
+    const [now, setNow] = useState(() => clockMs());
     const current = useRef<SlotHold | null>(null);
 
     useEffect(() => {
@@ -20,7 +21,7 @@ export function useHold(source: DataSource) {
             return;
         }
 
-        const timer = window.setInterval(() => setNow(Date.now()), 1000);
+        const timer = window.setInterval(() => setNow(clockMs()), 1000);
 
         return () => window.clearInterval(timer);
     }, [hold]);
@@ -32,7 +33,7 @@ export function useHold(source: DataSource) {
             startsAt: IsoDateTime;
         }) => {
             const next = await source.slots.hold(input);
-            setNow(Date.now());
+            setNow(clockMs());
             setHold(next);
 
             return next;

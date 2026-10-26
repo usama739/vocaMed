@@ -119,7 +119,7 @@ export interface Patient {
     id: Id;
     clinicId: Id;
     name: string;
-    phone: string; // E.164, e.g. +923001234567
+    phone: string; // E.164, e.g. +923001234567; '' for a walk-in added without a number
     preferredLocale: Locale;
     preferredChannel: Channel;
     consent: boolean;
@@ -141,6 +141,8 @@ export interface Appointment {
     reason: string | null; // optional visit reason; never clinical notes
     notes: string | null;
     createdAt: IsoDateTime;
+    /** The staff member who booked it, or 'patient' when it came from a signed link. */
+    createdBy: Id;
 }
 
 export type SlotState = 'free' | 'held';
@@ -168,6 +170,7 @@ export interface SlotHold {
 export type NotificationKind =
     'confirmation' | 'reminder' | 'reschedule' | 'cancellation';
 export type NotificationStatus = 'queued' | 'sent' | 'delivered' | 'failed';
+export type FailureReason = 'not_on_whatsapp' | 'unreachable' | 'no_consent';
 
 export interface NotificationLogEntry {
     id: Id;
@@ -179,7 +182,26 @@ export interface NotificationLogEntry {
     status: NotificationStatus;
     createdAt: IsoDateTime;
     sentAt: IsoDateTime | null;
+    /** Why a failed message failed. */
+    failureReason?: FailureReason;
+    /** Set on a failed row once it has been sent again; the log itself is append-only. */
+    resentAt?: IsoDateTime;
 }
+
+/** What a patient chose on their signed link. */
+export interface PatientReply {
+    id: Id;
+    clinicId: Id;
+    appointmentId: Id;
+    patientId: Id;
+    at: IsoDateTime;
+    action: 'confirm' | 'reschedule' | 'cancel';
+}
+
+/** One line in the appointment's "Reminders and patient replies" timeline. */
+export type TimelineItem =
+    | { type: 'message'; id: Id; at: IsoDateTime; entry: NotificationLogEntry }
+    | { type: 'reply'; id: Id; at: IsoDateTime; reply: PatientReply };
 
 export interface NotificationTemplate {
     id: Id;
@@ -238,6 +260,7 @@ export interface AppointmentQuery extends PageQuery {
     to?: IsoDate;
     doctorId?: Id;
     status?: AppointmentStatus;
+    patientId?: Id;
     patient?: string; // name or phone fragment
     sort?: 'startsAt' | '-startsAt';
 }
@@ -251,11 +274,25 @@ export interface SlotQuery {
 export interface NewPatientInput {
     name: string;
     phone: string;
+    /** Walk-ins may be added with a name only; the profile then says messages cannot be sent. */
+    noPhone?: boolean;
     preferredLocale?: Locale;
     preferredChannel?: Channel;
     consent?: boolean;
     notes?: string;
 }
+
+export type PatientPatch = Partial<
+    Pick<
+        Patient,
+        | 'name'
+        | 'phone'
+        | 'preferredLocale'
+        | 'preferredChannel'
+        | 'consent'
+        | 'notes'
+    >
+>;
 
 export interface NewAppointmentInput {
     patientId: Id;

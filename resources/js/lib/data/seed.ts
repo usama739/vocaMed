@@ -12,6 +12,7 @@ import type {
     NotificationLogEntry,
     NotificationTemplate,
     Patient,
+    PatientReply,
     Service,
     SlotHold,
     User,
@@ -32,6 +33,7 @@ export interface MockDatabase {
     appointments: Appointment[];
     holds: SlotHold[];
     notifications: NotificationLogEntry[];
+    replies: PatientReply[];
     templates: NotificationTemplate[];
     audit: AuditEntry[];
     /** Signed-link token → appointment. `expired` links resolve to the E4 state. */
@@ -316,6 +318,17 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
         person(8, DEMO_CLINIC_ID, 'Omar Farooq', '+923151234574', {
             preferredLocale: 'en',
         }),
+        person(11, DEMO_CLINIC_ID, 'سعدیہ نور', '+923001112233'),
+        person(12, DEMO_CLINIC_ID, 'عمران قریشی', '+923211112244', {
+            preferredChannel: 'whatsapp',
+        }),
+        person(13, DEMO_CLINIC_ID, 'بشیر احمد', '+923331112255', {
+            notes: 'Brings his daughter along',
+        }),
+        person(14, DEMO_CLINIC_ID, 'Nida Kamal', '+923451112266', {
+            preferredLocale: 'en',
+            preferredChannel: 'whatsapp',
+        }),
         person(9, OTHER_CLINIC_ID, 'Saad Mirza', '+923001234567', {
             preferredLocale: 'en',
         }),
@@ -355,7 +368,8 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
             source,
             reason,
             notes: null,
-            createdAt: iso,
+            createdAt: new Date(now.getTime() - 2 * 86_400_000).toISOString(),
+            createdBy: source === 'patient_link' ? 'patient' : 'u_recep',
         };
     };
 
@@ -468,28 +482,218 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
             '09:00',
             'booked',
         ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_11',
+            'd_imran',
+            's_followup',
+            0,
+            '11:00',
+            'confirmed',
+            'voice',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_12',
+            'd_sana',
+            's_general',
+            -1,
+            '09:30',
+            'done',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_5',
+            'd_sana',
+            's_general',
+            -1,
+            '10:00',
+            'done',
+            'voice',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_3',
+            'd_imran',
+            's_child',
+            -1,
+            '11:00',
+            'cancelled',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_13',
+            'd_hina',
+            's_general',
+            -2,
+            '11:00',
+            'done',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_4',
+            'd_sana',
+            's_followup',
+            -3,
+            '14:00',
+            'cancelled',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_14',
+            'd_imran',
+            's_child',
+            -5,
+            '12:00',
+            'done',
+            'walk_in',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_12',
+            'd_sana',
+            's_general',
+            1,
+            '10:00',
+            'booked',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_6',
+            'd_sana',
+            's_followup',
+            2,
+            '09:30',
+            'confirmed',
+            'voice',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_13',
+            'd_imran',
+            's_child',
+            2,
+            '14:00',
+            'booked',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_5',
+            'd_hina',
+            's_general',
+            4,
+            '12:00',
+            'confirmed',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_14',
+            'd_sana',
+            's_general',
+            5,
+            '11:00',
+            'booked',
+            'patient_link',
+        ),
     ];
+
+    const at = (hoursAgo: number) =>
+        new Date(now.getTime() - hoursAgo * 3_600_000).toISOString();
+    const channelOf = (patientId: Id) =>
+        patients.find((p) => p.id === patientId)?.preferredChannel ?? 'sms';
 
     const notifications: NotificationLogEntry[] = appointments
         .filter((a) => a.status !== 'cancelled')
-        .map((a, i) => ({
-            id: `n_${String(i + 1).padStart(3, '0')}`,
-            clinicId: a.clinicId,
-            appointmentId: a.id,
-            patientId: a.patientId,
-            kind: 'confirmation' as const,
-            channel:
-                patients.find((p) => p.id === a.patientId)?.preferredChannel ??
-                'sms',
-            status:
+        .map((a, i) => {
+            const channel = channelOf(a.patientId);
+            const status: NotificationLogEntry['status'] =
                 i % 5 === 4
-                    ? ('failed' as const)
-                    : i % 2 === 0
-                      ? ('delivered' as const)
-                      : ('sent' as const),
-            createdAt: iso,
-            sentAt: iso,
-        }));
+                    ? 'failed'
+                    : i % 7 === 6
+                      ? 'queued'
+                      : i % 2 === 0
+                        ? 'delivered'
+                        : 'sent';
+            const created = at(2 + (i % 4) * 20 + i);
+
+            return {
+                id: `n_${String(i + 1).padStart(3, '0')}`,
+                clinicId: a.clinicId,
+                appointmentId: a.id,
+                patientId: a.patientId,
+                kind: 'confirmation' as const,
+                channel,
+                status,
+                createdAt: created,
+                sentAt: status === 'queued' ? null : created,
+                ...(status === 'failed'
+                    ? {
+                          failureReason:
+                              channel === 'whatsapp'
+                                  ? ('not_on_whatsapp' as const)
+                                  : ('unreachable' as const),
+                      }
+                    : {}),
+            };
+        });
+
+    // Confirmed appointments also had a reminder, and the patient answered the confirmation.
+    const replies: PatientReply[] = [];
+    appointments
+        .filter((a) => a.status === 'confirmed' || a.status === 'arrived')
+        .forEach((a, i) => {
+            notifications.push({
+                id: `n_r${String(i + 1).padStart(3, '0')}`,
+                clinicId: a.clinicId,
+                appointmentId: a.id,
+                patientId: a.patientId,
+                kind: 'reminder',
+                channel: channelOf(a.patientId),
+                status: 'delivered',
+                createdAt: at(3 + i),
+                sentAt: at(3 + i),
+            });
+            replies.push({
+                id: `r_${String(i + 1).padStart(3, '0')}`,
+                clinicId: a.clinicId,
+                appointmentId: a.id,
+                patientId: a.patientId,
+                at: at(30 + i),
+                action: 'confirm',
+            });
+        });
+
+    const auditLog: AuditEntry[] = appointments
+        .filter((a) => a.clinicId === DEMO_CLINIC_ID)
+        .flatMap((a) => {
+            const created: AuditEntry = {
+                id: `au_${a.id}_c`,
+                clinicId: a.clinicId,
+                actorId: a.createdBy,
+                action: 'appointment.created',
+                subjectType: 'appointment',
+                subjectId: a.id,
+                at: a.createdAt,
+                meta: { source: a.source },
+            };
+            const confirmed: AuditEntry | null =
+                a.status === 'confirmed'
+                    ? {
+                          id: `au_${a.id}_k`,
+                          clinicId: a.clinicId,
+                          actorId: 'patient',
+                          action: 'appointment.status_changed',
+                          subjectType: 'appointment',
+                          subjectId: a.id,
+                          at: new Date(
+                              new Date(a.createdAt).getTime() + 3_600_000,
+                          ).toISOString(),
+                          meta: { status: 'confirmed', from: 'booked' },
+                      }
+                    : null;
+
+            return confirmed ? [confirmed, created] : [created];
+        });
 
     const templates: NotificationTemplate[] = (['en', 'ur'] as const).flatMap(
         (locale) =>
@@ -539,8 +743,9 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
         appointments,
         holds: [],
         notifications,
+        replies,
         templates,
-        audit: [],
+        audit: auditLog,
         links,
         seq: 1000,
     };
