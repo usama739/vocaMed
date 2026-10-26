@@ -112,9 +112,7 @@ test.describe('every page, in both languages', () => {
 });
 
 test.describe('A3 login', () => {
-    test('signs a receptionist in and lands on Today', async ({
-        page,
-    }) => {
+    test('signs a receptionist in and lands on Today', async ({ page }) => {
         await gotoIn(page, '/login', 'en');
         await page.getByLabel('Email').fill('reception@sample.vocamed.test');
         await page

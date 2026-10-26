@@ -37,8 +37,16 @@ const getStoredAppearance = (): Appearance => {
     return (localStorage.getItem('appearance') as Appearance) || 'light';
 };
 
+// The VocaMed design is light only: its colour tokens have no dark values, so switching the dark
+// class on would turn only the starter kit's tokens (the sidebar) dark. A stored "dark" or "system"
+// choice from the starter kit is therefore ignored until the design gets a dark theme.
+const DARK_THEME_AVAILABLE = false;
+
 const isDarkMode = (appearance: Appearance): boolean => {
-    return appearance === 'dark' || (appearance === 'system' && prefersDark());
+    return (
+        DARK_THEME_AVAILABLE &&
+        (appearance === 'dark' || (appearance === 'system' && prefersDark()))
+    );
 };
 
 const applyTheme = (appearance: Appearance): void => {

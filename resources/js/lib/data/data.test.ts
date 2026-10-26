@@ -138,10 +138,10 @@ describe('patients', () => {
     it('rejects duplicate and invalid phone numbers', async () => {
         await expect(
             reception.patients.create({ name: 'Dup', phone: '+923001234567' }),
-        ).rejects.toMatchObject({ code: 'VALIDATION' });
+        ).rejects.toMatchObject({ code: 'DUPLICATE_PHONE', field: 'phone' });
         await expect(
             reception.patients.create({ name: 'Bad', phone: '12' }),
-        ).rejects.toMatchObject({ code: 'VALIDATION' });
+        ).rejects.toMatchObject({ code: 'INVALID_PHONE', field: 'phone' });
     });
 });
 
@@ -388,7 +388,7 @@ describe('appointment lifecycle', () => {
             sort: '-startsAt',
         });
 
-        expect(page.total).toBe(7);
+        expect(page.total).toBe(9);
         expect(page.items).toHaveLength(3);
         expect(page.items[0].startsAt >= page.items[1].startsAt).toBe(true);
         expect(
@@ -468,7 +468,7 @@ describe('reception console additions', () => {
         expect(patient.phone).toBe('');
         await expect(
             reception.patients.create({ name: 'No number', phone: '' }),
-        ).rejects.toMatchObject({ code: 'VALIDATION' });
+        ).rejects.toMatchObject({ code: 'INVALID_PHONE', field: 'phone' });
     });
 
     it('updates a patient, normalises the phone and refuses a duplicate', async () => {
@@ -482,7 +482,7 @@ describe('reception console additions', () => {
         expect(updated.consent).toBe(false);
         await expect(
             reception.patients.update('p_1', { phone: '+923121234568' }),
-        ).rejects.toMatchObject({ code: 'VALIDATION' });
+        ).rejects.toMatchObject({ code: 'DUPLICATE_PHONE', field: 'phone' });
         await expect(
             reception.patients.update('p_1', { name: '  ' }),
         ).rejects.toMatchObject({ code: 'VALIDATION' });

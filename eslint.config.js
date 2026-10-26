@@ -47,6 +47,36 @@ export default defineConfig([
         },
     },
     {
+        // Pages and components read data through `@/lib/data` (DataSource and the page views) and the
+        // hooks. The mock tables are the stand-in for the Laravel backend and must stay behind that seam,
+        // so swapping in the real API touches only `lib/data`.
+        files: [
+            'resources/js/{pages,components,hooks,layouts,preview}/**/*.{ts,tsx}',
+        ],
+        ignores: ['**/*.test.{ts,tsx}'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: [
+                                '@/lib/data/mock',
+                                '@/lib/data/mock-views',
+                                '@/lib/data/seed',
+                                '@/lib/data/simulator',
+                                '**/lib/data/mock',
+                                '**/lib/data/seed',
+                            ],
+                            message:
+                                "Import from '@/lib/data' instead. The mock is the stand-in for the backend and stays behind that seam.",
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {
         // Module augmentation must repeat the original generic parameters.
         files: ['**/*.d.ts'],
         rules: { '@typescript-eslint/no-unused-vars': 'off' },

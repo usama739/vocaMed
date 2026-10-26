@@ -13,6 +13,7 @@ import type {
     NotificationTemplate,
     Patient,
     PatientReply,
+    RescheduleRequest,
     Service,
     SlotHold,
     User,
@@ -34,6 +35,7 @@ export interface MockDatabase {
     holds: SlotHold[];
     notifications: NotificationLogEntry[];
     replies: PatientReply[];
+    requests: RescheduleRequest[];
     templates: NotificationTemplate[];
     audit: AuditEntry[];
     /** Signed-link token → appointment. `expired` links resolve to the E4 state. */
@@ -248,12 +250,23 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
         {
             doctorId: 'd_sana',
             windows: fullWeek('09:00', '17:00', lunch),
-            timeOff: [],
+            timeOff: [
+                {
+                    id: 'to_sana',
+                    doctorId: 'd_sana',
+                    startDate: addDays(today, 17),
+                    endDate: addDays(today, 18),
+                    reason: 'Conference',
+                },
+            ],
+            // Every Monday 12:00 is kept free for ward rounds.
+            blocked: [{ weekday: 1, time: '12:00' }],
         },
         {
             doctorId: 'd_imran',
             windows: fullWeek('10:00', '18:00', lunch),
             timeOff: [],
+            blocked: [],
         },
         {
             doctorId: 'd_hina',
@@ -269,11 +282,13 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
                     reason: 'Conference',
                 },
             ],
+            blocked: [],
         },
         {
             doctorId: 'd_noor',
             windows: fullWeek('09:00', '15:00', []),
             timeOff: [],
+            blocked: [],
         },
     ];
 
@@ -595,6 +610,25 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
             'booked',
             'patient_link',
         ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_7',
+            'd_sana',
+            's_general',
+            0,
+            '11:20',
+            'booked',
+        ),
+        appt(
+            DEMO_CLINIC_ID,
+            'p_8',
+            'd_sana',
+            's_general',
+            0,
+            '11:40',
+            'confirmed',
+            'voice',
+        ),
     ];
 
     const at = (hoursAgo: number) =>
@@ -662,6 +696,50 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
                 action: 'confirm',
             });
         });
+
+    const requestFor = (
+        n: number,
+        appointmentId: Id,
+        dayOffset: number,
+        time: string,
+        status: RescheduleRequest['status'],
+        message: string | null,
+        hoursAgo: number,
+    ): RescheduleRequest => {
+        const a = appointments.find((x) => x.id === appointmentId)!;
+
+        return {
+            id: `rq_${n}`,
+            clinicId: a.clinicId,
+            appointmentId,
+            patientId: a.patientId,
+            doctorId: a.doctorId,
+            fromStartsAt: a.startsAt,
+            proposedStartsAt: zonedToUtc(
+                addDays(today, dayOffset),
+                time,
+                tz,
+            ).toISOString(),
+            status,
+            message,
+            createdAt: at(hoursAgo),
+            decidedAt: status === 'pending' ? null : at(hoursAgo - 1),
+        };
+    };
+    const requests: RescheduleRequest[] = [
+        requestFor(1, 'a_019', 3, '09:40', 'pending', null, 5),
+        requestFor(2, 'a_020', 4, '14:20', 'pending', null, 3),
+        requestFor(3, 'a_013', 1, '10:20', 'approved', 'OK', 72),
+        requestFor(
+            4,
+            'a_017',
+            0,
+            '16:40',
+            'rejected',
+            'No slots that evening',
+            96,
+        ),
+    ];
 
     const auditLog: AuditEntry[] = appointments
         .filter((a) => a.clinicId === DEMO_CLINIC_ID)
@@ -744,6 +822,7 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
         holds: [],
         notifications,
         replies,
+        requests,
         templates,
         audit: auditLog,
         links,

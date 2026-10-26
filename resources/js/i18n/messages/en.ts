@@ -1,6 +1,7 @@
 import authEn from './auth-en';
 import landingEn from './landing-en';
 import privacyEn from './privacy-en';
+import doctorEn from './doctor-en';
 import receptionEn from './reception-en';
 
 const en = {
@@ -182,6 +183,7 @@ const en = {
     landing: landingEn,
     privacy: privacyEn,
     reception: receptionEn,
+    doctor: doctorEn,
 } as const;
 
 export default en;

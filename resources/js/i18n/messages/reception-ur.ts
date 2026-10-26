@@ -39,6 +39,17 @@ const receptionUr: DeepString<typeof receptionEn> = {
     },
     langName: { en: 'انگریزی', ur: 'اردو' },
     noPhone: 'فون نمبر نہیں ہے',
+    errors: {
+        generic: 'کچھ غلط ہو گیا۔ دوبارہ کوشش کریں۔',
+        invalid: 'تفصیلات دیکھیں اور دوبارہ کوشش کریں۔',
+        invalidName: 'مریض کا نام درج کریں۔',
+        invalidPhone: 'کم از کم 10 ہندسوں کا فون نمبر درج کریں۔',
+        duplicatePhone: 'اس فون نمبر کا مریض پہلے سے موجود ہے۔',
+        slotTaken: 'یہ وقت ابھی لیا جا چکا ہے۔ دوسرا وقت چنیں۔',
+        notFound: 'یہ ریکارڈ نہیں ملا۔',
+        invalidTransition: 'اب یہ تبدیلی ممکن نہیں۔',
+        forbidden: 'آپ کو اس کی اجازت نہیں۔',
+    },
     notFoundBack: 'فہرست پر واپس جائیں',
     saving: 'محفوظ ہو رہا ہے…',
     today: {

@@ -1,3 +1,4 @@
+import { createMockViews } from './mock-views';
 import type { MockDatabase } from './seed';
 import type { DataSource, PatientLinkSource } from './source';
 import { PREVIOUS_STATUS, STATUS_TRANSITIONS } from './status';
@@ -5,6 +6,8 @@ import { addDays, addMinutes, utcToZoned, weekdayOf, zonedToUtc } from './time';
 import {
     DataError,
     type Appointment,
+    type AvailabilityDraft,
+    type DayHours,
     type AppointmentStatus,
     type AuditEntry,
     type Doctor,
@@ -35,12 +38,13 @@ const fromMin = (m: number) =>
     `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
     aStart < bEnd && bStart < aEnd;
+const LUNCH = [13 * 60, 14 * 60] as const;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export function createMockDataSource(
+function buildCore(
     db: MockDatabase,
     options: MockOptions,
-): DataSource {
+): Omit<DataSource, 'views'> {
     const { clinicId, actorId } = options;
     const now = options.now ?? (() => new Date());
     const latency = options.latencyMs ?? 0;
@@ -197,6 +201,16 @@ export function createMockDataSource(
                 if (
                     breaks.some(([bs, be]) =>
                         overlaps(m, m + service.durationMin, bs, be),
+                    ) ||
+                    (availability.blocked ?? []).some(
+                        (b) =>
+                            b.weekday === window.weekday &&
+                            overlaps(
+                                m,
+                                m + service.durationMin,
+                                toMin(b.time),
+                                toMin(b.time) + 30,
+                            ),
                     )
                 ) {
                     continue;
@@ -323,10 +337,71 @@ export function createMockDataSource(
               : `${code}${compact}`;
 
         if (!/^\+\d{8,15}$/.test(e164)) {
-            throw new DataError('VALIDATION', 'Enter a valid phone number');
+            throw new DataError(
+                'INVALID_PHONE',
+                'Enter a valid phone number',
+                [],
+                'phone',
+            );
         }
 
         return e164;
+    }
+
+    const actor = () => db.users.find((u) => u.id === actorId);
+    const isDoctor = () => actor()?.role === 'doctor';
+    /** Everything except starting and finishing a consultation belongs to reception and admin. */
+    function assertStaff() {
+        if (isDoctor()) {
+            throw new DataError('FORBIDDEN', 'Doctors cannot do this');
+        }
+    }
+    const myDoctor = () => {
+        const found = db.doctors.find(
+            (d) => d.clinicId === clinicId && d.userId === actorId,
+        );
+
+        if (!found) {
+            throw new DataError('NOT_FOUND', 'No doctor for this user');
+        }
+
+        return found;
+    };
+
+    const service = (id: Id) => find(db.services, id, 'Service');
+
+    function checkDraft(draft: AvailabilityDraft) {
+        const step = (time: string) =>
+            /^\d{2}:(00|30)$/.test(time) &&
+            toMin(time) >= 6 * 60 &&
+            toMin(time) <= 20 * 60;
+
+        for (const day of draft.days) {
+            if (
+                day.on &&
+                (!step(day.start) ||
+                    !step(day.end) ||
+                    toMin(day.start) >= toMin(day.end))
+            ) {
+                throw new DataError(
+                    'VALIDATION',
+                    'Working hours are not valid',
+                    [],
+                    'days',
+                );
+            }
+        }
+
+        for (const off of draft.timeOff) {
+            if (!off.startDate || !off.endDate || off.endDate < off.startDate) {
+                throw new DataError(
+                    'VALIDATION',
+                    'Time off dates are not valid',
+                    [],
+                    'timeOff',
+                );
+            }
+        }
     }
 
     function transition(appointment: Appointment, status: AppointmentStatus) {
@@ -338,6 +413,57 @@ export function createMockDataSource(
         }
 
         appointment.status = status;
+    }
+
+    function rescheduleAsSystem(id: Id, startsAt: IsoDateTime) {
+        return rescheduleNow(id, startsAt, true);
+    }
+
+    function rescheduleNow(
+        id: Id,
+        startsAt: IsoDateTime,
+        approved = false,
+    ): Appointment {
+        if (!approved) {
+            assertStaff();
+        }
+
+        const appointment = find(db.appointments, id, 'Appointment');
+
+        if (
+            appointment.status !== 'booked' &&
+            appointment.status !== 'confirmed'
+        ) {
+            throw new DataError(
+                'INVALID_TRANSITION',
+                `Cannot reschedule a ${appointment.status} appointment`,
+            );
+        }
+
+        const service = find(db.services, appointment.serviceId, 'Service');
+
+        assertBookable(
+            appointment.doctorId,
+            service.id,
+            startsAt,
+            appointment.id,
+        );
+
+        const previous = appointment.startsAt;
+        appointment.startsAt = startsAt;
+        appointment.endsAt = addMinutes(
+            new Date(startsAt),
+            service.durationMin,
+        ).toISOString();
+        appointment.status = 'booked';
+        db.holds = db.holds.filter((h) => h.heldBy !== actorId);
+        queueNotification(appointment, 'reschedule');
+        audit('appointment.rescheduled', 'appointment', id, {
+            from: previous,
+            to: startsAt,
+        });
+
+        return appointment;
     }
 
     const paginate = <T>(items: T[], page = 1, perPage = 20) => ({
@@ -388,6 +514,136 @@ export function createMockDataSource(
 
                     return found ?? { doctorId: id, windows: [], timeOff: [] };
                 }),
+            me: () => call(() => myDoctor()),
+
+            saveAvailability: (draft) =>
+                call(() => {
+                    const doctor = myDoctor();
+                    checkDraft(draft);
+                    const stored = db.availability.find(
+                        (a) => a.doctorId === doctor.id,
+                    );
+                    const next = {
+                        doctorId: doctor.id,
+                        windows: draft.days
+                            .filter((d) => d.on)
+                            .map((d) => ({
+                                weekday: d.weekday,
+                                start: d.start,
+                                end: d.end,
+                                breaks:
+                                    d.lunch && toMin(d.end) > LUNCH[1]
+                                        ? [
+                                              {
+                                                  start: fromMin(LUNCH[0]),
+                                                  end: fromMin(LUNCH[1]),
+                                              },
+                                          ]
+                                        : [],
+                            })),
+                        timeOff: draft.timeOff.map((t) => ({
+                            id: t.id ?? nextId('to'),
+                            doctorId: doctor.id,
+                            startDate: t.startDate,
+                            endDate: t.endDate,
+                            reason: t.reason,
+                        })),
+                        blocked: draft.blocked,
+                    };
+
+                    if (stored) {
+                        Object.assign(stored, next);
+                    } else {
+                        db.availability.push(next);
+                    }
+
+                    audit('availability.updated', 'doctor', doctor.id);
+                }),
+
+            previewAvailability: (draft) =>
+                call(() => {
+                    const doctor = myDoctor();
+                    checkDraft(draft);
+                    const open = (day: DayHours, m: number) =>
+                        day.on &&
+                        m >= toMin(day.start) &&
+                        m + 30 <= toMin(day.end) &&
+                        !(day.lunch && m >= LUNCH[0] && m < LUNCH[1]) &&
+                        !draft.blocked.some(
+                            (b) =>
+                                b.weekday === day.weekday &&
+                                toMin(b.time) === m,
+                        );
+                    const slotsPerWeekday = draft.days.map((day) => {
+                        let n = 0;
+
+                        for (let m = 6 * 60; m < 20 * 60; m += 30) {
+                            if (open(day, m)) {
+                                n++;
+                            }
+                        }
+
+                        return n;
+                    });
+                    const tz = clinic().timezone;
+                    const t = now().getTime();
+                    const affected = own(db.appointments)
+                        .filter(
+                            (a) =>
+                                a.doctorId === doctor.id &&
+                                (a.status === 'booked' ||
+                                    a.status === 'confirmed') &&
+                                new Date(a.startsAt).getTime() >= t,
+                        )
+                        .filter((a) => {
+                            const local = utcToZoned(new Date(a.startsAt), tz);
+                            const day = draft.days.find(
+                                (d) => d.weekday === local.weekday,
+                            );
+                            const m = toMin(local.time);
+                            const end = m + service(a.serviceId).durationMin;
+                            const fits =
+                                !!day &&
+                                day.on &&
+                                m >= toMin(day.start) &&
+                                end <= toMin(day.end) &&
+                                !(
+                                    day.lunch &&
+                                    m < LUNCH[1] &&
+                                    end > LUNCH[0]
+                                ) &&
+                                !draft.blocked.some(
+                                    (b) =>
+                                        b.weekday === local.weekday &&
+                                        m < toMin(b.time) + 30 &&
+                                        end > toMin(b.time),
+                                );
+                            const off = draft.timeOff.some(
+                                (o) =>
+                                    o.startDate <= local.date &&
+                                    local.date <= o.endDate,
+                            );
+
+                            return !fits || off;
+                        })
+                        .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+                        .map((a) => ({
+                            appointmentId: a.id,
+                            patientName: find(
+                                db.patients,
+                                a.patientId,
+                                'Patient',
+                            ).name,
+                            startsAt: a.startsAt,
+                        }));
+
+                    return {
+                        slotsPerWeekday,
+                        total: slotsPerWeekday.reduce((x, y) => x + y, 0),
+                        affected,
+                    };
+                }),
+
             nextFreeSlot: (doctorId, serviceId) =>
                 call(() => {
                     const today = utcToZoned(now(), clinic().timezone).date;
@@ -470,7 +726,12 @@ export function createMockDataSource(
                     const name = input.name.trim();
 
                     if (!name) {
-                        throw new DataError('VALIDATION', 'Name is required');
+                        throw new DataError(
+                            'VALIDATION',
+                            'Name is required',
+                            [],
+                            'name',
+                        );
                     }
 
                     const phone =
@@ -483,8 +744,10 @@ export function createMockDataSource(
                         own(db.patients).some((p) => p.phone === phone)
                     ) {
                         throw new DataError(
-                            'VALIDATION',
+                            'DUPLICATE_PHONE',
                             'A patient with this phone number already exists',
+                            [],
+                            'phone',
                         );
                     }
 
@@ -518,6 +781,8 @@ export function createMockDataSource(
                             throw new DataError(
                                 'VALIDATION',
                                 'Name is required',
+                                [],
+                                'name',
                             );
                         }
                     }
@@ -531,8 +796,10 @@ export function createMockDataSource(
                             )
                         ) {
                             throw new DataError(
-                                'VALIDATION',
+                                'DUPLICATE_PHONE',
                                 'A patient with this phone number already exists',
+                                [],
+                                'phone',
                             );
                         }
                     }
@@ -589,6 +856,7 @@ export function createMockDataSource(
 
             create: (input: NewAppointmentInput) =>
                 call(() => {
+                    assertStaff();
                     find(db.patients, input.patientId, 'Patient');
                     const service = find(
                         db.services,
@@ -652,55 +920,11 @@ export function createMockDataSource(
                 }),
 
             reschedule: (id, startsAt) =>
-                call(() => {
-                    const appointment = find(
-                        db.appointments,
-                        id,
-                        'Appointment',
-                    );
-
-                    if (
-                        appointment.status !== 'booked' &&
-                        appointment.status !== 'confirmed'
-                    ) {
-                        throw new DataError(
-                            'INVALID_TRANSITION',
-                            `Cannot reschedule a ${appointment.status} appointment`,
-                        );
-                    }
-
-                    const service = find(
-                        db.services,
-                        appointment.serviceId,
-                        'Service',
-                    );
-
-                    assertBookable(
-                        appointment.doctorId,
-                        service.id,
-                        startsAt,
-                        appointment.id,
-                    );
-
-                    const previous = appointment.startsAt;
-                    appointment.startsAt = startsAt;
-                    appointment.endsAt = addMinutes(
-                        new Date(startsAt),
-                        service.durationMin,
-                    ).toISOString();
-                    appointment.status = 'booked';
-                    db.holds = db.holds.filter((h) => h.heldBy !== actorId);
-                    queueNotification(appointment, 'reschedule');
-                    audit('appointment.rescheduled', 'appointment', id, {
-                        from: previous,
-                        to: startsAt,
-                    });
-
-                    return appointment;
-                }),
+                call(() => rescheduleNow(id, startsAt)),
 
             cancel: (id) =>
                 call(() => {
+                    assertStaff();
                     const appointment = find(
                         db.appointments,
                         id,
@@ -720,6 +944,22 @@ export function createMockDataSource(
                         id,
                         'Appointment',
                     );
+                    if (isDoctor()) {
+                        const mine = myDoctor().id === appointment.doctorId;
+                        const stage =
+                            (status === 'in_consultation' ||
+                                status === 'done') &&
+                            (appointment.status === 'arrived' ||
+                                appointment.status === 'in_consultation');
+
+                        if (!mine || !stage) {
+                            throw new DataError(
+                                'FORBIDDEN',
+                                'A doctor may only start or finish their own consultations',
+                            );
+                        }
+                    }
+
                     const from = appointment.status;
                     transition(appointment, status);
 
@@ -741,6 +981,7 @@ export function createMockDataSource(
 
             undoStatus: (id) =>
                 call(() => {
+                    assertStaff();
                     const appointment = find(
                         db.appointments,
                         id,
@@ -805,6 +1046,46 @@ export function createMockDataSource(
                     ];
 
                     return items.sort((a, b) => b.at.localeCompare(a.at));
+                }),
+        },
+
+        requests: {
+            decide: (id, input) =>
+                call(() => {
+                    const request = find(db.requests, id, 'Request');
+
+                    if (isDoctor() && request.doctorId !== myDoctor().id) {
+                        throw new DataError('FORBIDDEN', 'Not your request');
+                    }
+
+                    if (request.status !== 'pending') {
+                        throw new DataError(
+                            'INVALID_TRANSITION',
+                            'This request was already decided',
+                        );
+                    }
+
+                    if (input.decision === 'approved') {
+                        // Throws SLOT_UNAVAILABLE with alternatives if the time was taken meanwhile.
+                        rescheduleAsSystem(
+                            request.appointmentId,
+                            request.proposedStartsAt,
+                        );
+                    }
+
+                    request.status = input.decision;
+                    request.message = input.message?.trim() || null;
+                    request.decidedAt = now().toISOString();
+                    audit(
+                        'request.decided',
+                        'appointment',
+                        request.appointmentId,
+                        {
+                            decision: input.decision,
+                        },
+                    );
+
+                    return request;
                 }),
         },
 
@@ -927,6 +1208,53 @@ export function createMockDataSource(
                         );
                     });
                 }),
+        },
+    };
+}
+
+/**
+ * The mock "server": the tables behind `DataSource`, plus the page read models in `views`.
+ * A view costs one round trip (like one request) however many tables it reads.
+ */
+export function createMockDataSource(
+    db: MockDatabase,
+    options: MockOptions,
+): DataSource {
+    const core = buildCore(db, options);
+    const latency = options.latencyMs ?? 0;
+    // Views read the tables directly, without a delay per table.
+    const quick =
+        latency > 0 ? buildCore(db, { ...options, latencyMs: 0 }) : core;
+    const views = createMockViews(quick, {
+        now: options.now ?? (() => new Date()),
+        actorId: options.actorId,
+        db,
+    });
+    const delayed =
+        <A extends unknown[], R>(read: (...args: A) => Promise<R>) =>
+        async (...args: A): Promise<R> => {
+            if (latency > 0) {
+                await sleep(latency);
+            }
+
+            return structuredClone(await read(...args));
+        };
+
+    return {
+        ...core,
+        views: {
+            today: delayed(views.today),
+            appointments: delayed(views.appointments),
+            appointment: delayed(views.appointment),
+            calendar: delayed(views.calendar),
+            patients: delayed(views.patients),
+            patient: delayed(views.patient),
+            notifications: delayed(views.notifications),
+            doctorOverview: delayed(views.doctorOverview),
+            doctorSchedule: delayed(views.doctorSchedule),
+            availability: delayed(views.availability),
+            requests: delayed(views.requests),
+            doctorShell: delayed(views.doctorShell),
         },
     };
 }

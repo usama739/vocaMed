@@ -1,13 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
-    useCallback,
-    useEffect,
-    useMemo,
-    useState,
-    type ReactNode,
-} from 'react';
-import {
-    forcedStateFromUrl,
     ReceptionRuntimeContext,
     type ReceptionRuntime,
 } from '@/components/reception/runtime';
@@ -18,10 +11,11 @@ import {
 import { ClinicShell } from '@/components/vocamed/clinic-shell';
 import { ReconnectingBanner } from '@/components/vocamed/states';
 import type { Crumb } from '@/components/vocamed/top-bar';
-import { useData } from '@/hooks/use-data';
+import { DataSourceProvider } from '@/hooks/use-data';
+import { useStaffRuntime } from '@/hooks/use-staff-runtime';
 import { useShortcut } from '@/hooks/use-shortcut';
 import { useT } from '@/i18n/scope';
-import { startDemoActivity, type Appointment } from '@/lib/data';
+import { getRoleDataSource, type Appointment } from '@/lib/data';
 
 type PageKey = {
     active: string;
@@ -74,62 +68,17 @@ type PanelState = {
 };
 
 export default function ReceptionLayout({ children }: { children: ReactNode }) {
-    const { component, url } = usePage();
+    const { component } = usePage();
     const { t } = useT();
-    const source = useData();
+    const source = getRoleDataSource('receptionist');
     const page = PAGES[component] ?? PAGES['reception/today'];
 
-    const [epoch, setEpoch] = useState(0);
-    const [online, setOnline] = useState(() =>
-        typeof navigator === 'undefined' ? true : navigator.onLine,
-    );
     const [panel, setPanel] = useState<PanelState>({
         open: false,
         reschedule: null,
     });
 
-    const forced = useMemo(
-        () =>
-            typeof window === 'undefined'
-                ? null
-                : forcedStateFromUrl(
-                      window.location.search,
-                      window.location.hostname,
-                  ),
-        // The address can change with navigation (`url`), and `?state=` rides along with it.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [url],
-    );
-
-    const refresh = useCallback(() => setEpoch((n) => n + 1), []);
-
-    // Connection: show the banner while offline and reload every page's data when it returns.
-    useEffect(() => {
-        const down = () => setOnline(false);
-        const up = () => {
-            setOnline(true);
-            refresh();
-        };
-
-        window.addEventListener('offline', down);
-        window.addEventListener('online', up);
-
-        return () => {
-            window.removeEventListener('offline', down);
-            window.removeEventListener('online', up);
-        };
-    }, [refresh]);
-
-    // The demo has no live server: messages advance and (with ?sim=1) other receptionists hold slots.
-    useEffect(() => {
-        if (import.meta.env.MODE === 'test') {
-            return;
-        }
-
-        const sim = new URLSearchParams(window.location.search).get('sim');
-
-        return startDemoActivity({ otherReceptionist: sim === '1' });
-    }, []);
+    const { forced, epoch, refresh, reconnecting } = useStaffRuntime();
 
     const openBooking = useCallback(
         (prefill?: BookingPanelInitial) =>
@@ -173,34 +122,34 @@ export default function ReceptionLayout({ children }: { children: ReactNode }) {
         })),
     ];
 
-    const reconnecting = !online || forced === 'reconnecting';
-
     return (
-        <ReceptionRuntimeContext.Provider value={runtime}>
-            <ClinicShell
-                role="receptionist"
-                active={page.active}
-                crumbs={crumbs}
-                user={{ name: t('shell.userName') }}
-                onNewBooking={() => openBooking()}
-                onSearch={(query) =>
-                    router.visit(
-                        `/reception/patients?q=${encodeURIComponent(query)}`,
-                    )
-                }
-                banner={reconnecting ? <ReconnectingBanner /> : undefined}
-            >
-                {children}
-            </ClinicShell>
+        <DataSourceProvider source={source}>
+            <ReceptionRuntimeContext.Provider value={runtime}>
+                <ClinicShell
+                    role="receptionist"
+                    active={page.active}
+                    crumbs={crumbs}
+                    user={{ name: t('shell.userName') }}
+                    onNewBooking={() => openBooking()}
+                    onSearch={(query) =>
+                        router.visit(
+                            `/reception/patients?q=${encodeURIComponent(query)}`,
+                        )
+                    }
+                    banner={reconnecting ? <ReconnectingBanner /> : undefined}
+                >
+                    {children}
+                </ClinicShell>
 
-            <BookingPanel
-                open={panel.open}
-                onOpenChange={(open) => setPanel((p) => ({ ...p, open }))}
-                source={source}
-                prefill={panel.prefill}
-                reschedule={panel.reschedule}
-                onBooked={refresh}
-            />
-        </ReceptionRuntimeContext.Provider>
+                <BookingPanel
+                    open={panel.open}
+                    onOpenChange={(open) => setPanel((p) => ({ ...p, open }))}
+                    source={source}
+                    prefill={panel.prefill}
+                    reschedule={panel.reschedule}
+                    onBooked={refresh}
+                />
+            </ReceptionRuntimeContext.Provider>
+        </DataSourceProvider>
     );
 }

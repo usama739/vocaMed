@@ -1,6 +1,8 @@
 import type {
     Appointment,
     AppointmentQuery,
+    AvailabilityDraft,
+    AvailabilityPreview,
     AppointmentStatus,
     AuditEntry,
     Clinic,
@@ -19,6 +21,8 @@ import type {
     Page,
     Patient,
     PatientLinkResult,
+    RequestDecisionInput,
+    RescheduleRequest,
     PatientPatch,
     Service,
     Slot,
@@ -27,6 +31,7 @@ import type {
     TimelineItem,
     User,
 } from './types';
+import type { ViewSource } from './views';
 
 /**
  * The only surface the UI is allowed to use for data.
@@ -43,6 +48,9 @@ import type {
 export interface DataSource {
     readonly clinicId: Id;
 
+    /** One read model per page (see ./views). */
+    views: ViewSource;
+
     clinic: {
         get(): Promise<Clinic>;
         settings(): Promise<ClinicSettings>;
@@ -58,6 +66,19 @@ export interface DataSource {
         get(id: Id): Promise<Doctor>;
         availability(id: Id): Promise<DoctorAvailability>;
         nextFreeSlot(doctorId: Id, serviceId: Id): Promise<Slot | null>;
+        /** The doctor linked to the signed-in user. Rejects with NOT_FOUND for other roles. */
+        me(): Promise<Doctor>;
+        /** `PUT /doctor/availability`: replaces weekly hours, time off and blocked times together. */
+        saveAvailability(draft: AvailabilityDraft): Promise<void>;
+        /** What a draft would produce, computed with the server's slot rules (nothing is saved). */
+        previewAvailability(
+            draft: AvailabilityDraft,
+        ): Promise<AvailabilityPreview>;
+    };
+
+    requests: {
+        /** Approving moves the appointment (409 with alternatives if the time is gone). */
+        decide(id: Id, input: RequestDecisionInput): Promise<RescheduleRequest>;
     };
 
     services: {

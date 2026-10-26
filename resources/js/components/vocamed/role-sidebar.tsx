@@ -13,6 +13,7 @@ export function RoleSidebar({
     clinicName,
     searchRef,
     onSearch,
+    badges,
     onNavigate,
     className,
 }: {
@@ -22,6 +23,8 @@ export function RoleSidebar({
     /** Defaults to the bracketed placeholder until the clinic name comes from the server. */
     clinicName?: string;
     searchRef?: Ref<HTMLInputElement>;
+    /** A count shown beside a nav item, by its `key` (the doctor's pending requests). */
+    badges?: Record<string, number>;
     /** Receptionist quick lookup: called with the typed text when Enter is pressed. */
     onSearch?: (query: string) => void;
     /** Called after a link is chosen; the mobile drawer uses it to close itself. */
@@ -133,7 +136,12 @@ export function RoleSidebar({
                                         on ? 'text-brand' : 'text-subtle',
                                     )}
                                 />
-                                <span>{t(entry.label)}</span>
+                                <span className="flex-1">{t(entry.label)}</span>
+                                {(badges?.[entry.key] ?? 0) > 0 && (
+                                    <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-danger px-1.5 text-caption font-bold text-white">
+                                        {badges?.[entry.key]}
+                                    </span>
+                                )}
                             </Link>
                         </li>
                     );

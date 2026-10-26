@@ -28,6 +28,7 @@ export function ClinicShell({
     clinicName,
     onNewBooking,
     onSearch,
+    badges,
     onLocaleChange,
     onSignOut,
     banner,
@@ -42,6 +43,8 @@ export function ClinicShell({
     onNewBooking?: () => void;
     /** Sidebar quick search (Enter): the receptionist console opens Patients with the text. */
     onSearch?: (query: string) => void;
+    /** Counts beside sidebar items, by nav key. */
+    badges?: Record<string, number>;
     onLocaleChange?: (locale: Locale) => void;
     onSignOut?: () => void;
     /** Full-width strip above the page content, e.g. the reconnecting banner. */
@@ -94,6 +97,7 @@ export function ClinicShell({
                     clinicName={clinicName}
                     searchRef={searchRef}
                     onSearch={onSearch}
+                    badges={badges}
                 />
             </aside>
 
@@ -143,6 +147,7 @@ export function ClinicShell({
                         active={active}
                         clinicName={clinicName}
                         onSearch={onSearch}
+                        badges={badges}
                         onNavigate={() => setMenuOpen(false)}
                     />
                 </SheetContent>

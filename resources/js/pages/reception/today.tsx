@@ -10,11 +10,6 @@ import {
     PageLoading,
     SampleNote,
 } from '@/components/reception/page-parts';
-import {
-    defaultService,
-    loadToday,
-    type Row,
-} from '@/components/reception/queries';
 import { useReception } from '@/components/reception/runtime';
 import { SummaryStrip } from '@/components/reception/stat-card';
 import {
@@ -25,16 +20,23 @@ import { Button } from '@/components/ui/button';
 import { notify } from '@/components/vocamed/toast';
 import { useChangedKeys } from '@/hooks/use-changed-keys';
 import { useData } from '@/hooks/use-data';
-import { useLiveQuery } from '@/hooks/use-live-query';
+import { useErrorText } from '@/hooks/use-error-text';
+import { useView } from '@/hooks/use-view';
 import { clockMs } from '@/lib/clock';
 import { useT } from '@/i18n/scope';
-import { DataError, utcToZoned, type AppointmentStatus } from '@/lib/data';
+import {
+    defaultService,
+    utcToZoned,
+    type AppointmentRow,
+    type AppointmentStatus,
+} from '@/lib/data';
 
 export default function Today() {
     const { t, locale } = useT();
+    const { message } = useErrorText();
     const source = useData();
     const { openBooking, openVoice } = useReception();
-    const query = useLiveQuery('today', loadToday, {
+    const query = useView('today', undefined, {
         emptyFrom: (d) => ({
             ...d,
             days: d.days.map((day) => ({ ...day, rows: [] })),
@@ -98,7 +100,7 @@ export default function Today() {
         };
     }, [days]);
 
-    const toggle = async (row: Row, stage: AppointmentStatus) => {
+    const toggle = async (row: AppointmentRow, stage: AppointmentStatus) => {
         const id = row.appointment.id;
         const undo = row.appointment.status === stage;
         setPending({ id, stage });
@@ -176,12 +178,7 @@ export default function Today() {
             );
             query.reload();
         } catch (caught) {
-            notify(
-                'error',
-                caught instanceof DataError
-                    ? caught.message
-                    : t('reception.today.changeFailed'),
-            );
+            notify('error', message(caught));
             throw caught;
         }
     };

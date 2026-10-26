@@ -37,7 +37,7 @@ describe('Appointments', () => {
         const table = await ready();
 
         expect(within(table).getAllByRole('row')).toHaveLength(11);
-        expect(screen.getByText('22 appointments')).toBeInTheDocument();
+        expect(screen.getByText('24 appointments')).toBeInTheDocument();
         expect(screen.getByText('Page 1 of 3')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
     });
@@ -120,7 +120,7 @@ describe('Appointments', () => {
             await screen.findByText('No appointments match'),
         ).toBeInTheDocument();
         await user.click(screen.getByRole('button', { name: 'Clear filters' }));
-        expect(await screen.findByText('22 appointments')).toBeInTheDocument();
+        expect(await screen.findByText('24 appointments')).toBeInTheDocument();
     });
 
     it('cancels an appointment only after confirming', async () => {
@@ -232,6 +232,6 @@ describe('Appointments', () => {
         expect(
             await screen.findByRole('heading', { level: 1 }),
         ).toHaveTextContent('اپائنٹمنٹس');
-        expect(await screen.findByText('22 اپائنٹمنٹس')).toBeInTheDocument();
+        expect(await screen.findByText('24 اپائنٹمنٹس')).toBeInTheDocument();
     });
 });

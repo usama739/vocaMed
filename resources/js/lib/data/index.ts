@@ -10,6 +10,8 @@ export * from './types';
 export * from './auth';
 export { SAMPLE_ACCOUNTS, SAMPLE_PASSWORD } from './auth-mock';
 export type { DataSource, PatientLinkSource } from './source';
+export * from './views';
+export { rangeOf, weekStart, monthStart, monthEnd } from './calendar-range';
 export { SLOT_HOLD_SECONDS } from './mock';
 export {
     addDays as addDaysToDate,
@@ -47,6 +49,28 @@ export function getDataSource(
 }
 
 export const data: DataSource = getDataSource();
+
+/**
+ * The data source for the area being shown. In the demo there is no session, so each role uses its
+ * sample user; with the real backend the session decides and every role gets the same source.
+ */
+const SAMPLE_USERS: Record<Role, string> = {
+    clinic_admin: 'u_admin',
+    receptionist: 'u_recep',
+    doctor: 'u_doc1',
+};
+const roleSources = new Map<Role, DataSource>();
+
+export function getRoleDataSource(role: Role): DataSource {
+    let source = roleSources.get(role);
+
+    if (!source) {
+        source = getDataSource(DEMO_CLINIC_ID, SAMPLE_USERS[role]);
+        roleSources.set(role, source);
+    }
+
+    return source;
+}
 
 /** Live-looking activity for the demo data (messages advancing, other receptionists holding slots). */
 export function startDemoActivity(

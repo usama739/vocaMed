@@ -5,7 +5,6 @@ import { createSeedDatabase, DEMO_CLINIC_ID } from '@/lib/data/seed';
 import {
     cellState,
     dayRowTimes,
-    loadCalendar,
     monthEnd,
     monthGrid,
     monthStart,
@@ -88,7 +87,11 @@ describe('calendar dates', () => {
 describe('loadCalendar and day cells', () => {
     it('loads the day with each doctor’s slots, and leaves Sunday out of the week', async () => {
         const { source: s } = source();
-        const data = await loadCalendar(s, 'day', TODAY, 'all');
+        const data = await s.views.calendar({
+            view: 'day',
+            date: TODAY,
+            doctorId: 'all',
+        });
 
         expect(data.columns.map((c) => c.doctor.id)).toEqual([
             'd_sana',
@@ -104,7 +107,11 @@ describe('loadCalendar and day cells', () => {
 
     it('covers every doctor’s hours with half-hour rows', async () => {
         const { source: s } = source();
-        const data = await loadCalendar(s, 'day', TODAY, 'all');
+        const data = await s.views.calendar({
+            view: 'day',
+            date: TODAY,
+            doctorId: 'all',
+        });
         const times = dayRowTimes(data, TODAY);
 
         // Imran works until 18:00, so the last row is 17:30.
@@ -115,14 +122,18 @@ describe('loadCalendar and day cells', () => {
 
     it('classifies each cell: events, free, closed, past', async () => {
         const { source: s } = source();
-        const data = await loadCalendar(s, 'day', TODAY, 'all');
+        const data = await s.views.calendar({
+            view: 'day',
+            date: TODAY,
+            doctorId: 'all',
+        });
         const sana = data.columns.find((c) => c.doctor.id === 'd_sana')!;
         const imran = data.columns.find((c) => c.doctor.id === 'd_imran')!;
         const kind = (column: typeof sana, time: string) =>
             cellState(column, time, TODAY, data, data.rows).kind;
 
         expect(kind(sana, '09:00')).toBe('events');
-        expect(kind(sana, '11:30')).toBe('free');
+        expect(kind(sana, '12:30')).toBe('free');
         // It is 10:15: Imran's empty 09:00 row is already behind us.
         expect(kind(imran, '09:00')).toBe('past');
         // Lunch break 13:00-14:00 for both.
@@ -158,7 +169,11 @@ describe('loadCalendar and day cells', () => {
             serviceId: 's_general',
             startsAt: slot.startsAt,
         });
-        const data = await loadCalendar(mine, 'day', TODAY, 'all');
+        const data = await mine.views.calendar({
+            view: 'day',
+            date: TODAY,
+            doctorId: 'all',
+        });
         const sana = data.columns.find((c) => c.doctor.id === 'd_sana')!;
         const state = cellState(sana, row, TODAY, data, data.rows);
 
@@ -178,7 +193,11 @@ describe('loadCalendar and day cells', () => {
                 .filter((s) => s.state === 'free')
                 .at(-1)!.startsAt,
         });
-        const again = await loadCalendar(mine, 'day', TODAY, 'all');
+        const again = await mine.views.calendar({
+            view: 'day',
+            date: TODAY,
+            doctorId: 'all',
+        });
         const mineSlot = again.columns[0].slots.find((s) => s.heldByMe);
 
         expect(mineSlot).toBeTruthy();
@@ -186,7 +205,11 @@ describe('loadCalendar and day cells', () => {
 
     it('limits the week and month to one doctor when asked', async () => {
         const { source: s } = source();
-        const week = await loadCalendar(s, 'week', TODAY, 'd_imran');
+        const week = await s.views.calendar({
+            view: 'week',
+            date: TODAY,
+            doctorId: 'd_imran',
+        });
 
         expect(week.doctors.map((d) => d.id)).toEqual(['d_imran']);
         expect(

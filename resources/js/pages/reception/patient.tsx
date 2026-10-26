@@ -6,7 +6,6 @@ import {
     formatShortDate,
     localDate,
     relativeDay,
-    todayIn,
     digitsOf,
 } from '@/components/reception/format';
 import {
@@ -20,7 +19,6 @@ import {
     PatientAvatar,
     SampleNote,
 } from '@/components/reception/page-parts';
-import { toRows, type Row } from '@/components/reception/queries';
 import { useReception } from '@/components/reception/runtime';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,10 +33,11 @@ import { EmptyState } from '@/components/vocamed/states';
 import { StatusBadge } from '@/components/vocamed/status-badge';
 import { notify } from '@/components/vocamed/toast';
 import { useData } from '@/hooks/use-data';
-import { useLiveQuery } from '@/hooks/use-live-query';
+import { useErrorText } from '@/hooks/use-error-text';
+import { useView } from '@/hooks/use-view';
 import { useT } from '@/i18n/scope';
 import {
-    DataError,
+    type AppointmentRow,
     type Channel,
     type Clinic,
     type Locale,
@@ -52,8 +51,6 @@ type Draft = {
     consent: boolean;
     notes: string;
 };
-
-type Loaded = { clinic: Clinic; patient: Patient; rows: Row[] } | null;
 
 const draftOf = (patient: Patient, clinic: Clinic): Draft => ({
     phone: formatPhone(patient.phone, clinic.phoneCountryCode),
@@ -72,33 +69,11 @@ const OPEN_STATUSES = new Set([
 
 export default function PatientProfile({ id }: { id: string }) {
     const { t, locale } = useT();
+    const { forField } = useErrorText();
     const source = useData();
     const { openBooking } = useReception();
 
-    const query = useLiveQuery<Loaded>(
-        `patient:${id}`,
-        async (s) => {
-            try {
-                const [clinic, patient, page] = await Promise.all([
-                    s.clinic.get(),
-                    s.patients.get(id),
-                    s.appointments.list({ patientId: id, perPage: 200 }),
-                ]);
-
-                return { clinic, patient, rows: await toRows(s, page.items) };
-            } catch (caught) {
-                if (
-                    caught instanceof DataError &&
-                    caught.code === 'NOT_FOUND'
-                ) {
-                    return null;
-                }
-
-                throw caught;
-            }
-        },
-        { refreshMs: 0 },
-    );
+    const query = useView('patient', id, { refreshMs: 0 });
 
     const data = query.data;
     const patient = data?.patient;
@@ -135,13 +110,13 @@ export default function PatientProfile({ id }: { id: string }) {
     const dirty =
         !!draft && !!saved && JSON.stringify(draft) !== JSON.stringify(saved);
 
-    const today = clinic ? todayIn(clinic.timezone) : null;
+    const today = data?.today ?? null;
 
     const { upcoming, past, counts } = useMemo(() => {
-        const rows = [...(data?.rows ?? [])].sort((a, b) =>
+        const rows = [...(data?.appointments ?? [])].sort((a, b) =>
             a.appointment.startsAt.localeCompare(b.appointment.startsAt),
         );
-        const isUpcoming = (r: Row) =>
+        const isUpcoming = (r: AppointmentRow) =>
             OPEN_STATUSES.has(r.appointment.status) &&
             !!today &&
             !!clinic &&
@@ -195,26 +170,25 @@ export default function PatientProfile({ id }: { id: string }) {
             notify('success', t('reception.patient.saved'));
             query.reload();
         } catch (caught) {
+            const { field, message } = forField(caught);
+
             setErrors(
-                caught instanceof DataError &&
-                    /already exists/.test(caught.message)
-                    ? { phone: t('reception.patients.errDuplicate') }
-                    : caught instanceof DataError
-                      ? { phone: t('reception.patient.errPhone') }
-                      : { form: t('reception.patient.saveFailed') },
+                field === 'phone'
+                    ? { phone: message }
+                    : { form: t('reception.patient.saveFailed') },
             );
         } finally {
             setSaving(false);
         }
     };
 
-    const describe = (row: Row) =>
+    const describe = (row: AppointmentRow) =>
         t('reception.patient.withDoctor', {
             service: row.service.name,
             doctor: row.doctor.name,
         });
 
-    const stamp = (row: Row, future: boolean) => {
+    const stamp = (row: AppointmentRow, future: boolean) => {
         if (!clinic || !today) {
             return '';
         }
@@ -537,12 +511,12 @@ function AppointmentList({
     describe,
 }: {
     title: string;
-    rows: Row[];
+    rows: AppointmentRow[];
     empty: string;
     action?: React.ReactNode;
     delay: number;
-    stamp: (row: Row) => string;
-    describe: (row: Row) => string;
+    stamp: (row: AppointmentRow) => string;
+    describe: (row: AppointmentRow) => string;
 }) {
     return (
         <section

@@ -10,14 +10,13 @@ import { formatClock } from '@/components/vocamed/booking/format';
 import { BADGE_SPEC } from '@/components/vocamed/status-badge';
 import { useT } from '@/i18n/scope';
 import {
-    isOpenStatus,
+    type AppointmentRow,
     utcToZoned,
     weekdayOf,
     type IsoDate,
     type Slot,
 } from '@/lib/data';
 import { cn } from '@/lib/utils';
-import type { Row } from '@/components/reception/queries';
 import {
     cellState,
     dayRowTimes,
@@ -29,13 +28,25 @@ import {
     type ColumnData,
 } from './model';
 
+/** Read-only mode (the doctor's schedule): events open a panel, nothing can be booked or moved. */
+export type ReadOnly = { onOpen: (row: AppointmentRow) => void };
+
+const NO_HANDLERS: MoveHandlers = {
+    moving: null,
+    onSelect: () => undefined,
+    onDragStart: () => undefined,
+    onDragEnd: () => undefined,
+    onMoveTo: () => undefined,
+    onBook: () => undefined,
+};
+
 export type MoveHandlers = {
     /** The appointment being moved (selected or dragged). */
-    moving: Row | null;
-    onSelect: (row: Row | null) => void;
-    onDragStart: (row: Row) => void;
+    moving: AppointmentRow | null;
+    onSelect: (row: AppointmentRow | null) => void;
+    onDragStart: (row: AppointmentRow) => void;
     onDragEnd: () => void;
-    onMoveTo: (row: Row, slot: Slot) => void;
+    onMoveTo: (row: AppointmentRow, slot: Slot) => void;
     onBook: (doctorId: string, slot: Slot) => void;
 };
 
@@ -45,11 +56,13 @@ function EventCard({
     timeZone,
     rowTime,
     handlers,
+    readOnly,
 }: {
-    row: Row;
+    row: AppointmentRow;
     timeZone: string;
     rowTime: string;
     handlers: MoveHandlers;
+    readOnly?: ReadOnly;
 }) {
     const { t } = useT();
     const { appointment, patient, service } = row;
@@ -57,7 +70,7 @@ function EventCard({
     const Icon = spec.icon;
     const clock = formatClock(appointment.startsAt, timeZone);
     const picked = handlers.moving?.appointment.id === appointment.id;
-    const movable = isOpenStatus(appointment.status);
+    const movable = row.allowed.canReschedule;
     const label = t(spec.label);
     const aria = t('reception.calendar.eventAria', {
         patient: patient.name,
@@ -89,6 +102,19 @@ function EventCard({
         spec.className,
         picked ? 'border-brand shadow-lift' : 'border-transparent',
     );
+
+    if (readOnly) {
+        return (
+            <button
+                type="button"
+                aria-label={aria}
+                onClick={() => readOnly.onOpen(row)}
+                className={cn(base, 'hover:-translate-y-px hover:shadow-card')}
+            >
+                {body}
+            </button>
+        );
+    }
 
     if (!movable) {
         return (
@@ -129,11 +155,13 @@ function EventCard({
 export function DayView({
     data,
     date,
-    handlers,
+    handlers = NO_HANDLERS,
+    readOnly,
 }: {
     data: CalendarData;
     date: IsoDate;
-    handlers: MoveHandlers;
+    handlers?: MoveHandlers;
+    readOnly?: ReadOnly;
 }) {
     const { t } = useT();
     const tz = data.clinic.timezone;
@@ -151,7 +179,11 @@ export function DayView({
         <div className="overflow-x-auto rounded-xl border border-line">
             <div
                 role="table"
-                aria-label={t('reception.calendar.dayGrid')}
+                aria-label={
+                    readOnly
+                        ? t('doctor.schedule.dayGrid')
+                        : t('reception.calendar.dayGrid')
+                }
                 style={{ minWidth: 72 + columns.length * 220 }}
             >
                 <div
@@ -246,6 +278,7 @@ export function DayView({
                                         timeZone={tz}
                                         droppable={droppable(column)}
                                         handlers={handlers}
+                                        readOnly={readOnly}
                                     />
                                 </div>
                             );
@@ -264,6 +297,7 @@ function Cell({
     timeZone,
     droppable,
     handlers,
+    readOnly,
 }: {
     cell: ReturnType<typeof cellState>;
     column: ColumnData;
@@ -271,6 +305,7 @@ function Cell({
     timeZone: string;
     droppable: boolean;
     handlers: MoveHandlers;
+    readOnly?: ReadOnly;
 }) {
     const { t } = useT();
     const moving = handlers.moving;
@@ -285,9 +320,18 @@ function Cell({
                         timeZone={timeZone}
                         rowTime={time}
                         handlers={handlers}
+                        readOnly={readOnly}
                     />
                 ))}
             </div>
+        );
+    }
+
+    if (cell.kind === 'free' && readOnly) {
+        return (
+            <span className="flex flex-1 items-center ps-2 text-[13.5px] text-mute">
+                {t('doctor.schedule.free')}
+            </span>
         );
     }
 
@@ -355,15 +399,51 @@ function Cell({
     );
 }
 
+/** A week-view chip: a link to the appointment, or (read only) a button that opens the panel. */
+function ChipShell({
+    row,
+    readOnly,
+    className,
+    children,
+}: {
+    row: AppointmentRow;
+    readOnly?: ReadOnly;
+    className?: string;
+    children: React.ReactNode;
+}) {
+    if (readOnly) {
+        return (
+            <button
+                type="button"
+                onClick={() => readOnly.onOpen(row)}
+                className={cn(className, 'w-full items-start text-start')}
+            >
+                {children}
+            </button>
+        );
+    }
+
+    return (
+        <Link
+            href={`/reception/appointments/${row.appointment.id}`}
+            className={className}
+        >
+            {children}
+        </Link>
+    );
+}
+
 /** The week's open days (Monday first) with hourly rows and small appointment chips. */
 export function WeekView({
     data,
     date,
     onBook,
+    readOnly,
 }: {
     data: CalendarData;
     date: IsoDate;
-    onBook: (date: IsoDate, hour: number) => void;
+    onBook?: (date: IsoDate, hour: number) => void;
+    readOnly?: ReadOnly;
 }) {
     const { t, locale } = useT();
     const tz = data.clinic.timezone;
@@ -395,7 +475,11 @@ export function WeekView({
         <div className="overflow-x-auto rounded-xl border border-line">
             <div
                 role="table"
-                aria-label={t('reception.calendar.weekGrid')}
+                aria-label={
+                    readOnly
+                        ? t('doctor.schedule.weekGrid')
+                        : t('reception.calendar.weekGrid')
+                }
                 style={{ minWidth: 72 + days.length * 130 }}
             >
                 <div
@@ -472,9 +556,10 @@ export function WeekView({
                                         const Icon = spec.icon;
 
                                         return (
-                                            <Link
+                                            <ChipShell
                                                 key={row.appointment.id}
-                                                href={`/reception/appointments/${row.appointment.id}`}
+                                                row={row}
+                                                readOnly={readOnly}
                                                 className={cn(
                                                     'flex min-h-11 flex-col justify-center gap-px rounded-sm px-2 py-1.5 transition-[transform,box-shadow] duration-150 hover:-translate-y-px hover:shadow-card',
                                                     spec.className,
@@ -505,26 +590,28 @@ export function WeekView({
                                                         </span>
                                                     )}
                                                 </span>
-                                            </Link>
+                                            </ChipShell>
                                         );
                                     })}
-                                    <button
-                                        type="button"
-                                        aria-label={t(
-                                            'reception.calendar.slotAria',
-                                            {
-                                                time,
-                                                doctor: formatWeekdayShort(
-                                                    d,
-                                                    locale,
-                                                ),
-                                            },
-                                        )}
-                                        onClick={() => onBook(d, hour)}
-                                        className="mt-auto min-h-11 rounded-md border border-dashed border-line-strong text-small font-semibold text-subtle transition-colors duration-150 hover:border-brand hover:bg-brand-tint hover:text-brand-deep"
-                                    >
-                                        +
-                                    </button>
+                                    {!readOnly && (
+                                        <button
+                                            type="button"
+                                            aria-label={t(
+                                                'reception.calendar.slotAria',
+                                                {
+                                                    time,
+                                                    doctor: formatWeekdayShort(
+                                                        d,
+                                                        locale,
+                                                    ),
+                                                },
+                                            )}
+                                            onClick={() => onBook?.(d, hour)}
+                                            className="mt-auto min-h-11 rounded-md border border-dashed border-line-strong text-small font-semibold text-subtle transition-colors duration-150 hover:border-brand hover:bg-brand-tint hover:text-brand-deep"
+                                        >
+                                            +
+                                        </button>
+                                    )}
                                 </div>
                             );
                         })}

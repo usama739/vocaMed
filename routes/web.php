@@ -16,7 +16,14 @@ Route::get('invite/{token}', fn (string $token) => Inertia::render('auth/invite'
 
 // Where a successful sign-in lands until the role areas are built. No access control yet.
 Route::inertia('admin', 'placeholder', ['role' => 'clinic_admin'])->name('placeholder.admin');
-Route::inertia('doctor', 'placeholder', ['role' => 'doctor'])->name('placeholder.doctor');
+
+// Doctor workspace. UI only for now: each route just renders its page, with no access control yet.
+Route::prefix('doctor')->name('doctor.')->group(function () {
+    Route::inertia('/', 'doctor/overview')->name('overview');
+    Route::inertia('schedule', 'doctor/schedule')->name('schedule');
+    Route::inertia('availability', 'doctor/availability')->name('availability');
+    Route::inertia('requests', 'doctor/requests')->name('requests');
+});
 
 // Receptionist console. UI only for now: each route just renders its page, with no access control yet.
 Route::prefix('reception')->name('reception.')->group(function () {

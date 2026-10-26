@@ -1,13 +1,17 @@
 import { Link } from '@inertiajs/react';
 import { CalendarOff, CalendarPlus, Clock } from 'lucide-react';
 import { initialsOf, localDate } from '@/components/reception/format';
-import type { DoctorDay, Row } from '@/components/reception/queries';
 import { StatusToggleGroup } from '@/components/reception/status-toggle-group';
 import { Button } from '@/components/ui/button';
 import { formatClock, formatWhen } from '@/components/vocamed/booking/format';
 import { StatusBadge } from '@/components/vocamed/status-badge';
 import { useT } from '@/i18n/scope';
-import type { AppointmentStatus, IsoDate } from '@/lib/data';
+import type {
+    AppointmentRow,
+    AppointmentStatus,
+    DoctorDay,
+    IsoDate,
+} from '@/lib/data';
 import { cn } from '@/lib/utils';
 
 /** The row grid: stacked on tablets, one line of four columns from `lg` up. */
@@ -21,11 +25,11 @@ function ScheduleRow({
     pendingStage,
     onToggle,
 }: {
-    row: Row;
+    row: AppointmentRow;
     timeZone: string;
     changed: boolean;
     pendingStage: AppointmentStatus | null;
-    onToggle: (row: Row, stage: AppointmentStatus) => void;
+    onToggle: (row: AppointmentRow, stage: AppointmentStatus) => void;
 }) {
     const { t } = useT();
     const { appointment, patient, service } = row;
@@ -66,6 +70,7 @@ function ScheduleRow({
                 <StatusToggleGroup
                     patientName={patient.name}
                     status={appointment.status}
+                    allowed={row.allowed}
                     pending={pendingStage}
                     onToggle={(stage) => onToggle(row, stage)}
                 />
@@ -90,7 +95,7 @@ export function DoctorSchedule({
     timeZone: string;
     changed: ReadonlySet<string>;
     pending: { id: string; stage: AppointmentStatus } | null;
-    onToggle: (row: Row, stage: AppointmentStatus) => void;
+    onToggle: (row: AppointmentRow, stage: AppointmentStatus) => void;
     onBook: (doctorId: string) => void;
     index?: number;
 }) {

@@ -12,9 +12,10 @@ import { ChoiceChip } from '@/components/vocamed/choice-chip';
 import { FormField, TextField } from '@/components/vocamed/form-fields';
 import { Input } from '@/components/ui/input';
 import { useData } from '@/hooks/use-data';
+import { useErrorText } from '@/hooks/use-error-text';
 import { useT } from '@/i18n/scope';
 import type { Locale } from '@/i18n/locales';
-import { DataError, type Patient } from '@/lib/data';
+import type { Patient } from '@/lib/data';
 
 /**
  * "Add a patient": name, mobile phone and message language. Field errors sit under the field;
@@ -74,6 +75,7 @@ function NewPatientForm({
     }) => Promise<void>;
 }) {
     const { t } = useT();
+    const { forField } = useErrorText();
     const [name, setName] = useState('');
     const [phone, setPhone] = useState(initialPhone);
     const [language, setLanguage] = useState<Locale>('ur');
@@ -111,16 +113,13 @@ function NewPatientForm({
                 preferredLocale: language,
             });
         } catch (caught) {
-            if (
-                caught instanceof DataError &&
-                /already exists/.test(caught.message)
-            ) {
-                setErrors({ phone: t('reception.patients.errDuplicate') });
-            } else if (caught instanceof DataError) {
-                setErrors({ phone: t('reception.patients.errPhone') });
-            } else {
-                setErrors({ form: t('reception.patients.saveFailed') });
-            }
+            const { field, message } = forField(caught);
+
+            setErrors(
+                field === 'phone' || field === 'name'
+                    ? { [field]: message }
+                    : { form: t('reception.patients.saveFailed') },
+            );
         } finally {
             setSaving(false);
         }

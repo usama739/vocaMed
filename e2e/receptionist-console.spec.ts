@@ -41,7 +41,7 @@ const PAGES: PageSpec[] = [
         name: 'appointments',
         path: url('/reception/appointments'),
         h1: { en: 'Appointments', ur: 'اپائنٹمنٹس' },
-        ready: '22',
+        ready: '24',
     },
     {
         name: 'appointment',
@@ -79,7 +79,7 @@ const PAGES: PageSpec[] = [
 async function waitForData(page: Page, spec: PageSpec, locale: Locale) {
     if (spec.name === 'appointments') {
         await expect(
-            page.getByRole('status').filter({ hasText: '22' }),
+            page.getByRole('status').filter({ hasText: '24' }),
         ).toBeVisible();
 
         return;
@@ -321,7 +321,7 @@ test.describe('Appointments', () => {
         page,
     }) => {
         await gotoIn(page, url('/reception/appointments'), 'en');
-        await expect(page.getByText('22 appointments')).toBeVisible();
+        await expect(page.getByText('24 appointments')).toBeVisible();
 
         await page
             .getByRole('group', { name: 'Doctor' })
@@ -349,7 +349,7 @@ test.describe('Appointments', () => {
         page,
     }) => {
         await gotoIn(page, url('/reception/appointments'), 'en');
-        await expect(page.getByText('22 appointments')).toBeVisible();
+        await expect(page.getByText('24 appointments')).toBeVisible();
 
         await page
             .getByRole('button', { name: /^Reschedule / })
@@ -368,6 +368,8 @@ test.describe('Appointments', () => {
 
         for (let i = 0; i < (await days.count()); i++) {
             await days.nth(i).click();
+            // Times load a moment after the day is chosen; wait for them before looking.
+            await expect(panel.getByText('Loading…')).toBeHidden();
             const free = panel
                 .getByRole('group', { name: 'Time' })
                 .getByRole('button')
@@ -388,14 +390,14 @@ test.describe('Appointments', () => {
         page,
     }) => {
         await gotoIn(page, url('/reception/appointments'), 'en');
-        await expect(page.getByText('22 appointments')).toBeVisible();
+        await expect(page.getByText('24 appointments')).toBeVisible();
 
         await page
             .getByRole('searchbox', { name: 'Search by patient name or phone' })
             .fill('zzzzzz');
         await expect(page.getByText('No appointments match')).toBeVisible();
         await page.getByRole('button', { name: 'Clear filters' }).click();
-        await expect(page.getByText('22 appointments')).toBeVisible();
+        await expect(page.getByText('24 appointments')).toBeVisible();
     });
 
     test('opens an appointment, marks it arrived, and the history grows', async ({

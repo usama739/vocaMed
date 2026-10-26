@@ -9,7 +9,6 @@ import {
 } from '@/components/reception/calendar/views';
 import {
     APPOINTMENT_STATUSES,
-    loadCalendar,
     openDaysOfWeek,
     rangeOf,
     shiftDate,
@@ -17,18 +16,13 @@ import {
     VIEWS,
     type CalendarView,
 } from '@/components/reception/calendar/model';
-import {
-    formatLongDate,
-    formatMonthYear,
-    todayIn,
-} from '@/components/reception/format';
+import { formatLongDate, formatMonthYear } from '@/components/reception/format';
 import {
     PageBody,
     PageError,
     PageLoading,
     SampleNote,
 } from '@/components/reception/page-parts';
-import { defaultService, type Row } from '@/components/reception/queries';
 import { useReception } from '@/components/reception/runtime';
 import { Button } from '@/components/ui/button';
 import { formatClock } from '@/components/vocamed/booking/format';
@@ -37,10 +31,17 @@ import { ConfirmDialog } from '@/components/vocamed/confirm-dialog';
 import { BADGE_SPEC } from '@/components/vocamed/status-badge';
 import { notify } from '@/components/vocamed/toast';
 import { useData } from '@/hooks/use-data';
-import { useLiveQuery } from '@/hooks/use-live-query';
 import { useUrlParams } from '@/hooks/use-url-params';
+import { useView } from '@/hooks/use-view';
 import { useT } from '@/i18n/scope';
-import { DataError, utcToZoned, type IsoDate, type Slot } from '@/lib/data';
+import {
+    DataError,
+    defaultService,
+    utcToZoned,
+    type AppointmentRow,
+    type IsoDate,
+    type Slot,
+} from '@/lib/data';
 import { cn } from '@/lib/utils';
 
 const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -54,45 +55,39 @@ export default function CalendarPage() {
         date: '',
         doctor: 'all',
     });
-    const [moving, setMoving] = useState<Row | null>(null);
+    const [moving, setMoving] = useState<AppointmentRow | null>(null);
     const [pending, setPending] = useState<{
-        row: Row;
+        row: AppointmentRow;
         startsAt: string;
     } | null>(null);
     const dragging = useRef(false);
     // While a drag is under way the grid must not move, so the banner waits until it ends.
     const [dragActive, setDragActive] = useState(false);
 
-    const clinic = useLiveQuery('clinic', (s) => s.clinic.get(), {
-        refreshMs: 0,
-    }).data;
-    const doctors = useLiveQuery(
-        'doctors',
-        (s) => s.doctors.list({ activeOnly: true }),
-        { refreshMs: 0 },
-    ).data;
-    const today = clinic ? todayIn(clinic.timezone) : null;
     const view = (VIEWS as string[]).includes(params.view)
         ? (params.view as CalendarView)
         : 'day';
-    const date: IsoDate | null = validDate(params.date) ? params.date : today;
+
+    const query = useView(
+        'calendar',
+        {
+            view,
+            // Empty means today: the server decides what today is.
+            date: validDate(params.date) ? params.date : null,
+            doctorId: params.doctor,
+        },
+        { emptyFrom: (d) => ({ ...d, rows: [] }) },
+    );
+    const data = query.data;
+    const date: IsoDate | null = data?.date ?? null;
+    const doctors = data?.allDoctors;
     const doctorId =
         params.doctor === 'all' ||
         !doctors ||
         doctors.some((d) => d.id === params.doctor)
             ? params.doctor
             : 'all';
-
-    const query = useLiveQuery(
-        `calendar:${view}:${date}:${doctorId}`,
-        (s) =>
-            date
-                ? loadCalendar(s, view, date, doctorId)
-                : Promise.resolve(null),
-        { emptyFrom: (d) => (d ? { ...d, rows: [] } : d) },
-    );
-    const data = query.data ?? undefined;
-    const tz = clinic?.timezone ?? 'UTC';
+    const tz = data?.clinic.timezone ?? 'UTC';
 
     const rangeLabel = (() => {
         if (!date) {
@@ -134,7 +129,7 @@ export default function CalendarPage() {
         openBooking({ doctorId: doctor, startsAt: slot.startsAt });
 
     /** Finds the free time in the chosen half hour that suits the moved appointment's own service. */
-    const askMove = async (row: Row, slot: Slot) => {
+    const askMove = async (row: AppointmentRow, slot: Slot) => {
         const local = utcToZoned(new Date(slot.startsAt), tz);
         const rowStart = Math.floor(toMinutes(local.time) / 30) * 30;
 

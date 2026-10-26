@@ -23,7 +23,6 @@ import {
     PageLoading,
     SampleNote,
 } from '@/components/reception/page-parts';
-import { toRows } from '@/components/reception/queries';
 import { useReception } from '@/components/reception/runtime';
 import { Button } from '@/components/ui/button';
 import { formatClock } from '@/components/vocamed/booking/format';
@@ -31,15 +30,9 @@ import { ConfirmDialog } from '@/components/vocamed/confirm-dialog';
 import { StatusBadge } from '@/components/vocamed/status-badge';
 import { notify } from '@/components/vocamed/toast';
 import { useData } from '@/hooks/use-data';
-import { useLiveQuery } from '@/hooks/use-live-query';
+import { useView } from '@/hooks/use-view';
 import { useT } from '@/i18n/scope';
-import {
-    DataError,
-    isOpenStatus,
-    type AuditEntry,
-    type TimelineItem,
-    type User,
-} from '@/lib/data';
+import type { Actor, HistoryItem, TimelineItem } from '@/lib/data';
 import { cn } from '@/lib/utils';
 
 export default function AppointmentDetail({ id }: { id: string }) {
@@ -49,34 +42,7 @@ export default function AppointmentDetail({ id }: { id: string }) {
     const [busy, setBusy] = useState<'arrive' | 'resend' | null>(null);
     const [confirming, setConfirming] = useState(false);
 
-    const query = useLiveQuery(
-        `appointment:${id}`,
-        async (s) => {
-            try {
-                const appointment = await s.appointments.get(id);
-                const [clinic, [row], users, timeline, audit] =
-                    await Promise.all([
-                        s.clinic.get(),
-                        toRows(s, [appointment]),
-                        s.users.list(),
-                        s.appointments.timeline(id),
-                        s.audit.list({ subjectId: id }),
-                    ]);
-
-                return { clinic, row, users, timeline, audit };
-            } catch (caught) {
-                if (
-                    caught instanceof DataError &&
-                    caught.code === 'NOT_FOUND'
-                ) {
-                    return null;
-                }
-
-                throw caught;
-            }
-        },
-        { refreshMs: 5000 },
-    );
+    const query = useView('appointment', id, { refreshMs: 5000 });
 
     const data = query.data;
     const row = data?.row;
@@ -104,14 +70,13 @@ export default function AppointmentDetail({ id }: { id: string }) {
         (item) => item.type === 'message' && item.entry.kind === 'confirmation',
     );
 
-    const userName = (actorId: string, users: User[]) =>
-        actorId === 'patient'
+    const actorName = (actor: Actor) =>
+        actor.kind === 'patient'
             ? t('reception.detail.patientLink')
-            : (users.find((u) => u.id === actorId)?.name ??
-              t('reception.detail.system'));
+            : (actor.name ?? t('reception.detail.system'));
 
-    const history = (audit: AuditEntry[], users: User[]) =>
-        audit.map((entry) => {
+    const history = (items: HistoryItem[]) =>
+        items.map((entry) => {
             const status = String(entry.meta.status ?? '');
             const what =
                 entry.action === 'appointment.created'
@@ -119,7 +84,7 @@ export default function AppointmentDetail({ id }: { id: string }) {
                           `reception.detail.audit.created.${String(entry.meta.source ?? 'manual')}` as never,
                       )
                     : entry.action === 'appointment.status_changed'
-                      ? status === 'confirmed' && entry.actorId === 'patient'
+                      ? status === 'confirmed' && entry.actor.kind === 'patient'
                           ? t('reception.detail.audit.confirmedByPatient')
                           : status === 'arrived'
                             ? t('reception.detail.audit.arrived')
@@ -145,7 +110,7 @@ export default function AppointmentDetail({ id }: { id: string }) {
             return {
                 id: entry.id,
                 what,
-                who: userName(entry.actorId, users),
+                who: actorName(entry.actor),
                 when: clinic
                     ? formatStamp(entry.at, clinic.timezone, locale)
                     : '',
@@ -191,7 +156,7 @@ export default function AppointmentDetail({ id }: { id: string }) {
                                         />
                                     </div>
                                 </div>
-                                {isOpenStatus(appointment.status) && (
+                                {row.allowed.canReschedule && (
                                     <div className="flex flex-wrap gap-2">
                                         <Button
                                             disabled={busy !== null}
@@ -369,9 +334,8 @@ export default function AppointmentDetail({ id }: { id: string }) {
                                                 {t(
                                                     'reception.detail.bookedByValue',
                                                     {
-                                                        name: userName(
-                                                            appointment.createdBy,
-                                                            data.users,
+                                                        name: actorName(
+                                                            row.createdBy,
                                                         ),
                                                         source: t(
                                                             `reception.source.${appointment.source}`,
@@ -392,7 +356,7 @@ export default function AppointmentDetail({ id }: { id: string }) {
                                         <CardTitle>
                                             {t('reception.detail.history')}
                                         </CardTitle>
-                                        {data.audit.length === 0 ? (
+                                        {data.history.length === 0 ? (
                                             <p className="text-control">
                                                 {t(
                                                     'reception.detail.noHistory',
@@ -400,31 +364,32 @@ export default function AppointmentDetail({ id }: { id: string }) {
                                             </p>
                                         ) : (
                                             <ol className="flex flex-col gap-3.5">
-                                                {history(
-                                                    data.audit,
-                                                    data.users,
-                                                ).map((item) => (
-                                                    <li
-                                                        key={item.id}
-                                                        className="flex items-start gap-3"
-                                                    >
-                                                        <span
-                                                            aria-hidden="true"
-                                                            className="mt-[9px] size-2.5 shrink-0 rounded-full bg-line-dashed"
-                                                        />
-                                                        <div className="flex flex-col leading-[1.5]">
-                                                            <span className="text-control font-semibold text-ink">
-                                                                {item.what}
-                                                            </span>
-                                                            <span className="text-label">
-                                                                {item.who} ·{' '}
-                                                                <span dir="ltr">
-                                                                    {item.when}
+                                                {history(data.history).map(
+                                                    (item) => (
+                                                        <li
+                                                            key={item.id}
+                                                            className="flex items-start gap-3"
+                                                        >
+                                                            <span
+                                                                aria-hidden="true"
+                                                                className="mt-[9px] size-2.5 shrink-0 rounded-full bg-line-dashed"
+                                                            />
+                                                            <div className="flex flex-col leading-[1.5]">
+                                                                <span className="text-control font-semibold text-ink">
+                                                                    {item.what}
                                                                 </span>
-                                                            </span>
-                                                        </div>
-                                                    </li>
-                                                ))}
+                                                                <span className="text-label">
+                                                                    {item.who} ·{' '}
+                                                                    <span dir="ltr">
+                                                                        {
+                                                                            item.when
+                                                                        }
+                                                                    </span>
+                                                                </span>
+                                                            </div>
+                                                        </li>
+                                                    ),
+                                                )}
                                             </ol>
                                         )}
                                     </Card>

@@ -36,6 +36,17 @@ const receptionEn = {
     },
     langName: { en: 'English', ur: 'Urdu' },
     noPhone: 'No phone number',
+    errors: {
+        generic: 'Something went wrong. Try again.',
+        invalid: 'Check the details and try again.',
+        invalidName: 'Enter the patient’s name.',
+        invalidPhone: 'Enter a phone number with at least 10 digits.',
+        duplicatePhone: 'A patient with this phone number already exists.',
+        slotTaken: 'That time was just taken. Choose another.',
+        notFound: 'That record could not be found.',
+        invalidTransition: 'That change is not possible any more.',
+        forbidden: 'You are not allowed to do that.',
+    },
     notFoundBack: 'Back to the list',
     saving: 'Saving…',
     today: {

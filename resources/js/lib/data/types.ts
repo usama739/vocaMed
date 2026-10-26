@@ -109,10 +109,79 @@ export interface TimeOff {
     reason: string;
 }
 
+/** A 30-minute time that is closed every week on that weekday (the doctor blocked it). */
+export interface BlockedSlot {
+    weekday: number;
+    time: TimeOfDay;
+}
+
 export interface DoctorAvailability {
     doctorId: Id;
     windows: WorkingWindow[];
     timeOff: TimeOff[];
+    blocked: BlockedSlot[];
+}
+
+/** One weekday as the doctor edits it. A lunch break is the fixed 13:00 to 14:00 gap. */
+export interface DayHours {
+    weekday: number;
+    on: boolean;
+    start: TimeOfDay;
+    end: TimeOfDay;
+    lunch: boolean;
+}
+
+export interface TimeOffDraft {
+    id: Id | null;
+    startDate: IsoDate;
+    endDate: IsoDate;
+    reason: string;
+}
+
+/** Everything the availability page edits and saves together (`PUT /doctor/availability`). */
+export interface AvailabilityDraft {
+    /** Monday first. */
+    days: DayHours[];
+    timeOff: TimeOffDraft[];
+    blocked: BlockedSlot[];
+}
+
+export interface AffectedBooking {
+    appointmentId: Id;
+    patientName: string;
+    startsAt: IsoDateTime;
+}
+
+/** What a draft would produce: bookable 30-minute slots per day, and the bookings it would strand. */
+export interface AvailabilityPreview {
+    /** Same order as `AvailabilityDraft.days`. */
+    slotsPerWeekday: number[];
+    total: number;
+    affected: AffectedBooking[];
+}
+
+export type RequestStatus = 'pending' | 'approved' | 'rejected';
+
+/** A patient asked, through their link, to move an appointment (phase 2). */
+export interface RescheduleRequest {
+    id: Id;
+    clinicId: Id;
+    appointmentId: Id;
+    patientId: Id;
+    doctorId: Id;
+    /** When the appointment was, at the moment the patient asked. */
+    fromStartsAt: IsoDateTime;
+    proposedStartsAt: IsoDateTime;
+    status: RequestStatus;
+    /** The doctor's optional message to reception. */
+    message: string | null;
+    createdAt: IsoDateTime;
+    decidedAt: IsoDateTime | null;
+}
+
+export interface RequestDecisionInput {
+    decision: 'approved' | 'rejected';
+    message?: string;
 }
 
 export interface Patient {
@@ -304,22 +373,37 @@ export interface NewAppointmentInput {
     notes?: string;
 }
 
+/**
+ * Errors the pages understand. The real adapter builds them from the response: 404 NOT_FOUND,
+ * 409 SLOT_UNAVAILABLE (with alternatives), 422 (VALIDATION, INVALID_PHONE, DUPLICATE_PHONE,
+ * INVALID_TRANSITION, carrying the field), 403 FORBIDDEN. Pages never read `message`.
+ */
 export type DataErrorCode =
-    'NOT_FOUND' | 'SLOT_UNAVAILABLE' | 'INVALID_TRANSITION' | 'VALIDATION';
+    | 'NOT_FOUND'
+    | 'SLOT_UNAVAILABLE'
+    | 'INVALID_TRANSITION'
+    | 'VALIDATION'
+    | 'INVALID_PHONE'
+    | 'DUPLICATE_PHONE'
+    | 'FORBIDDEN';
 
 export class DataError extends Error {
     readonly code: DataErrorCode;
     /** For SLOT_UNAVAILABLE: the nearest free slots, so the UI can offer alternatives. */
     readonly alternatives: Slot[];
+    /** The form field the error belongs to, when it belongs to one. */
+    readonly field: string | null;
 
     constructor(
         code: DataErrorCode,
         message: string,
         alternatives: Slot[] = [],
+        field: string | null = null,
     ) {
         super(message);
         this.name = 'DataError';
         this.code = code;
         this.alternatives = alternatives;
+        this.field = field;
     }
 }

@@ -1,12 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
 import { Download } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    addDaysToDate,
     formatPhone,
     localDate,
     relativeDay,
-    todayIn,
 } from '@/components/reception/format';
 import {
     PageBody,
@@ -14,7 +12,6 @@ import {
     PageHeader,
     SampleNote,
 } from '@/components/reception/page-parts';
-import { loadRows, type Row } from '@/components/reception/queries';
 import { useReception } from '@/components/reception/runtime';
 import { Button } from '@/components/ui/button';
 import { formatClock } from '@/components/vocamed/booking/format';
@@ -33,15 +30,11 @@ import { StatusBadge } from '@/components/vocamed/status-badge';
 import { notify } from '@/components/vocamed/toast';
 import { useChangedKeys } from '@/hooks/use-changed-keys';
 import { useData } from '@/hooks/use-data';
-import { useLiveQuery } from '@/hooks/use-live-query';
 import { useShortcut } from '@/hooks/use-shortcut';
 import { useUrlParams } from '@/hooks/use-url-params';
+import { useView } from '@/hooks/use-view';
 import { useT } from '@/i18n/scope';
-import {
-    isOpenStatus,
-    type AppointmentQuery,
-    type AppointmentStatus,
-} from '@/lib/data';
+import type { AppointmentRow, AppointmentStatus } from '@/lib/data';
 
 const PER_PAGE = 10;
 const STATUSES: AppointmentStatus[] = [
@@ -72,7 +65,7 @@ export default function Appointments() {
     const [params, setParams] = useUrlParams(DEFAULTS);
     const [typed, setTyped] = useState(params.q);
     const [debounced, setDebounced] = useState(params.q.trim());
-    const [cancelling, setCancelling] = useState<Row | null>(null);
+    const [cancelling, setCancelling] = useState<AppointmentRow | null>(null);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -92,65 +85,37 @@ export default function Appointments() {
         document.getElementById('appointment-search')?.focus(),
     );
 
-    const setup = useLiveQuery(
-        'appointments-setup',
-        async (s) => {
-            const [clinic, doctors] = await Promise.all([
-                s.clinic.get(),
-                s.doctors.list(),
-            ]);
-
-            return { clinic, doctors };
-        },
-        { refreshMs: 0 },
-    ).data;
-    const today = setup ? todayIn(setup.clinic.timezone) : null;
     const when = (DATE_FILTERS as readonly string[]).includes(params.when)
         ? (params.when as DateFilter)
         : 'any';
     const page = Math.max(1, Number(params.page) || 1);
     const direction = params.sort === 'asc' ? 'asc' : 'desc';
 
-    const filters: AppointmentQuery | null = useMemo(() => {
-        if (!today) {
-            return null;
-        }
-
-        const range =
-            when === 'today'
-                ? { from: today, to: today }
-                : when === 'next7'
-                  ? { from: today, to: addDaysToDate(today, 7) }
-                  : when === 'past7'
-                    ? {
-                          from: addDaysToDate(today, -7),
-                          to: addDaysToDate(today, -1),
-                      }
-                    : {};
-
-        return {
-            ...range,
-            ...(params.doctor !== 'all' ? { doctorId: params.doctor } : {}),
-            ...(params.status !== 'all'
-                ? { status: params.status as AppointmentStatus }
-                : {}),
-            ...(debounced ? { patient: debounced } : {}),
-            sort: direction === 'asc' ? 'startsAt' : '-startsAt',
+    const query = useView(
+        'appointments',
+        {
+            when,
+            doctorId: params.doctor !== 'all' ? params.doctor : undefined,
+            status:
+                params.status !== 'all'
+                    ? (params.status as AppointmentStatus)
+                    : undefined,
+            q: debounced || undefined,
+            sort: direction,
             page,
             perPage: PER_PAGE,
-        };
-    }, [today, when, params.doctor, params.status, debounced, direction, page]);
-
-    const query = useLiveQuery(
-        `appointments:${JSON.stringify(filters)}`,
-        (s) => (filters ? loadRows(s, filters) : Promise.resolve(null)),
+        },
         {
             keepPrevious: true,
-            emptyFrom: (page) =>
-                page ? { ...page, items: [], total: 0 } : page,
+            emptyFrom: (view) => ({
+                ...view,
+                page: { ...view.page, items: [], total: 0 },
+            }),
         },
     );
-    const result = query.data ?? undefined;
+    const setup = query.data;
+    const today = setup?.today ?? null;
+    const result = query.data?.page;
     const rows = result?.items ?? [];
     const pageCount = Math.max(1, Math.ceil((result?.total ?? 0) / PER_PAGE));
     const changed = useChangedKeys(
@@ -172,7 +137,7 @@ export default function Appointments() {
     const change = (patch: Partial<typeof DEFAULTS>) =>
         setParams({ ...patch, page: '1' });
 
-    const whenLabel = (row: Row) => {
+    const whenLabel = (row: AppointmentRow) => {
         if (!setup || !today) {
             return null;
         }
@@ -186,7 +151,7 @@ export default function Appointments() {
         };
     };
 
-    const columns: Column<Row>[] = [
+    const columns: Column<AppointmentRow>[] = [
         {
             key: 'when',
             header: t('reception.appointments.colWhen'),
@@ -406,52 +371,51 @@ export default function Appointments() {
                                                 )}
                                             </Link>
                                         </Button>
-                                        {isOpenStatus(
-                                            row.appointment.status,
-                                        ) && (
-                                            <>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    aria-label={t(
-                                                        'reception.appointments.rescheduleAria',
-                                                        {
-                                                            patient:
-                                                                row.patient
-                                                                    .name,
-                                                        },
-                                                    )}
-                                                    onClick={() =>
-                                                        openReschedule(
-                                                            row.appointment,
-                                                        )
-                                                    }
-                                                >
-                                                    {t(
-                                                        'reception.appointments.reschedule',
-                                                    )}
-                                                </Button>
-                                                <Button
-                                                    variant="outline-destructive"
-                                                    size="sm"
-                                                    aria-label={t(
-                                                        'reception.appointments.cancelAria',
-                                                        {
-                                                            patient:
-                                                                row.patient
-                                                                    .name,
-                                                        },
-                                                    )}
-                                                    onClick={() =>
-                                                        setCancelling(row)
-                                                    }
-                                                >
-                                                    {t(
-                                                        'reception.appointments.cancel',
-                                                    )}
-                                                </Button>
-                                            </>
-                                        )}
+                                        {row.allowed.canReschedule &&
+                                            row.allowed.canCancel && (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        aria-label={t(
+                                                            'reception.appointments.rescheduleAria',
+                                                            {
+                                                                patient:
+                                                                    row.patient
+                                                                        .name,
+                                                            },
+                                                        )}
+                                                        onClick={() =>
+                                                            openReschedule(
+                                                                row.appointment,
+                                                            )
+                                                        }
+                                                    >
+                                                        {t(
+                                                            'reception.appointments.reschedule',
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline-destructive"
+                                                        size="sm"
+                                                        aria-label={t(
+                                                            'reception.appointments.cancelAria',
+                                                            {
+                                                                patient:
+                                                                    row.patient
+                                                                        .name,
+                                                            },
+                                                        )}
+                                                        onClick={() =>
+                                                            setCancelling(row)
+                                                        }
+                                                    >
+                                                        {t(
+                                                            'reception.appointments.cancel',
+                                                        )}
+                                                    </Button>
+                                                </>
+                                            )}
                                     </>
                                 );
                             }}

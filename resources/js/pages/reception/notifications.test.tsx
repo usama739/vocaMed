@@ -55,10 +55,15 @@ describe('Notifications', () => {
         ] as const) {
             const n = (await source.notifications.list({ status })).length;
 
+            const label = {
+                queued: 'Queued',
+                sent: 'Sent',
+                delivered: 'Delivered',
+                failed: 'Failed',
+            }[status];
+
             expect(
-                screen.getByRole('button', {
-                    name: new RegExp(`\\(${n}\\)$`),
-                }),
+                screen.getByRole('button', { name: `${label} (${n})` }),
             ).toBeDefined();
         }
     });

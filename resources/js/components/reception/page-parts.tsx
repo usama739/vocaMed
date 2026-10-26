@@ -97,12 +97,17 @@ export function Card({
 export function CardTitle({
     children,
     className,
+    id,
 }: {
     children: ReactNode;
     className?: string;
+    id?: string;
 }) {
     return (
-        <h2 className={cn('text-lead font-semibold text-ink', className)}>
+        <h2
+            id={id}
+            className={cn('text-lead font-semibold text-ink', className)}
+        >
             {children}
         </h2>
     );

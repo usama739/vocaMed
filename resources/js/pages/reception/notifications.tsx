@@ -5,7 +5,6 @@ import {
     formatPhone,
     localDate,
     relativeDay,
-    todayIn,
 } from '@/components/reception/format';
 import {
     PageBody,
@@ -25,15 +24,10 @@ import { StatusBadge } from '@/components/vocamed/status-badge';
 import { notify } from '@/components/vocamed/toast';
 import { useChangedKeys } from '@/hooks/use-changed-keys';
 import { useData } from '@/hooks/use-data';
-import { useLiveQuery } from '@/hooks/use-live-query';
 import { useUrlParams } from '@/hooks/use-url-params';
+import { useView } from '@/hooks/use-view';
 import { useT } from '@/i18n/scope';
-import type {
-    DataSource,
-    NotificationLogEntry,
-    NotificationStatus,
-    Patient,
-} from '@/lib/data';
+import type { NotificationRow, NotificationStatus } from '@/lib/data';
 
 const PER_PAGE = 20;
 const STATUSES: NotificationStatus[] = [
@@ -43,25 +37,6 @@ const STATUSES: NotificationStatus[] = [
     'failed',
 ];
 
-type LogRow = { entry: NotificationLogEntry; patient: Patient | undefined };
-
-async function loadLog(source: DataSource) {
-    const [clinic, entries] = await Promise.all([
-        source.clinic.get(),
-        source.notifications.list(),
-    ]);
-    const ids = [...new Set(entries.map((e) => e.patientId))];
-    const patients = await Promise.all(
-        ids.map((id) => source.patients.get(id).catch(() => undefined)),
-    );
-    const rows: LogRow[] = entries.map((entry) => ({
-        entry,
-        patient: patients.find((p) => p?.id === entry.patientId),
-    }));
-
-    return { clinic, rows };
-}
-
 export default function Notifications() {
     const { t } = useT();
     const source = useData();
@@ -69,12 +44,12 @@ export default function Notifications() {
     const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set());
     const [resending, setResending] = useState<string | null>(null);
 
-    const query = useLiveQuery('notifications', loadLog, {
+    const query = useView('notifications', undefined, {
         emptyFrom: (d) => ({ ...d, rows: [] }),
     });
     const rows = useMemo(() => query.data?.rows ?? [], [query.data]);
     const clinic = query.data?.clinic;
-    const today = clinic ? todayIn(clinic.timezone) : null;
+    const today = query.data?.today ?? null;
 
     const changed = useChangedKeys(
         rows,
@@ -98,7 +73,7 @@ export default function Notifications() {
     const page = Math.min(Math.max(1, Number(params.page) || 1), pageCount);
     const visible = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-    const resend = async (row: LogRow) => {
+    const resend = async (row: NotificationRow) => {
         setResending(row.entry.id);
 
         try {
@@ -118,7 +93,7 @@ export default function Notifications() {
         }
     };
 
-    const columns: Column<LogRow>[] = [
+    const columns: Column<NotificationRow>[] = [
         {
             key: 'when',
             header: t('reception.notifications.colTime'),

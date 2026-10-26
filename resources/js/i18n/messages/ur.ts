@@ -2,6 +2,7 @@ import type en from './en';
 import authUr from './auth-ur';
 import landingUr from './landing-ur';
 import privacyUr from './privacy-ur';
+import doctorUr from './doctor-ur';
 import receptionUr from './reception-ur';
 import type { DeepString } from './types';
 
@@ -185,6 +186,7 @@ const ur: DeepString<typeof en> = {
     landing: landingUr,
     privacy: privacyUr,
     reception: receptionUr,
+    doctor: doctorUr,
 };
 
 export default ur;

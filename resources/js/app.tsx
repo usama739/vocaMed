@@ -5,6 +5,7 @@ import { initializeTheme } from '@/hooks/use-appearance';
 import { setupI18n } from '@/i18n';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
+import DoctorLayout from '@/layouts/doctor-layout';
 import ReceptionLayout from '@/layouts/reception-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
@@ -31,6 +32,8 @@ void createInertiaApp({
             // Pages that bring their own shell (public layout, previews).
             case PAGES_WITH_OWN_SHELL.has(name):
                 return null;
+            case name.startsWith('doctor/'):
+                return DoctorLayout;
             case name.startsWith('reception/'):
                 return ReceptionLayout;
             case name.startsWith('auth/'):

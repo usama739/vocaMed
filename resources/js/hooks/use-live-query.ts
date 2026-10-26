@@ -3,6 +3,15 @@ import { useReception } from '@/components/reception/runtime';
 import { useData } from '@/hooks/use-data';
 import type { DataSource } from '@/lib/data';
 
+export type LiveOptions<T> = {
+    refreshMs?: number;
+    /** What `?state=empty` shows when the page has nothing to build it from. */
+    empty?: T;
+    /** Builds the empty view from the real data (keeps doctors, filters and so on). */
+    emptyFrom?: (data: T) => T;
+    keepPrevious?: boolean;
+};
+
 export type LiveStatus = 'loading' | 'ready' | 'error';
 
 /**
@@ -16,14 +25,7 @@ export type LiveStatus = 'loading' | 'ready' | 'error';
 export function useLiveQuery<T>(
     key: string,
     load: (source: DataSource) => Promise<T>,
-    options: {
-        refreshMs?: number;
-        /** What `?state=empty` shows when the page has nothing to build it from. */
-        empty?: T;
-        /** Builds the empty view from the real data (keeps doctors, filters and so on). */
-        emptyFrom?: (data: T) => T;
-        keepPrevious?: boolean;
-    } = {},
+    options: LiveOptions<T> = {},
 ): {
     data: T | undefined;
     status: LiveStatus;

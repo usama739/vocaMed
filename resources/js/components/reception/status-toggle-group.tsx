@@ -1,6 +1,6 @@
 import { Check, Loader2 } from 'lucide-react';
 import { useT } from '@/i18n/scope';
-import { canMoveStatus, type AppointmentStatus } from '@/lib/data';
+import type { AppointmentAllowed, AppointmentStatus } from '@/lib/data';
 import { cn } from '@/lib/utils';
 
 /** The stages a receptionist moves a patient through on the day. */
@@ -18,11 +18,14 @@ export const DAY_STAGES = [
 export function StatusToggleGroup({
     patientName,
     status,
+    allowed,
     pending,
     onToggle,
 }: {
     patientName: string;
     status: AppointmentStatus;
+    /** What the server allows from this status; the buttons only read it. */
+    allowed: AppointmentAllowed;
     /** The stage being saved, shown with a spinner. */
     pending?: AppointmentStatus | null;
     onToggle: (stage: AppointmentStatus) => void;
@@ -40,7 +43,9 @@ export function StatusToggleGroup({
             {DAY_STAGES.map((stage) => {
                 const on = status === stage;
                 const busy = pending === stage;
-                const blocked = !on && !canMoveStatus(status, stage);
+                const blocked = on
+                    ? !allowed.canUndo
+                    : !allowed.transitions.includes(stage);
 
                 return (
                     <button

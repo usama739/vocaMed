@@ -5,7 +5,6 @@ import {
     formatPhone,
     localDate,
     relativeDay,
-    todayIn,
 } from '@/components/reception/format';
 import { NewPatientDialog } from '@/components/reception/new-patient-dialog';
 import {
@@ -16,18 +15,15 @@ import {
     PatientAvatar,
     SampleNote,
 } from '@/components/reception/page-parts';
-import {
-    loadPatientRows,
-    type PatientRow,
-} from '@/components/reception/queries';
 import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/vocamed/data-table';
 import { EmptyState } from '@/components/vocamed/states';
 import { notify } from '@/components/vocamed/toast';
-import { useLiveQuery } from '@/hooks/use-live-query';
 import { useShortcut } from '@/hooks/use-shortcut';
 import { useUrlParams } from '@/hooks/use-url-params';
+import { useView } from '@/hooks/use-view';
 import { useT } from '@/i18n/scope';
+import type { PatientRow } from '@/lib/data';
 
 export default function Patients() {
     const { t } = useT();
@@ -46,17 +42,19 @@ export default function Patients() {
     // On this page "/" searches patients here, not in the sidebar.
     useShortcut('/', () => inputRef.current?.focus());
 
-    const query = useLiveQuery(
-        `patients:${debounced}`,
-        (source) => loadPatientRows(source, debounced),
-        { keepPrevious: true, refreshMs: 0, empty: [] },
+    const query = useView(
+        'patients',
+        { q: debounced },
+        {
+            keepPrevious: true,
+            refreshMs: 0,
+            emptyFrom: (view) => ({ ...view, rows: [] }),
+        },
     );
-    const clinic = useLiveQuery('clinic', (source) => source.clinic.get(), {
-        refreshMs: 0,
-    }).data;
+    const clinic = query.data?.clinic;
 
     const rows = useMemo(() => {
-        const loaded = query.data ?? [];
+        const loaded = query.data?.rows ?? [];
 
         // A patient just added stays on top of the recent list, so they can be opened at once.
         return debounced
@@ -69,7 +67,7 @@ export default function Patients() {
               ];
     }, [query.data, added, debounced]);
 
-    const today = clinic ? todayIn(clinic.timezone) : null;
+    const today = query.data?.today ?? null;
     const when = (iso: string | null, empty: string) => {
         if (!iso || !clinic || !today) {
             return empty;

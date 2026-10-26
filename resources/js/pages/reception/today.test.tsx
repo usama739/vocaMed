@@ -42,7 +42,7 @@ describe('Today', () => {
 
         expect(screen.getByText(/Monday, 26 October/)).toBeInTheDocument();
         expect(screen.getAllByText('Sample data').length).toBeGreaterThan(0);
-        expect(summary('Booked or confirmed')).toBe('3');
+        expect(summary('Booked or confirmed')).toBe('5');
         expect(summary('Arrived')).toBe('1');
         expect(summary('Done')).toBe('1');
         expect(summary('No-show')).toBe('1');
