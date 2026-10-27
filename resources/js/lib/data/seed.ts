@@ -1,4 +1,5 @@
 import { addDays, utcToZoned, zonedToUtc } from './time';
+import type { QueueStage } from './patient-views';
 import type {
     Appointment,
     AppointmentStatus,
@@ -39,7 +40,16 @@ export interface MockDatabase {
     templates: NotificationTemplate[];
     audit: AuditEntry[];
     /** Signed-link token → appointment. `expired` links resolve to the E4 state. */
-    links: Map<string, { appointmentId: Id; clinicId: Id; expired: boolean }>;
+    links: Map<
+        string,
+        {
+            appointmentId: Id;
+            clinicId: Id;
+            expired: boolean;
+            /** Demo only: shows a queue stage the data would not naturally be in. */
+            demoStage?: QueueStage;
+        }
+    >;
     seq: number;
 }
 
@@ -98,7 +108,7 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
         holidays: [{ date: addDays(today, 19), name: 'Public holiday' }],
         reminderHoursBefore: [24, 2],
         cancellationWindowHours: 4,
-        rescheduleRequiresApproval: false,
+        rescheduleRequiresApproval: c.id === OTHER_CLINIC_ID,
         voiceEnabled: true,
         voiceAudioRetentionDays: 30,
     }));
@@ -659,6 +669,16 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
             'confirmed',
             'voice',
         ),
+        // The second clinic, which approves time changes, has a visit tomorrow.
+        appt(
+            OTHER_CLINIC_ID,
+            'p_10',
+            'd_noor',
+            's_noor_general',
+            1,
+            '11:00',
+            'booked',
+        ),
     ];
 
     const at = (hoursAgo: number) =>
@@ -993,6 +1013,41 @@ export function createSeedDatabase(now: Date = new Date()): MockDatabase {
         });
     }
     links.set('tok_expired', {
+        appointmentId: appointments[0].id,
+        clinicId: DEMO_CLINIC_ID,
+        expired: true,
+    });
+
+    // Readable links for the demo, one per situation a patient can be in. (A link to nothing, such as
+    // "sample-unknown", is the unknown-link page.)
+    const sampleLink = (
+        name: string,
+        appointmentId: Id,
+        extra: { demoStage?: QueueStage } = {},
+    ) => {
+        const found = appointments.find((a) => a.id === appointmentId);
+
+        if (found) {
+            links.set(name, {
+                appointmentId,
+                clinicId: found.clinicId,
+                expired: false,
+                ...extra,
+            });
+        }
+    };
+    sampleLink('sample-booked', 'a_007');
+    sampleLink('sample-confirmed', 'a_008');
+    sampleLink('sample-cancelled', 'a_009');
+    sampleLink('sample-late', 'a_012');
+    sampleLink('sample-pending', 'a_019');
+    sampleLink('sample-approval', 'a_026');
+    sampleLink('sample-notarrived', 'a_004');
+    sampleLink('sample-waiting', 'a_003');
+    sampleLink('sample-next', 'a_003', { demoStage: 'next' });
+    sampleLink('sample-consult', 'a_002');
+    sampleLink('sample-done', 'a_001');
+    links.set('sample-expired', {
         appointmentId: appointments[0].id,
         clinicId: DEMO_CLINIC_ID,
         expired: true,

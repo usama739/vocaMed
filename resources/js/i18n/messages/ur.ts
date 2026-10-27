@@ -1,6 +1,7 @@
 import type en from './en';
 import authUr from './auth-ur';
 import landingUr from './landing-ur';
+import patientUr from './patient-ur';
 import privacyUr from './privacy-ur';
 import adminUr from './admin-ur';
 import doctorUr from './doctor-ur';
@@ -189,6 +190,7 @@ const ur: DeepString<typeof en> = {
     reception: receptionUr,
     doctor: doctorUr,
     admin: adminUr,
+    patient: patientUr,
 };
 
 export default ur;

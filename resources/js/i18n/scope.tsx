@@ -40,7 +40,7 @@ export function LocaleScope({
  * many times slower. The loose overload comes first, so those calls skip the heavy key types.
  */
 type ReceptionT = (
-    key: `reception.${string}` | `doctor.${string}` | `admin.${string}`,
+    key: `reception.${string}` | `doctor.${string}` | `admin.${string}` | `patient.${string}`,
     options?: Record<string, unknown>,
 ) => string;
 type TypedT = ReturnType<

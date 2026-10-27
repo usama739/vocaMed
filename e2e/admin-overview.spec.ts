@@ -109,6 +109,7 @@ test.describe('Overview', () => {
         const chart = page.getByTestId('trend-chart');
         await expect(chart).toBeVisible();
 
+        await chart.scrollIntoViewIfNeeded();
         const box = (await chart.boundingBox())!;
         await page.mouse.move(box.x + box.width * 0.5, box.y + box.height / 2);
         await expect(page.getByText('This period:')).toBeVisible();

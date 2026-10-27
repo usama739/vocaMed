@@ -121,7 +121,7 @@ test.describe('the shell', () => {
         const nav = page.getByRole('navigation', { name: 'Main menu' });
 
         // The admin's own pages (the top bar carries the link to the Receptionist Console).
-        await expect(nav.locator('a[href^="/admin"]')).toHaveCount(7);
+        await expect(nav.locator('li a[href^="/admin"]')).toHaveCount(7);
         await expect(nav.locator('[aria-current="page"]')).toHaveText(
             'Services',
         );

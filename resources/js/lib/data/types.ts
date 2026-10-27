@@ -452,6 +452,9 @@ export type DataErrorCode =
     | 'DUPLICATE_NAME'
     | 'LAST_ADMIN'
     | 'UNKNOWN_VARIABLE'
+    | 'LINK_EXPIRED'
+    | 'OUTSIDE_WINDOW'
+    | 'RATE_LIMITED'
     | 'FORBIDDEN';
 
 export class DataError extends Error {

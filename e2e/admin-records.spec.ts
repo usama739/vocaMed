@@ -224,7 +224,8 @@ test.describe('Audit log', () => {
             'Invitation',
         );
 
-        await page.getByRole('button', { name: 'Last 7 days' }).click();
+        // Nothing was invited today, so the empty state offers Clear filters.
+        await page.getByRole('button', { name: 'Today' }).click();
         await page.getByRole('button', { name: 'Clear filters' }).click();
         await expect(page).not.toHaveURL(/days=|action=/);
         await expect(

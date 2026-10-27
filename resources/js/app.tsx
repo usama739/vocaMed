@@ -7,6 +7,7 @@ import AdminLayout from '@/layouts/admin-layout';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import DoctorLayout from '@/layouts/doctor-layout';
+import PatientLayout from '@/layouts/patient-layout';
 import ReceptionLayout from '@/layouts/reception-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
@@ -33,6 +34,8 @@ void createInertiaApp({
             // Pages that bring their own shell (public layout, previews).
             case PAGES_WITH_OWN_SHELL.has(name):
                 return null;
+            case name.startsWith('patient/'):
+                return PatientLayout;
             case name.startsWith('admin/'):
                 return AdminLayout;
             case name.startsWith('doctor/'):

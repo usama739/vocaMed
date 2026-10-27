@@ -1,10 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-    createMockDataSource,
-    createMockPatientLinks,
-    SLOT_HOLD_SECONDS,
-} from './mock';
+import { createMockDataSource, SLOT_HOLD_SECONDS } from './mock';
+import { createMockPatientLinks } from './mock-patient-links';
 import {
     createSeedDatabase,
     DEMO_CLINIC_ID,
@@ -404,7 +401,7 @@ describe('appointment lifecycle', () => {
 
 describe('signed patient links', () => {
     it('resolves a valid token and treats unknown or expired tokens the same', async () => {
-        const links = createMockPatientLinks(db);
+        const links = createMockPatientLinks(db, { now: () => clock });
         const valid = await links.resolve('tok_a_001');
 
         expect(valid.state).toBe('valid');

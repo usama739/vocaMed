@@ -1,7 +1,8 @@
 import type { AuthSource } from './auth';
 import { clockNow } from '@/lib/clock';
 import { createMockAuth } from './auth-mock';
-import { createMockDataSource, createMockPatientLinks } from './mock';
+import { createMockDataSource } from './mock';
+import { createMockPatientLinks } from './mock-patient-links';
 import { createSeedDatabase, DEMO_CLINIC_ID } from './seed';
 import { startActivitySimulator } from './simulator';
 import type { DataSource, PatientLinkSource } from './source';
@@ -11,6 +12,7 @@ export * from './auth';
 export { SAMPLE_ACCOUNTS, SAMPLE_PASSWORD } from './auth-mock';
 export type { DataSource, PatientLinkSource } from './source';
 export * from './views';
+export * from './patient-views';
 export { rangeOf, weekStart, monthStart, monthEnd } from './calendar-range';
 export { SLOT_HOLD_SECONDS } from './mock';
 export {
@@ -85,7 +87,7 @@ export function startDemoActivity(
 
 export const patientLinks: PatientLinkSource = createMockPatientLinks(
     database,
-    { latencyMs },
+    { latencyMs, now: clockNow },
 );
 
 /** Sign-in, password recovery, invitations and sign-up. Mock until the endpoints exist. */

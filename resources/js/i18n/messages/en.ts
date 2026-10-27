@@ -1,6 +1,7 @@
 import adminEn from './admin-en';
 import authEn from './auth-en';
 import landingEn from './landing-en';
+import patientEn from './patient-en';
 import privacyEn from './privacy-en';
 import doctorEn from './doctor-en';
 import receptionEn from './reception-en';
@@ -186,6 +187,7 @@ const en = {
     reception: receptionEn,
     doctor: doctorEn,
     admin: adminEn,
+    patient: patientEn,
 } as const;
 
 export default en;

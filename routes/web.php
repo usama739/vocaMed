@@ -14,6 +14,15 @@ Route::inertia('privacy', 'privacy')->name('privacy');
 Route::get('invite/{token}', fn (string $token) => Inertia::render('auth/invite', ['token' => $token]))
     ->name('invite');
 
+// Patient link pages: no sign-in, one appointment, reached from the message the patient received.
+// UI only for now; the token is passed to the page as it arrives.
+Route::prefix('p/{token}')->name('patient.')->group(function () {
+    Route::get('/', fn (string $token) => Inertia::render('patient/manage', ['token' => $token]))->name('manage');
+    Route::get('reschedule', fn (string $token) => Inertia::render('patient/reschedule', ['token' => $token]))->name('reschedule');
+    Route::get('status', fn (string $token) => Inertia::render('patient/status', ['token' => $token]))->name('status');
+    Route::get('expired', fn (string $token) => Inertia::render('patient/expired', ['token' => $token]))->name('expired');
+});
+
 // Clinic admin. UI only for now: each route just renders its page, with no access control yet.
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::inertia('/', 'admin/overview')->name('overview');

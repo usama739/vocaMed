@@ -36,6 +36,7 @@ import type {
     TimelineItem,
     User,
 } from './types';
+import type { PatientActions, PatientViewSource } from './patient-views';
 import type { ViewSource } from './views';
 
 /**
@@ -207,7 +208,12 @@ export interface DataSource {
     };
 }
 
-/** Patients act through signed links, not accounts, so this is not tied to a clinic session. */
-export interface PatientLinkSource {
+/**
+ * Patients act through signed links, not accounts, so this is not tied to a clinic session and is
+ * kept apart from `DataSource`: a patient page can only reach what its own token opens.
+ */
+export interface PatientLinkSource extends PatientActions {
+    /** One read model per patient page. */
+    views: PatientViewSource;
     resolve(token: string): Promise<PatientLinkResult>;
 }

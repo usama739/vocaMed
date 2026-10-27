@@ -1,7 +1,7 @@
 import { createAdminMutations } from './mock-admin';
 import { createMockViews } from './mock-views';
 import type { MockDatabase } from './seed';
-import type { DataSource, PatientLinkSource } from './source';
+import type { DataSource } from './source';
 import { PREVIOUS_STATUS, STATUS_TRANSITIONS } from './status';
 import { addDays, addMinutes, utcToZoned, weekdayOf, zonedToUtc } from './time';
 import {
@@ -1319,52 +1319,6 @@ export function createMockDataSource(
             adminSettings: delayed(views.adminSettings),
             adminTemplates: delayed(views.adminTemplates),
             adminAudit: delayed(views.adminAudit),
-        },
-    };
-}
-
-export function createMockPatientLinks(
-    db: MockDatabase,
-    options: { latencyMs?: number } = {},
-): PatientLinkSource {
-    return {
-        async resolve(token) {
-            if (options.latencyMs) {
-                await sleep(options.latencyMs);
-            }
-
-            const link = db.links.get(token);
-            const appointment =
-                link &&
-                db.appointments.find((a) => a.id === link.appointmentId);
-            const found =
-                appointment &&
-                db.clinics.find((c) => c.id === appointment.clinicId);
-            const doctor =
-                appointment &&
-                db.doctors.find((d) => d.id === appointment.doctorId);
-            const service =
-                appointment &&
-                db.services.find((s) => s.id === appointment.serviceId);
-
-            if (
-                !link ||
-                link.expired ||
-                !appointment ||
-                !found ||
-                !doctor ||
-                !service
-            ) {
-                return { state: 'expired' };
-            }
-
-            return structuredClone({
-                state: 'valid' as const,
-                appointment,
-                clinic: found,
-                doctor,
-                service,
-            });
         },
     };
 }
