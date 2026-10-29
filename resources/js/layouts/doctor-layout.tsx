@@ -9,7 +9,7 @@ import { initialsOf } from '@/components/reception/format';
 import { ReconnectingBanner } from '@/components/vocamed/states';
 import type { Crumb } from '@/components/vocamed/top-bar';
 import { DataSourceProvider } from '@/hooks/use-data';
-import { useSessionUser } from '@/hooks/use-session-user';
+import { useClinicName, useSessionUser } from '@/hooks/use-session-user';
 import { useStaffRuntime } from '@/hooks/use-staff-runtime';
 import { useView } from '@/hooks/use-view';
 import { useT } from '@/i18n/scope';
@@ -71,6 +71,7 @@ function DoctorFrame({
     const { component } = usePage();
     const { t } = useT();
     const me = useSessionUser('doctor');
+    const clinicName = useClinicName();
     const page = PAGES[component] ?? PAGES['doctor/overview'];
     // The sidebar badge is a view of its own (shared props with Inertia), refreshed with the page.
     const shell = useView('doctorShell', undefined, { refreshMs: 10_000 });
@@ -86,6 +87,7 @@ function DoctorFrame({
             active={page.active}
             crumbs={crumbs}
             user={{ name: me.name, initials: initialsOf(me.name) }}
+            clinicName={clinicName}
             badges={{ requests: shell.data?.pendingRequests ?? 0 }}
             banner={reconnecting ? <ReconnectingBanner /> : undefined}
         >

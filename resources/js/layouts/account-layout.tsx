@@ -3,7 +3,11 @@ import { initialsOf } from '@/components/reception/format';
 import { ClinicShell } from '@/components/vocamed/clinic-shell';
 import { ReconnectingBanner } from '@/components/vocamed/states';
 import { AccountSourceProvider } from '@/hooks/use-account';
-import { useSessionRole, useSessionUser } from '@/hooks/use-session-user';
+import {
+    useClinicName,
+    useSessionRole,
+    useSessionUser,
+} from '@/hooks/use-session-user';
 import { useStaffRuntime } from '@/hooks/use-staff-runtime';
 import { useT } from '@/i18n/scope';
 import { getAccountSource } from '@/lib/data';
@@ -17,6 +21,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
     const { t } = useT();
     const role = useSessionRole();
     const me = useSessionUser(role);
+    const clinicName = useClinicName();
     const { reconnecting } = useStaffRuntime();
 
     return (
@@ -25,6 +30,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
                 role={role}
                 crumbs={[{ label: t('account.title') }]}
                 user={{ name: me.name, initials: initialsOf(me.name) }}
+                clinicName={clinicName}
                 banner={reconnecting ? <ReconnectingBanner /> : undefined}
             >
                 {children}

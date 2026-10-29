@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { useEffect, useSyncExternalStore } from 'react';
 import {
     getSessionUser,
@@ -36,7 +37,7 @@ function rememberArea(role: Role) {
  * Which role the page is for. The real backend knows it from the session. The demo has none, so it
  * is the area last visited, with `?role=` on local hosts to review each one, else the clinic admin.
  */
-export function useSessionRole(): Role {
+function useDemoSessionRole(): Role {
     if (typeof window === 'undefined') {
         return 'clinic_admin';
     }
@@ -58,8 +59,8 @@ export function useSessionRole(): Role {
  * with Laravel it returns the `auth.user` prop every page already receives. A staff layout passes its
  * own role, which also teaches the demo which area the person is working in.
  */
-export function useSessionUser(role?: Role): SessionUser {
-    const fallback = useSessionRole();
+function useDemoSessionUser(role?: Role): SessionUser {
+    const fallback = useDemoSessionRole();
     const area = role ?? fallback;
 
     useEffect(() => {
@@ -74,3 +75,40 @@ export function useSessionUser(role?: Role): SessionUser {
         () => getSessionUser(area),
     );
 }
+
+const REAL_AUTH = import.meta.env.VITE_REAL_AUTH === 'true';
+
+const NOBODY: SessionUser = {
+    id: '',
+    name: '',
+    email: '',
+    role: 'clinic_admin',
+    locale: 'en',
+};
+
+function useRealSessionUser(): SessionUser {
+    return usePage().props.auth?.user ?? NOBODY;
+}
+
+function useRealSessionRole(): Role {
+    return useRealSessionUser().role;
+}
+
+function useRealClinicName(): string | undefined {
+    return usePage().props.auth?.clinic?.name;
+}
+
+/** Which role the page is for: the signed-in person's role with the real backend, else the demo's area. */
+export const useSessionRole: () => Role = REAL_AUTH
+    ? useRealSessionRole
+    : useDemoSessionRole;
+
+/** The signed-in person: the shared `auth.user` prop with the real backend, else the demo's sample user. */
+export const useSessionUser: (role?: Role) => SessionUser = REAL_AUTH
+    ? useRealSessionUser
+    : useDemoSessionUser;
+
+/** The clinic name for the sidebar: the signed-in person's clinic with the real backend, else the demo's default. */
+export const useClinicName: () => string | undefined = REAL_AUTH
+    ? useRealClinicName
+    : () => undefined;

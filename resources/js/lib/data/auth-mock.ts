@@ -93,7 +93,7 @@ export function createMockAuth(
                 return { ok: true as const };
             }),
 
-        checkResetToken: (token) =>
+        checkResetToken: ({ token }) =>
             call(() => (token === 'sample-valid' ? 'valid' : 'expired')),
 
         resetPassword: ({ token }) =>

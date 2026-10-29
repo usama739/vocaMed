@@ -28,14 +28,17 @@ import { cn } from '@/lib/utils';
  */
 export function ResetPage({
     token,
+    email = '',
     source = auth,
 }: {
     token: string;
+    /** The address the link was sent to; it travels in the link's query string. */
+    email?: string;
     source?: AuthSource;
 }) {
     const { t } = useT();
     const check = useAsyncValue(`reset:${token}`, () =>
-        source.checkResetToken(token),
+        source.checkResetToken({ token, email }),
     );
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
@@ -60,7 +63,11 @@ export function ResetPage({
         setPhase('submitting');
 
         try {
-            const result = await source.resetPassword({ token, password });
+            const result = await source.resetPassword({
+                token,
+                email,
+                password,
+            });
             setPhase(result.ok ? 'done' : 'expired');
         } catch {
             setPhase('error');

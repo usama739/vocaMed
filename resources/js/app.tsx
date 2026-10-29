@@ -5,7 +5,6 @@ import { initializeTheme } from '@/hooks/use-appearance';
 import { setupI18n } from '@/i18n';
 import AccountLayout from '@/layouts/account-layout';
 import AdminLayout from '@/layouts/admin-layout';
-import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import DoctorLayout from '@/layouts/doctor-layout';
 import PatientLayout from '@/layouts/patient-layout';
@@ -46,11 +45,8 @@ void createInertiaApp({
                 return ReceptionLayout;
             case name.startsWith('auth/'):
                 return AuthLayout;
-            // The starter kit's settings pages only send the visitor on to the Account page.
-            case name.startsWith('settings/'):
-                return null;
             default:
-                return AppLayout;
+                return null;
         }
     },
     strictMode: true,

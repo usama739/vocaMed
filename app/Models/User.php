@@ -2,37 +2,46 @@
 
 namespace App\Models;
 
+use App\Enums\Role;
+use App\Support\TenantContext;
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
-use Laravel\Fortify\Contracts\PasskeyUser;
-use Laravel\Fortify\PasskeyAuthenticatable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
+ * A staff member of one clinic, with one role. Patients are not users: they reach their own
+ * appointment through a signed link.
+ *
+ * The clinic and the role are never mass-assignable, so a request can not choose them; the clinic
+ * service and the invitation flow set them explicitly.
+ *
  * @property int $id
+ * @property string|null $clinic_id
  * @property string $name
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string $password
- * @property string|null $two_factor_secret
- * @property string|null $two_factor_recovery_codes
- * @property Carbon|null $two_factor_confirmed_at
+ * @property Role|null $role
+ * @property string $locale
+ * @property bool $is_active
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Clinic|null $clinic
  */
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
+#[Fillable(['name', 'email', 'password', 'locale'])]
+#[Hidden(['password', 'remember_token'])]
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -44,9 +53,46 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            /* @chisel-2fa */
-            'two_factor_confirmed_at' => 'datetime',
-            /* @end-chisel-2fa */
+            'role' => Role::class,
+            'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Clinic, $this>
+     */
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
+    }
+
+    /**
+     * Whether this person may have a session right now. Checked at sign-in and again on every request, so
+     * deactivating a person or suspending a clinic takes effect at once, not when the session runs out.
+     */
+    public function canSignIn(): bool
+    {
+        return $this->is_active
+            && $this->role !== null
+            && $this->email_verified_at !== null
+            && $this->clinic?->isActive() === true;
+    }
+
+    /**
+     * The staff of the clinic being acted for. `users` is the one clinic table read before a clinic is known (sign-in,
+     * password reset), so it has no automatic scope; every staff list goes through this and fails with no clinic set.
+     *
+     * @param  Builder<User>  $query
+     * @return Builder<User>
+     */
+    #[Scope]
+    protected function inCurrentClinic(Builder $query): Builder
+    {
+        return $query->where($this->qualifyColumn('clinic_id'), app(TenantContext::class)->requireId());
+    }
+
+    public function hasRole(Role ...$roles): bool
+    {
+        return $this->role !== null && in_array($this->role, $roles, true);
     }
 }

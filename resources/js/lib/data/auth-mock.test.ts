@@ -84,11 +84,21 @@ describe('mock auth', () => {
     it('treats unknown reset tokens as expired', async () => {
         const auth = createMockAuth();
 
-        expect(await auth.checkResetToken('sample-valid')).toBe('valid');
-        expect(await auth.checkResetToken('sample-expired')).toBe('expired');
-        expect(await auth.checkResetToken('whatever')).toBe('expired');
         expect(
-            await auth.resetPassword({ token: 'whatever', password: 'x' }),
+            await auth.checkResetToken({ token: 'sample-valid', email: '' }),
+        ).toBe('valid');
+        expect(
+            await auth.checkResetToken({ token: 'sample-expired', email: '' }),
+        ).toBe('expired');
+        expect(
+            await auth.checkResetToken({ token: 'whatever', email: '' }),
+        ).toBe('expired');
+        expect(
+            await auth.resetPassword({
+                token: 'whatever',
+                email: '',
+                password: 'x',
+            }),
         ).toEqual({ ok: false, reason: 'expired' });
     });
 

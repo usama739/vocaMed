@@ -1,6 +1,7 @@
 import type { AuthSource } from './auth';
 import { clockNow } from '@/lib/clock';
 import type { AccountSource, SessionUser } from './account';
+import { createHttpAuth } from './auth-http';
 import { createMockAuth, SAMPLE_PASSWORD } from './auth-mock';
 import { createMockAccounts } from './mock-account';
 import { createSessionUserStore } from './session-user';
@@ -94,10 +95,16 @@ export const patientLinks: PatientLinkSource = createMockPatientLinks(
     { latencyMs, now: clockNow },
 );
 
-/** Sign-in, password recovery, invitations and sign-up. Mock until the endpoints exist. */
-export const auth: AuthSource = createMockAuth({
-    latencyMs: import.meta.env.MODE === 'test' ? 0 : 600,
-});
+/**
+ * Sign-in, password recovery, invitations and sign-up. The mock by default (the demo and the browser specs);
+ * Laravel's endpoints when VITE_REAL_AUTH=true.
+ */
+export const auth: AuthSource =
+    import.meta.env.VITE_REAL_AUTH === 'true'
+        ? createHttpAuth()
+        : createMockAuth({
+              latencyMs: import.meta.env.MODE === 'test' ? 0 : 600,
+          });
 
 /**
  * The signed-in person, and their account. In the demo each role signs in as its sample user; with

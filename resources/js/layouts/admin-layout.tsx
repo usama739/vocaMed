@@ -9,7 +9,7 @@ import { initialsOf } from '@/components/reception/format';
 import { ReconnectingBanner } from '@/components/vocamed/states';
 import type { Crumb } from '@/components/vocamed/top-bar';
 import { DataSourceProvider } from '@/hooks/use-data';
-import { useSessionUser } from '@/hooks/use-session-user';
+import { useClinicName, useSessionUser } from '@/hooks/use-session-user';
 import { useStaffRuntime } from '@/hooks/use-staff-runtime';
 import { useT } from '@/i18n/scope';
 import { getRoleDataSource } from '@/lib/data';
@@ -90,6 +90,7 @@ function AdminFrame({
     const { component } = usePage();
     const { t } = useT();
     const me = useSessionUser('clinic_admin');
+    const clinicName = useClinicName();
     const page = PAGES[component] ?? PAGES['admin/overview'];
 
     const crumbs: Crumb[] = [
@@ -106,6 +107,7 @@ function AdminFrame({
             active={page.active}
             crumbs={crumbs}
             user={{ name: me.name, initials: initialsOf(me.name) }}
+            clinicName={clinicName}
             banner={reconnecting ? <ReconnectingBanner /> : undefined}
         >
             {children}

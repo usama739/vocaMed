@@ -20,9 +20,8 @@ export type RegisterInput = {
 };
 
 /**
- * Everything the public and sign-in pages need from the server. Backed by a mock until the
- * Laravel endpoints exist (login, forgot/reset password, invitations, sign-up); then only
- * ./index.ts changes. Methods reject on a network or server failure, which the pages show
+ * Everything the public and sign-in pages need from the server. Backed by the mock, or by Laravel's
+ * endpoints (auth-http.ts) when VITE_REAL_AUTH is true; only ./index.ts chooses. Methods reject on a network or server failure, which the pages show
  * as a retryable error.
  */
 export interface AuthSource {
@@ -33,9 +32,14 @@ export interface AuthSource {
     }): Promise<LoginResult>;
     /** Always succeeds, so the page never reveals whether an address has an account. */
     requestPasswordReset(email: string): Promise<{ ok: true }>;
-    checkResetToken(token: string): Promise<'valid' | 'expired'>;
+    /** The reset link carries the address too, so the server can find the one pending request. */
+    checkResetToken(input: {
+        token: string;
+        email: string;
+    }): Promise<'valid' | 'expired'>;
     resetPassword(input: {
         token: string;
+        email: string;
         password: string;
     }): Promise<{ ok: true } | { ok: false; reason: 'expired' }>;
     getInvitation(token: string): Promise<InvitationResult>;
