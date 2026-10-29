@@ -1,6 +1,8 @@
+import { router } from '@inertiajs/react';
 import type { AuthSource } from './auth';
 import { clockNow } from '@/lib/clock';
 import type { AccountSource, SessionUser } from './account';
+import { createHttpAccount } from './account-http';
 import { createHttpAuth } from './auth-http';
 import { createMockAuth, SAMPLE_PASSWORD } from './auth-mock';
 import { createMockAccounts } from './mock-account';
@@ -99,12 +101,13 @@ export const patientLinks: PatientLinkSource = createMockPatientLinks(
  * Sign-in, password recovery, invitations and sign-up. The mock by default (the demo and the browser specs);
  * Laravel's endpoints when VITE_REAL_AUTH=true.
  */
-export const auth: AuthSource =
-    import.meta.env.VITE_REAL_AUTH === 'true'
-        ? createHttpAuth()
-        : createMockAuth({
-              latencyMs: import.meta.env.MODE === 'test' ? 0 : 600,
-          });
+const REAL_AUTH = import.meta.env.VITE_REAL_AUTH === 'true';
+
+export const auth: AuthSource = REAL_AUTH
+    ? createHttpAuth()
+    : createMockAuth({
+          latencyMs: import.meta.env.MODE === 'test' ? 0 : 600,
+      });
 
 /**
  * The signed-in person, and their account. In the demo each role signs in as its sample user; with
@@ -120,7 +123,17 @@ const accountFor = createMockAccounts(database, {
 });
 const accountSources = new Map<Role, AccountSource>();
 
+// With Laravel the session decides whose account it is, so one source serves every role. After the name or language
+// is saved, the shared `auth` prop is refreshed so the top bar shows the new name.
+const httpAccount: AccountSource | null = REAL_AUTH
+    ? createHttpAccount({ onChange: () => router.reload({ only: ['auth'] }) })
+    : null;
+
 export const getAccountSource = (role: Role): AccountSource => {
+    if (httpAccount) {
+        return httpAccount;
+    }
+
     let source = accountSources.get(role);
 
     if (!source) {

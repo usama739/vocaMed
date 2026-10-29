@@ -17,16 +17,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Real sign-in for the staff pages
+    | Real sign-in and role access for the staff pages
     |--------------------------------------------------------------------------
     |
     | The same switch as the frontend's VITE_REAL_AUTH. On: /admin, /reception, /doctor and /account need a
-    | signed-in person and the pages read who they are from the session. Off: the open demo on mock data
-    | (also what the browser specs use). Goes away in F4, when access control is always on.
+    | signed-in person of the right role, and the pages read who they are from the session. Off: the open demo on
+    | mock data (what the browser specs use). Always on in production, whatever the environment file says.
     |
     */
 
-    'real_auth' => (bool) env('VITE_REAL_AUTH', false),
+    'real_auth' => env('APP_ENV') === 'production' || (bool) env('VITE_REAL_AUTH', false),
 
     /*
     |--------------------------------------------------------------------------

@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\Role;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Auth\ConfirmEmailController;
 use App\Http\Controllers\Auth\DemoRequestController;
 use App\Http\Controllers\Auth\InvitationController;
@@ -7,7 +9,7 @@ use App\Http\Controllers\Auth\PasswordResetStatusController;
 use App\Http\Controllers\Auth\SignUpController;
 use App\Http\Controllers\DevInboxController;
 use App\Http\Controllers\LocaleController;
-use App\Http\Middleware\RequireSignInWhenReal;
+use App\Http\Middleware\EnsureStaffRole;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -46,46 +48,54 @@ Route::prefix('p/{token}')->name('patient.')->group(function () {
     Route::get('expired', fn (string $token) => Inertia::render('patient/expired', ['token' => $token]))->name('expired');
 });
 
-// Staff pages. With real sign-in on (config vocamed.real_auth) they need a signed-in person; off, they are the
-// open demo. Role-based access control comes in F4.
-Route::middleware(RequireSignInWhenReal::class)->group(function () {
-    // The signed-in person's own account, shared by every staff role. UI only for now: no access control yet.
-    Route::inertia('account', 'account')->name('account');
+// Staff areas. Each is guarded by role (EnsureStaffRole): not signed in goes to the sign-in page, another role's area
+// is refused (403 for JSON, a redirect to the person's own area for a page). The guard applies while real sign-in is on
+// (config vocamed.real_auth, always on in production); off, the pages are the open demo on mock data. A test fails if
+// a route outside the public list has no guard.
 
-    // Clinic admin. UI only for now: each route just renders its page, with no access control yet.
-    Route::prefix('admin')->name('admin.')->group(function () {
-        Route::inertia('/', 'admin/overview')->name('overview');
-        Route::inertia('doctors', 'admin/doctors')->name('doctors');
-        // `new` is the blank form for a doctor who does not exist yet.
-        Route::get('doctors/{id}', fn (string $id) => Inertia::render('admin/doctor', ['id' => $id]))
-            ->name('doctor');
-        Route::inertia('staff', 'admin/staff')->name('staff');
-        Route::inertia('services', 'admin/services')->name('services');
-        Route::inertia('settings', 'admin/settings')->name('settings');
-        Route::inertia('templates', 'admin/templates')->name('templates');
-        Route::inertia('audit', 'admin/audit')->name('audit');
-    });
+// The signed-in person's own account, shared by every staff role.
+Route::middleware(EnsureStaffRole::for())->prefix('account')->group(function () {
+    Route::get('/', [AccountController::class, 'show'])->name('account');
+    Route::patch('/', [AccountController::class, 'update'])->name('account.update');
+    Route::patch('notifications', [AccountController::class, 'notifications'])->name('account.notifications');
+    // Both confirm the current password, so they share one allowance of wrong guesses.
+    Route::put('password', [AccountController::class, 'password'])->middleware('throttle:account-sensitive')->name('account.password');
+    Route::post('sessions/logout-others', [AccountController::class, 'signOutOthers'])->middleware('throttle:account-sensitive')->name('account.sessions.logout-others');
+});
 
-    // Doctor workspace. UI only for now: each route just renders its page, with no access control yet.
-    Route::prefix('doctor')->name('doctor.')->group(function () {
-        Route::inertia('/', 'doctor/overview')->name('overview');
-        Route::inertia('schedule', 'doctor/schedule')->name('schedule');
-        Route::inertia('availability', 'doctor/availability')->name('availability');
-        Route::inertia('requests', 'doctor/requests')->name('requests');
-    });
+// Clinic admin.
+Route::middleware(EnsureStaffRole::for(Role::ClinicAdmin))->prefix('admin')->name('admin.')->group(function () {
+    Route::inertia('/', 'admin/overview')->name('overview');
+    Route::inertia('doctors', 'admin/doctors')->name('doctors');
+    // `new` is the blank form for a doctor who does not exist yet.
+    Route::get('doctors/{id}', fn (string $id) => Inertia::render('admin/doctor', ['id' => $id]))
+        ->name('doctor');
+    Route::inertia('staff', 'admin/staff')->name('staff');
+    Route::inertia('services', 'admin/services')->name('services');
+    Route::inertia('settings', 'admin/settings')->name('settings');
+    Route::inertia('templates', 'admin/templates')->name('templates');
+    Route::inertia('audit', 'admin/audit')->name('audit');
+});
 
-    // Receptionist console. UI only for now: each route just renders its page, with no access control yet.
-    Route::prefix('reception')->name('reception.')->group(function () {
-        Route::inertia('/', 'reception/today')->name('today');
-        Route::inertia('appointments', 'reception/appointments')->name('appointments');
-        Route::get('appointments/{id}', fn (string $id) => Inertia::render('reception/appointment', ['id' => $id]))
-            ->name('appointment');
-        Route::inertia('calendar', 'reception/calendar')->name('calendar');
-        Route::inertia('patients', 'reception/patients')->name('patients');
-        Route::get('patients/{id}', fn (string $id) => Inertia::render('reception/patient', ['id' => $id]))
-            ->name('patient');
-        Route::inertia('notifications', 'reception/notifications')->name('notifications');
-    });
+// Doctor workspace.
+Route::middleware(EnsureStaffRole::for(Role::Doctor))->prefix('doctor')->name('doctor.')->group(function () {
+    Route::inertia('/', 'doctor/overview')->name('overview');
+    Route::inertia('schedule', 'doctor/schedule')->name('schedule');
+    Route::inertia('availability', 'doctor/availability')->name('availability');
+    Route::inertia('requests', 'doctor/requests')->name('requests');
+});
+
+// Receptionist console.
+Route::middleware(EnsureStaffRole::for(Role::Receptionist))->prefix('reception')->name('reception.')->group(function () {
+    Route::inertia('/', 'reception/today')->name('today');
+    Route::inertia('appointments', 'reception/appointments')->name('appointments');
+    Route::get('appointments/{id}', fn (string $id) => Inertia::render('reception/appointment', ['id' => $id]))
+        ->name('appointment');
+    Route::inertia('calendar', 'reception/calendar')->name('calendar');
+    Route::inertia('patients', 'reception/patients')->name('patients');
+    Route::get('patients/{id}', fn (string $id) => Inertia::render('reception/patient', ['id' => $id]))
+        ->name('patient');
+    Route::inertia('notifications', 'reception/notifications')->name('notifications');
 });
 
 // Developer preview of the shared components (en + ur). Not available in production.

@@ -4,7 +4,7 @@ namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Services\UserSessions;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\ResetsUserPasswords;
@@ -33,8 +33,6 @@ class ResetUserPassword implements ResetsUserPasswords
             'email_verified_at' => $user->email_verified_at ?? now(),
         ])->save();
 
-        if (config('session.driver') === 'database') {
-            DB::table((string) config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
-        }
+        app(UserSessions::class)->endAll($user);
     }
 }

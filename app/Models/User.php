@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AccountNotification;
 use App\Enums\Role;
 use App\Support\TenantContext;
 use Database\Factories\UserFactory;
@@ -31,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property Role|null $role
  * @property string $locale
  * @property bool $is_active
+ * @property array<string, bool>|null $notification_preferences
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -55,7 +57,41 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => Role::class,
             'is_active' => 'boolean',
+            'notification_preferences' => 'array',
         ];
+    }
+
+    /**
+     * The person as the pages see them (the shared `auth.user` prop and the Account page): nothing else of the model.
+     *
+     * @return array{id: string, name: string, email: string, role: string|null, locale: string}
+     */
+    public function asSessionUser(): array
+    {
+        return [
+            'id' => (string) $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'role' => $this->role?->value,
+            'locale' => $this->locale,
+        ];
+    }
+
+    /**
+     * Which emails reach this person: what they chose, else the defaults.
+     *
+     * @return array<string, bool>
+     */
+    public function notificationChoices(): array
+    {
+        $chosen = $this->notification_preferences ?? [];
+        $choices = [];
+
+        foreach (AccountNotification::cases() as $key) {
+            $choices[$key->value] = (bool) ($chosen[$key->value] ?? $key->default());
+        }
+
+        return $choices;
     }
 
     /**

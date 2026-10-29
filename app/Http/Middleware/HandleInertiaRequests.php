@@ -27,29 +27,6 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * The signed-in person as the shell shows them. Only what the pages need: never the password hash, the clinic
-     * id or anything else on the model.
-     *
-     * @return array{id: string, name: string, email: string, role: string|null, locale: string}|null
-     */
-    private function user(Request $request): ?array
-    {
-        $user = $request->user();
-
-        if ($user === null) {
-            return null;
-        }
-
-        return [
-            'id' => (string) $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'role' => $user->role?->value,
-            'locale' => $user->locale,
-        ];
-    }
-
-    /**
      * The clinic the signed-in person works in, by name only (the sidebar shows it).
      *
      * @return array{name: string}|null
@@ -76,7 +53,7 @@ class HandleInertiaRequests extends Middleware
             'locale' => app()->getLocale(),
             'direction' => SetLocale::LOCALES[app()->getLocale()] ?? 'ltr',
             'auth' => [
-                'user' => $this->user($request),
+                'user' => $request->user()?->asSessionUser(),
                 'clinic' => $this->clinic($request),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
