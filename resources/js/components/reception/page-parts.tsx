@@ -86,7 +86,10 @@ export function Card({
 } & React.HTMLAttributes<HTMLElement>) {
     return (
         <Tag
-            className={cn('rounded-xl border border-line bg-white', className)}
+            className={cn(
+                'rounded-xl border border-line bg-white shadow-soft',
+                className,
+            )}
             {...props}
         >
             {children}

@@ -35,6 +35,8 @@ const landingEn = {
         discard: 'Discard',
         demo: 'Watch the 15-second demo',
         sample: 'Sample data',
+        floatValue: '12',
+        floatLabel: 'Reminders sent today',
     },
     benefits: {
         title: 'Three things that make the desk calmer',

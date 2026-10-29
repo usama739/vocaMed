@@ -23,6 +23,9 @@ Route::prefix('p/{token}')->name('patient.')->group(function () {
     Route::get('expired', fn (string $token) => Inertia::render('patient/expired', ['token' => $token]))->name('expired');
 });
 
+// The signed-in person's own account, shared by every staff role. UI only for now: no access control yet.
+Route::inertia('account', 'account')->name('account');
+
 // Clinic admin. UI only for now: each route just renders its page, with no access control yet.
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::inertia('/', 'admin/overview')->name('overview');

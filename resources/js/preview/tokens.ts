@@ -49,6 +49,12 @@ export const COLOR_GROUPS: { title: string; tokens: ColorToken[] }[] = [
                 hex: '#bcd6fa',
                 use: 'Border of brand-tint surfaces',
             },
+            {
+                name: 'brand-bright',
+                cssVar: '--color-brand-bright',
+                hex: '#2b7be6',
+                use: 'Top of the marketing button gradient',
+            },
         ],
     },
     {
@@ -405,7 +411,7 @@ export const TYPE_SCALE = [
     {
         cls: 'text-hero',
         cssVar: '--text-hero',
-        size: '34–56px',
+        size: '36–64px',
         use: 'Landing hero only',
     },
 ] as const;
@@ -446,6 +452,12 @@ export const RADII = [
         cssVar: '--radius-2xl',
         px: '16px',
         use: 'Page cards, dialogs, panel',
+    },
+    {
+        cls: 'rounded-3xl',
+        cssVar: '--radius-3xl',
+        px: '24px',
+        use: 'Hero window, sign-in cards',
     },
     {
         cls: 'rounded-full',
@@ -491,6 +503,54 @@ export const SHADOWS = [
         cssVar: '--shadow-glow',
         value: '0 6px 16px rgba(19, 102, 214, 0.28)',
         use: 'Hovered primary button',
+    },
+    {
+        cls: 'shadow-soft',
+        cssVar: '--shadow-soft',
+        value: '0 4px 14px rgba(7, 20, 55, 0.05), 0 1px 2px rgba(7, 20, 55, 0.04)',
+        use: 'Raised marketing cards',
+    },
+    {
+        cls: 'shadow-pill',
+        cssVar: '--shadow-pill',
+        value: '0 8px 24px rgba(7, 20, 55, 0.08), 0 1px 2px rgba(7, 20, 55, 0.05)',
+        use: 'Floating header',
+    },
+    {
+        cls: 'shadow-float',
+        cssVar: '--shadow-float',
+        value: '0 16px 40px rgba(7, 20, 55, 0.12), 0 2px 6px rgba(7, 20, 55, 0.06)',
+        use: 'Floating cards, sign-in cards',
+    },
+    {
+        cls: 'shadow-window',
+        cssVar: '--shadow-window',
+        value: '0 30px 70px rgba(7, 20, 55, 0.14), 0 8px 20px rgba(7, 20, 55, 0.06)',
+        use: 'Hero product window',
+    },
+    {
+        cls: 'shadow-cta',
+        cssVar: '--shadow-cta',
+        value: '0 10px 24px rgba(19, 102, 214, 0.3)',
+        use: 'Marketing primary button',
+    },
+    {
+        cls: 'shadow-bar',
+        cssVar: '--shadow-bar',
+        value: '0 8px 20px -14px rgba(7, 20, 55, 0.18)',
+        use: 'Top bar over the page',
+    },
+    {
+        cls: 'shadow-btn',
+        cssVar: '--shadow-btn',
+        value: '0 2px 6px rgba(19, 102, 214, 0.25)',
+        use: 'Resting primary button in the app',
+    },
+    {
+        cls: 'shadow-cta-lift',
+        cssVar: '--shadow-cta-lift',
+        value: '0 14px 30px rgba(19, 102, 214, 0.38)',
+        use: 'Hovered marketing primary button',
     },
     {
         cls: 'shadow-modal',

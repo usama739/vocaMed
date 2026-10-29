@@ -5,9 +5,11 @@ import {
     type ReceptionRuntime,
 } from '@/components/reception/runtime';
 import { ClinicShell } from '@/components/vocamed/clinic-shell';
+import { initialsOf } from '@/components/reception/format';
 import { ReconnectingBanner } from '@/components/vocamed/states';
 import type { Crumb } from '@/components/vocamed/top-bar';
 import { DataSourceProvider } from '@/hooks/use-data';
+import { useSessionUser } from '@/hooks/use-session-user';
 import { useStaffRuntime } from '@/hooks/use-staff-runtime';
 import { useT } from '@/i18n/scope';
 import { getRoleDataSource } from '@/lib/data';
@@ -87,6 +89,7 @@ function AdminFrame({
 }) {
     const { component } = usePage();
     const { t } = useT();
+    const me = useSessionUser('clinic_admin');
     const page = PAGES[component] ?? PAGES['admin/overview'];
 
     const crumbs: Crumb[] = [
@@ -102,7 +105,7 @@ function AdminFrame({
             role="clinic_admin"
             active={page.active}
             crumbs={crumbs}
-            user={{ name: t('shell.userName') }}
+            user={{ name: me.name, initials: initialsOf(me.name) }}
             banner={reconnecting ? <ReconnectingBanner /> : undefined}
         >
             {children}

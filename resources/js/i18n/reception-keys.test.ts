@@ -48,7 +48,7 @@ for (const file of sources(ROOT)) {
     const text = readFileSync(file, 'utf8');
 
     for (const match of text.matchAll(
-        /\bt\(\s*['`]((?:reception|doctor|admin|patient)\.[\w.]+)['`]/g,
+        /\bt\(\s*['`]((?:reception|doctor|admin|patient|account)\.[\w.]+)['`]/g,
     )) {
         used.set(match[1], file.replace(ROOT, ''));
     }
@@ -83,5 +83,6 @@ describe('reception copy', () => {
         expect(flat(ur.doctor).sort()).toEqual(flat(en.doctor).sort());
         expect(flat(ur.admin).sort()).toEqual(flat(en.admin).sort());
         expect(flat(ur.patient).sort()).toEqual(flat(en.patient).sort());
+        expect(flat(ur.account).sort()).toEqual(flat(en.account).sort());
     });
 });

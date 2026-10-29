@@ -37,7 +37,7 @@ export function AuthCard({
         <section
             aria-labelledby="auth-title"
             className={cn(
-                'flex animate-rise flex-col gap-[22px] rounded-2xl border border-line bg-white p-8 shadow-card',
+                'flex animate-rise flex-col gap-[22px] rounded-3xl border border-line/70 bg-white p-8 shadow-float sm:p-10',
                 className,
             )}
         >
@@ -125,7 +125,7 @@ export function StatusPanel({
     return (
         <section
             aria-labelledby="status-title"
-            className="flex animate-fade flex-col items-center gap-4 rounded-2xl border border-line bg-white px-8 py-10 text-center shadow-card"
+            className="flex animate-fade flex-col items-center gap-4 rounded-3xl border border-line/70 bg-white px-8 py-10 text-center shadow-float"
         >
             <span
                 aria-hidden="true"
@@ -196,7 +196,7 @@ export function AuthCardSkeleton() {
         <div
             role="status"
             aria-busy="true"
-            className="flex animate-fade flex-col gap-4 rounded-2xl border border-line bg-white p-8 shadow-card"
+            className="flex animate-fade flex-col gap-4 rounded-3xl border border-line/70 bg-white p-8 shadow-float"
         >
             <span className="sr-only">{t('states.loading')}</span>
             <Skeleton className="h-8 w-3/4" />

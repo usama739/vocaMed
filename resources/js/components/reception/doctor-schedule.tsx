@@ -112,7 +112,7 @@ export function DoctorSchedule({
         <section
             aria-label={doctor.name}
             style={{ animationDelay: `${index * 60}ms` }}
-            className="animate-rise overflow-hidden rounded-xl border border-line bg-white motion-reduce:animate-none"
+            className="animate-rise overflow-hidden rounded-xl border border-line bg-white shadow-soft motion-reduce:animate-none"
         >
             <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-line bg-surface-subtle px-5 py-3.5">
                 <div className="flex items-center gap-3">

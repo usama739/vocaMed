@@ -101,7 +101,7 @@ export function ClinicShell({
                 />
             </aside>
 
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-white">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[20px] border border-line bg-white shadow-soft">
                 <TopBar
                     role={role}
                     crumbs={crumbs}

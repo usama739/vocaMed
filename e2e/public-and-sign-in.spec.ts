@@ -369,7 +369,10 @@ test.describe('A1 landing', () => {
             .getByRole('link', { name: 'FAQ' })
             .click();
         await expect(page.locator('#faq')).toBeInViewport();
-        await expect(page.locator('header').first()).toHaveClass(/shadow-menu/);
+        // The floating bar is the header's inner box; its shadow deepens once the page scrolls.
+        await expect(page.locator('header > div').first()).toHaveClass(
+            /shadow-menu/,
+        );
     });
 
     test('FAQ opens one answer at a time', async ({ page }) => {

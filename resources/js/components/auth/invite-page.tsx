@@ -22,6 +22,8 @@ import { useAsyncValue } from '@/hooks/use-async-value';
 import { useT } from '@/i18n/scope';
 import { auth, type AuthSource } from '@/lib/data';
 import { meetsPasswordRule } from '@/lib/validation';
+import { marketingPrimary } from '@/components/public/marketing';
+import { cn } from '@/lib/utils';
 
 /**
  * A6. Accept an invitation: shows the clinic and role, then sets a name and password.
@@ -91,7 +93,7 @@ export function InvitePage({
             : invitation.value?.state;
 
     const signIn = (
-        <Button size="lg" asChild>
+        <Button size="lg" className={marketingPrimary} asChild>
             <Link href="/login">{t('auth.common.signIn')}</Link>
         </Button>
     );
@@ -196,7 +198,7 @@ export function InvitePage({
                             <Button
                                 type="submit"
                                 size="lg"
-                                className="w-full"
+                                className={cn(marketingPrimary, 'w-full')}
                                 aria-busy={phase === 'submitting'}
                             >
                                 {phase === 'submitting' && (

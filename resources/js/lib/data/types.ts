@@ -455,6 +455,7 @@ export type DataErrorCode =
     | 'LINK_EXPIRED'
     | 'OUTSIDE_WINDOW'
     | 'RATE_LIMITED'
+    | 'INVALID_PASSWORD'
     | 'FORBIDDEN';
 
 export class DataError extends Error {

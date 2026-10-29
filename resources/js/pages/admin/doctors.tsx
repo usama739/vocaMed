@@ -165,7 +165,7 @@ export default function Doctors() {
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto rounded-xl border border-line">
+                        <div className="overflow-x-auto rounded-xl border border-line shadow-soft">
                             <div
                                 role="table"
                                 aria-label={t('admin.doctors.table')}

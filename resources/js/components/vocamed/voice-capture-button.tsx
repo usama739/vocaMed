@@ -68,7 +68,7 @@ export function VoiceCaptureButton({
     return (
         <div
             className={cn(
-                'flex flex-col items-center gap-3 rounded-xl border border-line bg-surface-subtle px-4 py-[22px] text-center',
+                'flex flex-col items-center gap-3 rounded-xl border border-line bg-surface-subtle px-4 py-[22px] text-center shadow-soft',
                 className,
             )}
         >

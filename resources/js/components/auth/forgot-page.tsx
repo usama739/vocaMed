@@ -20,6 +20,8 @@ import { TextField } from '@/components/vocamed/form-fields';
 import { useT } from '@/i18n/scope';
 import { auth, type AuthSource } from '@/lib/data';
 import { isEmail } from '@/lib/validation';
+import { marketingPrimary } from '@/components/public/marketing';
+import { cn } from '@/lib/utils';
 
 const backLink =
     'inline-flex min-h-11 items-center rounded-md px-2 text-control font-semibold text-brand-hover transition-colors hover:text-brand-deep hover:underline';
@@ -122,7 +124,7 @@ export function ForgotPage({ source = auth }: { source?: AuthSource }) {
                                 <Button
                                     type="submit"
                                     size="lg"
-                                    className="w-full"
+                                    className={cn(marketingPrimary, 'w-full')}
                                     aria-busy={phase === 'submitting'}
                                 >
                                     {phase === 'submitting' && (

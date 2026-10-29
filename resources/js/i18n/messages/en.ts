@@ -1,3 +1,4 @@
+import accountEn from './account-en';
 import adminEn from './admin-en';
 import authEn from './auth-en';
 import landingEn from './landing-en';
@@ -188,6 +189,7 @@ const en = {
     doctor: doctorEn,
     admin: adminEn,
     patient: patientEn,
+    account: accountEn,
 } as const;
 
 export default en;

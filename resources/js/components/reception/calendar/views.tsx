@@ -176,7 +176,7 @@ export function DayView({
         !!moving && moving.appointment.doctorId === column.doctor.id;
 
     return (
-        <div className="overflow-x-auto rounded-xl border border-line">
+        <div className="overflow-x-auto rounded-xl border border-line shadow-soft">
             <div
                 role="table"
                 aria-label={
@@ -472,7 +472,7 @@ export function WeekView({
     const showDoctor = data.doctors.length > 1;
 
     return (
-        <div className="overflow-x-auto rounded-xl border border-line">
+        <div className="overflow-x-auto rounded-xl border border-line shadow-soft">
             <div
                 role="table"
                 aria-label={
@@ -654,7 +654,7 @@ export function MonthView({
     });
 
     return (
-        <div className="overflow-x-auto rounded-xl border border-line">
+        <div className="overflow-x-auto rounded-xl border border-line shadow-soft">
             <div
                 role="table"
                 aria-label={t('reception.calendar.monthGrid')}

@@ -521,7 +521,7 @@ function AppointmentList({
     return (
         <section
             style={{ animationDelay: `${delay}ms` }}
-            className="animate-rise overflow-hidden rounded-xl border border-line bg-white motion-reduce:animate-none"
+            className="animate-rise overflow-hidden rounded-xl border border-line bg-white shadow-soft motion-reduce:animate-none"
         >
             <h2 className="border-b border-line px-5 py-4 text-lead font-semibold text-ink">
                 {title}

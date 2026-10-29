@@ -1,4 +1,4 @@
-import { Clock, Mic, TriangleAlert } from 'lucide-react';
+import { BellRing, Clock, Mic, TriangleAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { formatCountdown } from '@/components/vocamed/booking/format';
 import { usePrefersReducedMotion } from '@/hooks/use-reduced-motion';
@@ -91,108 +91,140 @@ export function HeroDemo() {
             aria-hidden="true"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
-            className="overflow-hidden rounded-2xl border border-line bg-white shadow-lift transition-shadow duration-300 hover:shadow-panel"
+            className="relative"
         >
-            <div className="flex items-center justify-between gap-3 border-b border-line-soft px-[18px] py-3.5">
-                <span className="text-control font-bold text-ink">
-                    {t('landing.mock.title')}
-                </span>
-                <div className="inline-flex rounded-[9px] bg-surface-held p-[3px]">
-                    <span className="rounded-[7px] bg-white px-3.5 py-[5px] text-small font-semibold text-ink shadow-xs">
-                        {t('landing.mock.voice')}
-                    </span>
-                    <span className="px-3.5 py-[5px] text-small font-semibold text-subtle">
-                        {t('landing.mock.manual')}
-                    </span>
-                </div>
-            </div>
-
-            <div className="flex flex-col gap-4 p-[18px]">
-                <div className="flex items-start gap-3 rounded-lg border border-line-soft bg-surface-subtle p-3.5">
-                    <span
-                        className={cn(
-                            'inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-brand text-white',
-                            frame.listening && 'animate-pulse-ring',
-                        )}
-                    >
-                        <Mic className="size-5" />
-                    </span>
-                    <div className="flex min-w-0 flex-col gap-1">
-                        <span className="text-caption font-semibold tracking-[0.04em] text-subtle uppercase">
-                            {t('landing.mock.heard')}
+            <div className="overflow-hidden rounded-3xl border border-line/70 bg-white shadow-window transition-shadow duration-300">
+                <div className="flex items-center justify-between gap-3 border-b border-line-soft px-[18px] py-3.5">
+                    <span className="flex items-center gap-3">
+                        <span className="flex gap-1.5">
+                            <span className="size-2.5 rounded-full bg-line-strong" />
+                            <span className="size-2.5 rounded-full bg-line-strong" />
+                            <span className="size-2.5 rounded-full bg-line-strong" />
                         </span>
-                        <span className="min-h-[3em] text-control leading-normal text-ink">
-                            {transcript.slice(0, frame.chars)}
-                            {!reduced && frame.chars < transcript.length && (
-                                <span className="ms-px inline-block h-4 w-px animate-caret bg-ink align-middle" />
-                            )}
+                        <span className="text-control font-bold text-ink">
+                            {t('landing.mock.title')}
                         </span>
-                        <span className="text-small font-semibold text-brand-hover">
-                            {t('landing.mock.type')}
+                    </span>
+                    <div className="inline-flex rounded-[9px] bg-surface-held p-[3px]">
+                        <span className="rounded-[7px] bg-white px-3.5 py-[5px] text-small font-semibold text-ink shadow-xs">
+                            {t('landing.mock.voice')}
+                        </span>
+                        <span className="px-3.5 py-[5px] text-small font-semibold text-subtle">
+                            {t('landing.mock.manual')}
                         </span>
                     </div>
                 </div>
 
-                <div className="flex min-h-6 items-center justify-between gap-2">
-                    <span className="text-small font-semibold text-copy">
-                        {t('landing.mock.review')}
-                    </span>
-                    <span
-                        className={cn(
-                            'inline-flex items-center gap-1.5 text-small font-semibold text-copy transition-opacity duration-300',
-                            frame.holdSeconds === null && 'opacity-0',
-                        )}
-                    >
-                        <Clock className="size-3.5" />
-                        <span>
-                            {t('landing.mock.hold', {
-                                time: formatCountdown(frame.holdSeconds ?? 108),
-                            })}
+                <div className="flex flex-col gap-4 p-[18px]">
+                    <div className="flex items-start gap-3 rounded-lg border border-line-soft bg-surface-subtle p-3.5">
+                        <span
+                            className={cn(
+                                'inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-brand text-white',
+                                frame.listening && 'animate-pulse-ring',
+                            )}
+                        >
+                            <Mic className="size-5" />
                         </span>
-                    </span>
-                </div>
+                        <div className="flex min-w-0 flex-col gap-1">
+                            <span className="text-caption font-semibold tracking-[0.04em] text-subtle uppercase">
+                                {t('landing.mock.heard')}
+                            </span>
+                            <span className="min-h-[3em] text-control leading-normal text-ink">
+                                {transcript.slice(0, frame.chars)}
+                                {!reduced &&
+                                    frame.chars < transcript.length && (
+                                        <span className="ms-px inline-block h-4 w-px animate-caret bg-ink align-middle" />
+                                    )}
+                            </span>
+                            <span className="text-small font-semibold text-brand-hover">
+                                {t('landing.mock.type')}
+                            </span>
+                        </div>
+                    </div>
 
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-2.5">
-                    <Field
-                        label={t('landing.mock.patient')}
-                        value={t('landing.mock.vPatient')}
-                        filled={frame.fields >= 1}
-                    />
-                    <Field
-                        label={t('landing.mock.doctor')}
-                        value={t('landing.mock.vDoctor')}
-                        filled={frame.fields >= 2}
-                    />
-                    <Field
-                        label={t('landing.mock.service')}
-                        value={t('landing.mock.vService')}
-                        filled={frame.fields >= 3}
-                    />
-                    <Field
-                        label={t('landing.patient.when')}
-                        flagLabel={t('landing.mock.check')}
-                        value={t('landing.mock.vWhen')}
-                        filled={frame.fields >= 4}
-                        flagged
-                    />
-                </div>
+                    <div className="flex min-h-6 items-center justify-between gap-2">
+                        <span className="text-small font-semibold text-copy">
+                            {t('landing.mock.review')}
+                        </span>
+                        <span
+                            className={cn(
+                                'inline-flex items-center gap-1.5 text-small font-semibold text-copy transition-opacity duration-300',
+                                frame.holdSeconds === null && 'opacity-0',
+                            )}
+                        >
+                            <Clock className="size-3.5" />
+                            <span>
+                                {t('landing.mock.hold', {
+                                    time: formatCountdown(
+                                        frame.holdSeconds ?? 108,
+                                    ),
+                                })}
+                            </span>
+                        </span>
+                    </div>
 
-                <div className="flex flex-wrap gap-2.5">
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-2.5">
+                        <Field
+                            label={t('landing.mock.patient')}
+                            value={t('landing.mock.vPatient')}
+                            filled={frame.fields >= 1}
+                        />
+                        <Field
+                            label={t('landing.mock.doctor')}
+                            value={t('landing.mock.vDoctor')}
+                            filled={frame.fields >= 2}
+                        />
+                        <Field
+                            label={t('landing.mock.service')}
+                            value={t('landing.mock.vService')}
+                            filled={frame.fields >= 3}
+                        />
+                        <Field
+                            label={t('landing.patient.when')}
+                            flagLabel={t('landing.mock.check')}
+                            value={t('landing.mock.vWhen')}
+                            filled={frame.fields >= 4}
+                            flagged
+                        />
+                    </div>
+
+                    <div className="flex flex-wrap gap-2.5">
+                        <span
+                            className={cn(
+                                'inline-flex min-h-12 flex-[1_1_140px] items-center justify-center rounded-md bg-brand text-control font-semibold text-white transition-[transform,box-shadow] duration-150',
+                                frame.pressed && 'scale-[0.97] shadow-glow',
+                            )}
+                        >
+                            {t('landing.mock.confirm')}
+                        </span>
+                        <span className="inline-flex min-h-12 items-center justify-center rounded-md border border-line-strong px-5 text-control font-semibold text-ink">
+                            {t('landing.mock.edit')}
+                        </span>
+                        <span className="inline-flex min-h-12 items-center justify-center rounded-md px-5 text-control font-semibold text-copy">
+                            {t('landing.mock.discard')}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                className="absolute -end-2 -top-11 flex animate-rise items-center gap-3 rounded-2xl border border-line/70 bg-white py-3 ps-3 pe-5 shadow-float sm:-end-5"
+                style={{ animationDelay: '420ms' }}
+            >
+                <span className="inline-flex size-10 items-center justify-center rounded-xl bg-brand-tint text-brand-hover">
+                    <BellRing className="size-5" />
+                </span>
+                <span className="flex flex-col leading-tight">
                     <span
-                        className={cn(
-                            'inline-flex min-h-12 flex-[1_1_140px] items-center justify-center rounded-md bg-brand text-control font-semibold text-white transition-[transform,box-shadow] duration-150',
-                            frame.pressed && 'scale-[0.97] shadow-glow',
-                        )}
+                        lang="en"
+                        className="font-sans text-title font-bold text-ink"
                     >
-                        {t('landing.mock.confirm')}
+                        {t('landing.mock.floatValue')}
                     </span>
-                    <span className="inline-flex min-h-12 items-center justify-center rounded-md border border-line-strong px-5 text-control font-semibold text-ink">
-                        {t('landing.mock.edit')}
+                    <span className="text-small font-medium text-subtle">
+                        {t('landing.mock.floatLabel')}
                     </span>
-                    <span className="inline-flex min-h-12 items-center justify-center rounded-md px-5 text-control font-semibold text-copy">
-                        {t('landing.mock.discard')}
-                    </span>
-                </div>
+                </span>
             </div>
         </div>
     );

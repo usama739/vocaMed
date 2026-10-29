@@ -161,7 +161,7 @@ export function TopBar({
     const { t } = useT();
 
     return (
-        <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-line-soft bg-white px-6 py-3">
+        <header className="relative z-10 flex min-h-[72px] flex-wrap items-center justify-between gap-x-6 gap-y-3 bg-white px-6 py-3 shadow-bar">
             <div className="flex min-w-0 items-center gap-2">
                 {leading}
                 <Breadcrumbs crumbs={crumbs} />
@@ -176,7 +176,7 @@ export function TopBar({
                         </Link>
                     </Button>
                 )}
-                {role === 'receptionist' && (
+                {role === 'receptionist' && onNewBooking && (
                     <Button onClick={onNewBooking}>
                         <Plus aria-hidden="true" />
                         {t('shell.newBooking')}

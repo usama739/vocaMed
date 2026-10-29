@@ -38,6 +38,8 @@ const landingUr: DeepString<typeof landingEn> = {
         discard: 'منسوخ کریں',
         demo: '15 سیکنڈ کا ڈیمو دیکھیں',
         sample: 'نمونہ ڈیٹا',
+        floatValue: '12',
+        floatLabel: 'آج بھیجی گئی یاد دہانیاں',
     },
     benefits: {
         title: 'تین چیزیں جو ڈیسک کو پرسکون بناتی ہیں',

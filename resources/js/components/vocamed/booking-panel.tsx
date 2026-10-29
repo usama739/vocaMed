@@ -746,7 +746,7 @@ export function BookingPanelBody({
                                 />
                             )}
 
-                            <div className="flex flex-col gap-3 rounded-xl border border-line p-4">
+                            <div className="flex flex-col gap-3 rounded-xl border border-line p-4 shadow-soft">
                                 <strong className="text-control text-ink">
                                     {t('booking.reviewTitle')}
                                 </strong>

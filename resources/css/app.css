@@ -40,8 +40,8 @@
     --text-title--line-height: 1.3;
     --text-heading: 1.625rem; /* 26px  page titles (h1) */
     --text-heading--line-height: 1.2;
-    --text-hero: clamp(2.125rem, 5vw, 3.5rem); /* 34-56px  landing hero */
-    --text-hero--line-height: 1.1;
+    --text-hero: clamp(2.25rem, 5.6vw, 4rem); /* 36-64px  landing hero */
+    --text-hero--line-height: 1.05;
     --text-section: clamp(
         1.75rem,
         3.6vw,
@@ -62,6 +62,7 @@
     --radius-lg: 12px; /* alerts, popovers, toasts */
     --radius-xl: 14px; /* tables, cards inside panels */
     --radius-2xl: 16px; /* page cards, dialogs, slide-over */
+    --radius-3xl: 24px; /* hero window, sign-in cards, marketing surfaces */
 
     /* ---- Shadows ---- */
     --shadow-xs: 0 1px 2px rgba(7, 20, 55, 0.06); /* active nav item */
@@ -71,6 +72,18 @@
     --shadow-panel: 0 20px 50px rgba(7, 20, 55, 0.14); /* slide-over panel */
     --shadow-modal: 0 20px 50px rgba(7, 20, 55, 0.25); /* confirm dialog */
     --shadow-glow: 0 6px 16px rgba(19, 102, 214, 0.28); /* hovered primary button */
+    --shadow-soft:
+        0 4px 14px rgba(7, 20, 55, 0.05), 0 1px 2px rgba(7, 20, 55, 0.04); /* raised marketing cards */
+    --shadow-pill:
+        0 8px 24px rgba(7, 20, 55, 0.08), 0 1px 2px rgba(7, 20, 55, 0.05); /* floating header */
+    --shadow-float:
+        0 16px 40px rgba(7, 20, 55, 0.12), 0 2px 6px rgba(7, 20, 55, 0.06); /* floating cards, sign-in cards */
+    --shadow-window:
+        0 30px 70px rgba(7, 20, 55, 0.14), 0 8px 20px rgba(7, 20, 55, 0.06); /* hero product window */
+    --shadow-cta: 0 10px 24px rgba(19, 102, 214, 0.3); /* marketing primary button */
+    --shadow-bar: 0 8px 20px -14px rgba(7, 20, 55, 0.18); /* top bar over the page */
+    --shadow-btn: 0 2px 6px rgba(19, 102, 214, 0.25); /* resting primary button in the app */
+    --shadow-cta-lift: 0 14px 30px rgba(19, 102, 214, 0.38); /* hovered marketing primary button */
 
     /* ---- Motion ---- */
     --ease-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -176,6 +189,7 @@
     --color-brand-tint: #eaf2fe; /* selected chip / pressed toggle */
     --color-brand-wash: #ddebfe;
     --color-brand-line: #bcd6fa;
+    --color-brand-bright: #2b7be6; /* top of the marketing button gradient */
 
     /* ---- Navy (landing closing band) ---- */
     --color-navy: #0b2a5b;
@@ -445,6 +459,26 @@ html {
     outline: var(--focus-ring-width) solid var(--ring);
     outline-offset: var(--focus-ring-offset);
     --tw-ring-shadow: 0 0 #0000 !important;
+}
+
+/* Faint dots for the public pages, fading out toward the edges. Decorative; place it behind content. */
+@utility dot-field {
+    background-image: radial-gradient(
+        circle,
+        color-mix(in srgb, var(--color-ink) 16%, transparent) 1px,
+        transparent 1.3px
+    );
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(
+        ellipse 70% 65% at 50% 35%,
+        #000 15%,
+        transparent 78%
+    );
+    mask-image: radial-gradient(
+        ellipse 70% 65% at 50% 35%,
+        #000 15%,
+        transparent 78%
+    );
 }
 
 /* Slot held by another receptionist: diagonal stripes, as in the design. */

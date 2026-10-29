@@ -23,7 +23,7 @@ export function InsightCard({
         <section
             aria-labelledby={id}
             style={{ animationDelay: `${delay}ms` }}
-            className="flex animate-rise flex-col gap-3.5 rounded-xl border border-line bg-white p-5 motion-reduce:animate-none"
+            className="flex animate-rise flex-col gap-3.5 rounded-xl border border-line bg-white p-5 shadow-soft motion-reduce:animate-none"
         >
             <div className="flex flex-col gap-0.5">
                 <h2 id={id} className="text-lead font-semibold text-ink">

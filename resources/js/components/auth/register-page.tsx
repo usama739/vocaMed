@@ -31,6 +31,8 @@ import {
     type CountryCode,
 } from '@/lib/geo';
 import { isEmail, meetsPasswordRule } from '@/lib/validation';
+import { marketingPrimary } from '@/components/public/marketing';
+import { cn } from '@/lib/utils';
 
 type Field = 'clinic' | 'name' | 'email' | 'password' | 'terms';
 
@@ -285,7 +287,7 @@ export function RegisterPage({ source = auth }: { source?: AuthSource }) {
                                 <Button
                                     type="submit"
                                     size="lg"
-                                    className="w-full"
+                                    className={cn(marketingPrimary, 'w-full')}
                                     aria-busy={phase === 'submitting'}
                                 >
                                     {phase === 'submitting' && (

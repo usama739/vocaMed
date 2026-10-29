@@ -95,7 +95,7 @@ export default function Status() {
                     </div>
                 )}
                 {query.status === 'error' && (
-                    <div className="rounded-2xl border border-line bg-white">
+                    <div className="rounded-2xl border border-line bg-white shadow-soft">
                         <ErrorState onRetry={query.reload} />
                     </div>
                 )}

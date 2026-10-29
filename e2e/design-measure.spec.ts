@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 
 // Compares computed styles on the live pages against values read from the design files
 // (Login, Register, Invite, Privacy, Main). Run on demand: it prints a table of differences.
+// Expected values marked "visual polish" are the approved restyle (docs/modules/visual-polish.md),
+// not the original design; everything else still guards the design.
 test.use({ reducedMotion: 'reduce', viewport: { width: 1440, height: 900 } });
 
 type Check = [label: string, selector: string, prop: string, expected: string];
@@ -30,7 +32,13 @@ const PAGES: { name: string; path: string; checks: Check[] }[] = [
         name: 'login',
         path: '/login',
         checks: [
-            ['page background', 'div.min-h-dvh', 'backgroundColor', '#f9fafb'],
+            // visual polish: the ground is a soft gradient with dots, so there is no flat colour to compare.
+            [
+                'page background',
+                'div.min-h-dvh',
+                'backgroundColor',
+                'transparent',
+            ],
             [
                 'card width',
                 '#auth-title >> xpath=ancestor::section',
@@ -41,19 +49,19 @@ const PAGES: { name: string; path: string; checks: Check[] }[] = [
                 'card padding',
                 '#auth-title >> xpath=ancestor::section',
                 'paddingTop',
-                '32',
+                '40', // visual polish (design 32)
             ],
             [
                 'card radius',
                 '#auth-title >> xpath=ancestor::section',
                 'borderTopLeftRadius',
-                '16',
+                '24', // visual polish (design 16)
             ],
             [
-                'card border',
+                'card border width',
                 '#auth-title >> xpath=ancestor::section',
-                'borderTopColor',
-                '#e4e7ee',
+                'borderTopWidth',
+                '1',
             ],
             ['title size', '#auth-title', 'fontSize', '26'],
             ['title weight', '#auth-title', 'fontWeight', '700'],
@@ -78,7 +86,7 @@ const PAGES: { name: string; path: string; checks: Check[] }[] = [
                 'sign-in radius',
                 'button[type=submit]',
                 'borderTopLeftRadius',
-                '10',
+                '33554400', // visual polish: pill (design 10)
             ],
             ['sign-in font', 'button[type=submit]', 'fontSize', '16'],
         ],
@@ -142,16 +150,16 @@ const PAGES: { name: string; path: string; checks: Check[] }[] = [
         name: 'landing',
         path: '/',
         checks: [
-            ['h1 size (56 at 1440)', 'h1', 'fontSize', '56'],
+            ['h1 size (64 at 1440)', 'h1', 'fontSize', '64'], // visual polish (design 56)
             ['h1 weight', 'h1', 'fontWeight', '700'],
             ['h1 colour', 'h1', 'color', '#071437'],
             [
                 'hero background',
                 'main > section >> nth=0',
                 'backgroundColor',
-                '#f9fafb',
+                'transparent', // visual polish: gradient wash (design #f9fafb)
             ],
-            ['hero lead size', 'h1 + p', 'fontSize', '19'],
+            ['hero lead size', 'h1 + p', 'fontSize', '20'], // visual polish (design 19)
             [
                 'section title size (38 at 1440)',
                 '#benefits h2',
@@ -162,7 +170,7 @@ const PAGES: { name: string; path: string; checks: Check[] }[] = [
                 'benefit card radius',
                 '#benefits h3 >> xpath=..',
                 'borderTopLeftRadius',
-                '14',
+                '20', // visual polish (design 14)
             ],
             [
                 'benefit card padding',
@@ -183,9 +191,10 @@ const PAGES: { name: string; path: string; checks: Check[] }[] = [
                 'closing band radius',
                 '#cta h2 >> xpath=..',
                 'borderTopLeftRadius',
-                '20',
+                '28', // visual polish (design 20)
             ],
-            ['header height', 'header >> nth=0', 'height', '73'],
+            // visual polish: floating bar plus its top spacing (design 73)
+            ['header height', 'header >> nth=0', 'height', '80'],
         ],
     },
 ];

@@ -258,7 +258,7 @@ export default function DoctorOverview() {
                         ) : rows.length > 0 ? (
                             <div
                                 role="status"
-                                className="rounded-xl border border-line p-6 text-center text-body font-semibold text-ink"
+                                className="rounded-xl border border-line p-6 text-center text-body font-semibold text-ink shadow-soft"
                             >
                                 {t('doctor.overview.allDone')}
                             </div>
@@ -266,7 +266,7 @@ export default function DoctorOverview() {
 
                         <section
                             aria-labelledby="todays-appointments"
-                            className="animate-rise overflow-hidden rounded-xl border border-line bg-white motion-reduce:animate-none"
+                            className="animate-rise overflow-hidden rounded-xl border border-line bg-white shadow-soft motion-reduce:animate-none"
                         >
                             <h2
                                 id="todays-appointments"

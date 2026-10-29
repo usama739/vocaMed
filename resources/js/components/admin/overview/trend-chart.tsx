@@ -63,7 +63,7 @@ export function TrendChart({
     return (
         <section
             aria-labelledby="trend-title"
-            className="flex animate-rise flex-col gap-3.5 rounded-xl border border-line bg-white p-5 [animation-delay:120ms] motion-reduce:animate-none"
+            className="flex animate-rise flex-col gap-3.5 rounded-xl border border-line bg-white p-5 shadow-soft [animation-delay:120ms] motion-reduce:animate-none"
         >
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5">

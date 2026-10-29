@@ -102,7 +102,7 @@ export default function Manage() {
                     </div>
                 )}
                 {query.status === 'error' && (
-                    <div className="rounded-2xl border border-line bg-white">
+                    <div className="rounded-2xl border border-line bg-white shadow-soft">
                         <ErrorState onRetry={query.reload} />
                     </div>
                 )}
@@ -251,7 +251,7 @@ function Details({
 
             <section
                 aria-label={t('patient.manage.details')}
-                className="flex animate-rise flex-col gap-3.5 rounded-2xl border border-line bg-white p-5 motion-reduce:animate-none"
+                className="flex animate-rise flex-col gap-3.5 rounded-2xl border border-line bg-white p-5 shadow-soft motion-reduce:animate-none"
             >
                 <div className="flex items-center gap-3">
                     <span

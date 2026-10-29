@@ -1,6 +1,9 @@
 import type { AuthSource } from './auth';
 import { clockNow } from '@/lib/clock';
-import { createMockAuth } from './auth-mock';
+import type { AccountSource, SessionUser } from './account';
+import { createMockAuth, SAMPLE_PASSWORD } from './auth-mock';
+import { createMockAccounts } from './mock-account';
+import { createSessionUserStore } from './session-user';
 import { createMockDataSource } from './mock';
 import { createMockPatientLinks } from './mock-patient-links';
 import { createSeedDatabase, DEMO_CLINIC_ID } from './seed';
@@ -13,6 +16,7 @@ export { SAMPLE_ACCOUNTS, SAMPLE_PASSWORD } from './auth-mock';
 export type { DataSource, PatientLinkSource } from './source';
 export * from './views';
 export * from './patient-views';
+export * from './account';
 export { rangeOf, weekStart, monthStart, monthEnd } from './calendar-range';
 export { SLOT_HOLD_SECONDS } from './mock';
 export {
@@ -94,3 +98,32 @@ export const patientLinks: PatientLinkSource = createMockPatientLinks(
 export const auth: AuthSource = createMockAuth({
     latencyMs: import.meta.env.MODE === 'test' ? 0 : 600,
 });
+
+/**
+ * The signed-in person, and their account. In the demo each role signs in as its sample user; with
+ * the real backend the session decides, `getSessionUser` is replaced by the shared `auth.user` prop,
+ * and the account source talks to Laravel.
+ */
+const sessionUsers = createSessionUserStore(database, SAMPLE_USERS);
+const accountFor = createMockAccounts(database, {
+    latencyMs: import.meta.env.MODE === 'test' ? 0 : 200,
+    now: clockNow,
+    initialPassword: SAMPLE_PASSWORD,
+    onChange: () => sessionUsers.notify(),
+});
+const accountSources = new Map<Role, AccountSource>();
+
+export const getAccountSource = (role: Role): AccountSource => {
+    let source = accountSources.get(role);
+
+    if (!source) {
+        source = accountFor(SAMPLE_USERS[role]);
+        accountSources.set(role, source);
+    }
+
+    return source;
+};
+
+export const getSessionUser = (role: Role): SessionUser =>
+    sessionUsers.get(role);
+export const subscribeSessionUser = sessionUsers.subscribe;

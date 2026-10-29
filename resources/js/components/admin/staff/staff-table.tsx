@@ -45,7 +45,7 @@ export function StaffTable({
         waiting(row) || !row.name ? t('admin.staff.pending') : row.name;
 
     return (
-        <div className="overflow-x-auto rounded-xl border border-line">
+        <div className="overflow-x-auto rounded-xl border border-line shadow-soft">
             <div
                 role="table"
                 aria-label={t('admin.staff.title')}

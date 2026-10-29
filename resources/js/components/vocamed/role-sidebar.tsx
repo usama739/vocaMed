@@ -90,7 +90,7 @@ export function RoleSidebar({
                     ref={searchRef}
                     type="search"
                     placeholder={t('shell.searchMenu')}
-                    className="h-11 w-full rounded-md border border-line bg-white ps-10 pe-10 text-control text-ink placeholder:text-subtle"
+                    className="h-11 w-full rounded-md border border-line bg-white ps-10 pe-10 text-control text-ink shadow-xs placeholder:text-subtle"
                 />
                 <kbd
                     aria-hidden="true"
@@ -123,9 +123,9 @@ export function RoleSidebar({
                                 onClick={onNavigate}
                                 aria-current={on ? 'page' : undefined}
                                 className={cn(
-                                    'flex min-h-11 items-center gap-3 rounded-md border px-3 text-control',
+                                    'flex min-h-11 items-center gap-3 rounded-lg border px-3 text-control',
                                     on
-                                        ? 'border-line bg-sidebar-accent font-semibold text-ink shadow-xs'
+                                        ? 'border-line bg-sidebar-accent font-semibold text-ink shadow-soft'
                                         : 'border-transparent font-medium text-sidebar-foreground hover:bg-line-soft',
                                 )}
                             >

@@ -166,7 +166,7 @@ export default function Requests() {
 
                         <section
                             aria-labelledby="request-history"
-                            className="animate-rise overflow-hidden rounded-xl border border-line bg-white motion-reduce:animate-none"
+                            className="animate-rise overflow-hidden rounded-xl border border-line bg-white shadow-soft motion-reduce:animate-none"
                         >
                             <h2
                                 id="request-history"
@@ -332,7 +332,7 @@ function RequestCard({
             aria-labelledby={headingId}
             data-request={row.request.id}
             style={{ animationDelay: `${index * 60}ms` }}
-            className="flex animate-rise flex-col gap-3.5 rounded-xl border border-line bg-white p-5 motion-reduce:animate-none"
+            className="flex animate-rise flex-col gap-3.5 rounded-xl border border-line bg-white p-5 shadow-soft motion-reduce:animate-none"
         >
             <div className="flex flex-wrap items-center justify-between gap-2.5">
                 <div className="flex flex-col leading-[1.4]">

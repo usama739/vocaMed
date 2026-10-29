@@ -152,7 +152,7 @@ export function AvailabilityEditor({
                 <div className="flex min-w-0 flex-[2_1_520px] flex-col gap-5">
                     <section
                         aria-labelledby="weekly-hours"
-                        className="animate-rise overflow-hidden rounded-xl border border-line bg-white motion-reduce:animate-none"
+                        className="animate-rise overflow-hidden rounded-xl border border-line bg-white shadow-soft motion-reduce:animate-none"
                     >
                         <h2
                             id="weekly-hours"
@@ -497,7 +497,7 @@ export function AvailabilityEditor({
 
                 <aside
                     aria-labelledby="preview-title"
-                    className="sticky top-3 flex min-w-0 flex-[1_1_280px] animate-rise flex-col gap-3.5 rounded-xl border border-line bg-white p-5 [animation-delay:180ms] motion-reduce:animate-none"
+                    className="sticky top-3 flex min-w-0 flex-[1_1_280px] animate-rise flex-col gap-3.5 rounded-xl border border-line bg-white p-5 shadow-soft [animation-delay:180ms] motion-reduce:animate-none"
                 >
                     <div className="flex flex-col gap-0.5">
                         <CardTitle id="preview-title">

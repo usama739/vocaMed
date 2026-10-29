@@ -348,7 +348,7 @@ export default function Templates() {
                                 id="template-panel"
                                 role="tabpanel"
                                 aria-labelledby={`template-tab-${kind}`}
-                                className="flex min-w-0 flex-[1_1_520px] animate-rise flex-col gap-[18px] rounded-xl border border-line bg-white p-6 motion-reduce:animate-none"
+                                className="flex min-w-0 flex-[1_1_520px] animate-rise flex-col gap-[18px] rounded-xl border border-line bg-white p-6 shadow-soft motion-reduce:animate-none"
                             >
                                 <div className="flex flex-wrap gap-x-7 gap-y-4">
                                     <Segmented
@@ -548,7 +548,7 @@ export default function Templates() {
                                 aria-labelledby="template-preview"
                                 className="flex min-w-0 flex-[1_1_340px] animate-rise flex-col gap-5 [animation-delay:60ms] motion-reduce:animate-none"
                             >
-                                <div className="flex flex-col gap-3.5 rounded-xl border border-line bg-surface-subtle p-6">
+                                <div className="flex flex-col gap-3.5 rounded-xl border border-line bg-surface-subtle p-6 shadow-soft">
                                     <div className="flex flex-col gap-0.5">
                                         <h2
                                             id="template-preview"
@@ -573,7 +573,7 @@ export default function Templates() {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col gap-3.5 rounded-xl border border-line bg-white p-6">
+                                <div className="flex flex-col gap-3.5 rounded-xl border border-line bg-white p-6 shadow-soft">
                                     <h2 className="text-lead font-semibold text-ink">
                                         {t('admin.templates.test')}
                                     </h2>

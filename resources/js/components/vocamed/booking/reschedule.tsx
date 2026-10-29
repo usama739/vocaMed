@@ -180,7 +180,7 @@ export function RescheduleBody({
 
     return (
         <div className="flex flex-1 flex-col gap-[18px] p-5">
-            <dl className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-1.5 rounded-xl border border-line bg-surface-subtle p-4 text-control">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-1.5 rounded-xl border border-line bg-surface-subtle p-4 text-control shadow-soft">
                 <dt className="text-subtle">{t('booking.patient')}</dt>
                 <dd className="font-semibold text-ink">{patient.name}</dd>
                 <dt className="text-subtle">{t('booking.doctor')}</dt>

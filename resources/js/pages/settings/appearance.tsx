@@ -1,32 +1,14 @@
-import { Head } from '@inertiajs/react';
-import AppearanceTabs from '@/components/appearance-tabs';
-import Heading from '@/components/heading';
-import { edit as editAppearance } from '@/routes/appearance';
+import { router } from '@inertiajs/react';
+import { useEffect } from 'react';
 
-export default function Appearance() {
-    return (
-        <>
-            <Head title="Appearance settings" />
+/**
+ * The account lives at /account now (name, language, password, email choices, sessions). The starter
+ * kit's settings pages are not part of the product, so they only send the visitor there.
+ */
+export default function RedirectToAccount() {
+    useEffect(() => {
+        router.visit('/account', { replace: true });
+    }, []);
 
-            <h1 className="sr-only">Appearance settings</h1>
-
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Appearance settings"
-                    description="Update the appearance settings for your account"
-                />
-                <AppearanceTabs />
-            </div>
-        </>
-    );
+    return null;
 }
-
-Appearance.layout = {
-    breadcrumbs: [
-        {
-            title: 'Appearance settings',
-            href: editAppearance(),
-        },
-    ],
-};

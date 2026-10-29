@@ -92,7 +92,7 @@ export function DataTable<T>({
     return (
         <div
             className={cn(
-                'overflow-x-auto rounded-xl border border-line',
+                'overflow-x-auto rounded-xl border border-line shadow-soft',
                 className,
             )}
         >
@@ -277,7 +277,7 @@ export function FilterBar({
     return (
         <div
             className={cn(
-                'flex flex-col gap-3.5 rounded-xl border border-line bg-surface-subtle p-[18px]',
+                'flex flex-col gap-3.5 rounded-xl border border-line bg-surface-subtle p-[18px] shadow-soft',
                 className,
             )}
         >

@@ -24,6 +24,11 @@ import {
 } from '@/components/landing/demo-dialogs';
 import { HeroDemo } from '@/components/landing/hero-demo';
 import { Placeholders } from '@/components/public/placeholders';
+import {
+    marketingOnNavy,
+    marketingPrimary,
+    marketingSecondary,
+} from '@/components/public/marketing';
 import { PublicLayout, Wordmark } from '@/components/public/public-layout';
 import { Reveal } from '@/components/public/reveal';
 import { Button } from '@/components/ui/button';
@@ -60,7 +65,7 @@ function Section({
             id={id}
             className={cn(
                 'scroll-mt-20',
-                subtle ? 'border-y border-line bg-surface-subtle' : 'bg-white',
+                subtle ? 'bg-surface-subtle' : 'bg-white',
             )}
         >
             {children}
@@ -73,7 +78,7 @@ const wrap = 'mx-auto w-full max-w-[1200px] px-6';
 function SectionHead({ title, sub }: { title: string; sub?: ReactNode }) {
     return (
         <Reveal className="flex max-w-[680px] flex-col gap-3">
-            <h2 className="text-section font-bold text-balance text-ink">
+            <h2 className="text-section font-bold text-balance text-ink ltr:tracking-[-0.02em] rtl:tracking-normal">
                 {title}
             </h2>
             {sub && <p className="text-lead">{sub}</p>}
@@ -82,7 +87,7 @@ function SectionHead({ title, sub }: { title: string; sub?: ReactNode }) {
 }
 
 const card =
-    'group rounded-xl border border-line bg-white shadow-card transition-[transform,box-shadow,border-color] duration-300 ease-out-soft hover:-translate-y-0.5 hover:border-brand-line hover:shadow-lift';
+    'group rounded-[20px] border border-line/70 bg-white shadow-soft transition-[transform,box-shadow,border-color] duration-300 ease-out-soft hover:-translate-y-1 hover:border-brand-line hover:shadow-float motion-reduce:hover:translate-y-0';
 
 function IconTile({
     icon: Icon,
@@ -95,7 +100,7 @@ function IconTile({
         <span
             aria-hidden="true"
             className={cn(
-                'inline-flex items-center justify-center rounded-lg bg-brand-tint text-brand-hover transition-colors duration-300 group-hover:bg-brand group-hover:text-white',
+                'inline-flex items-center justify-center rounded-xl bg-brand-tint text-brand-hover transition-colors duration-300 group-hover:bg-brand group-hover:text-white',
                 size === 'lg' ? 'size-12' : 'size-11',
             )}
         >
@@ -158,15 +163,19 @@ export function LandingPage() {
             footer={<LandingFooter onRequest={() => setDialog('request')} />}
         >
             {/* Hero */}
-            <section className="border-b border-line bg-surface-subtle">
+            <section className="relative isolate overflow-hidden bg-linear-to-b from-white via-brand-tint/70 to-white">
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-full dot-field"
+                />
                 <div
                     className={cn(
                         wrap,
-                        'flex flex-wrap items-center gap-12 pt-[72px] pb-20',
+                        'flex flex-wrap items-center gap-14 pt-16 pb-20 sm:pt-[88px] sm:pb-[104px]',
                     )}
                 >
                     <div className="flex min-w-0 flex-[1_1_460px] animate-rise flex-col items-start gap-6">
-                        <span className="inline-flex items-center gap-2 rounded-full bg-brand-tint px-3.5 py-1.5 text-label font-semibold text-brand-hover">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-brand-line bg-white px-3.5 py-1.5 text-label font-semibold text-brand-hover shadow-xs">
                             <CircleCheck
                                 aria-hidden="true"
                                 className="size-3.5"
@@ -174,14 +183,18 @@ export function LandingPage() {
                             />
                             {t('landing.hero.badge')}
                         </span>
-                        <h1 className="text-hero font-bold text-balance text-ink">
+                        <h1 className="text-hero font-bold text-balance text-ink ltr:tracking-[-0.03em] rtl:tracking-normal">
                             {t('landing.hero.title')}
                         </h1>
-                        <p className="max-w-[540px] text-[1.1875rem] text-pretty">
+                        <p className="max-w-[540px] text-[1.25rem] leading-[1.6] text-pretty text-ink-soft">
                             {t('landing.hero.sub')}
                         </p>
                         <div className="flex flex-wrap gap-3">
-                            <Button size="lg" className="px-7" asChild>
+                            <Button
+                                size="lg"
+                                className={cn(marketingPrimary, 'px-8')}
+                                asChild
+                            >
                                 <Link href="/register">
                                     {t('landing.hero.ctaStart')}
                                 </Link>
@@ -189,7 +202,7 @@ export function LandingPage() {
                             <Button
                                 size="lg"
                                 variant="outline"
-                                className="px-7"
+                                className={cn(marketingSecondary, 'px-8')}
                                 onClick={() => setDialog('request')}
                             >
                                 {t('landing.hero.ctaDemo')}
@@ -211,7 +224,7 @@ export function LandingPage() {
                             <button
                                 type="button"
                                 onClick={() => setDialog('watch')}
-                                className="group inline-flex min-h-12 items-center gap-2.5 rounded-full border border-line-strong bg-white py-0 ps-3.5 pe-5 text-control font-semibold text-ink transition-colors hover:bg-surface-hover"
+                                className="group inline-flex min-h-12 items-center gap-2.5 rounded-full border border-line bg-white py-0 ps-3.5 pe-5 text-control font-semibold text-ink shadow-soft transition-[box-shadow,transform] hover:shadow-float"
                             >
                                 <span
                                     aria-hidden="true"
@@ -231,7 +244,12 @@ export function LandingPage() {
 
             {/* Benefits */}
             <Section id="benefits">
-                <div className={cn(wrap, 'flex flex-col gap-12 py-[88px]')}>
+                <div
+                    className={cn(
+                        wrap,
+                        'flex flex-col gap-12 py-16 sm:py-[104px]',
+                    )}
+                >
                     <SectionHead
                         title={t('landing.benefits.title')}
                         sub={t('landing.benefits.sub')}
@@ -263,7 +281,12 @@ export function LandingPage() {
 
             {/* How it works */}
             <Section id="how" subtle>
-                <div className={cn(wrap, 'flex flex-col gap-12 py-[88px]')}>
+                <div
+                    className={cn(
+                        wrap,
+                        'flex flex-col gap-12 py-16 sm:py-[104px]',
+                    )}
+                >
                     <SectionHead
                         title={t('landing.how.title')}
                         sub={t('landing.how.sub')}
@@ -301,7 +324,12 @@ export function LandingPage() {
 
             {/* Statuses */}
             <Section>
-                <div className={cn(wrap, 'flex flex-col gap-10 py-[88px]')}>
+                <div
+                    className={cn(
+                        wrap,
+                        'flex flex-col gap-10 py-16 sm:py-[104px]',
+                    )}
+                >
                     <SectionHead
                         title={t('landing.statuses.title')}
                         sub={t('landing.statuses.sub')}
@@ -314,7 +342,7 @@ export function LandingPage() {
                                 delay={index * 50}
                                 className="flex"
                             >
-                                <div className="flex w-full flex-col items-start gap-2.5 rounded-lg border border-line px-5 py-[18px] transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-brand-line hover:shadow-lift">
+                                <div className="flex w-full flex-col items-start gap-2.5 rounded-2xl border border-line/70 bg-white px-5 py-[18px] shadow-soft transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-brand-line hover:shadow-float motion-reduce:hover:translate-y-0">
                                     <StatusBadge
                                         status={status}
                                         className="px-3 py-1.5 text-label"
@@ -334,11 +362,11 @@ export function LandingPage() {
                 <div
                     className={cn(
                         wrap,
-                        'flex flex-wrap items-center gap-14 py-[88px]',
+                        'flex flex-wrap items-center gap-14 py-16 sm:py-[104px]',
                     )}
                 >
                     <Reveal className="flex min-w-0 flex-[1_1_440px] flex-col gap-5">
-                        <h2 className="text-section font-bold text-balance text-ink">
+                        <h2 className="text-section font-bold text-balance text-ink ltr:tracking-[-0.02em] rtl:tracking-normal">
                             {t('landing.patient.title')}
                         </h2>
                         <p className="text-lead text-pretty">
@@ -377,7 +405,12 @@ export function LandingPage() {
 
             {/* Roles */}
             <Section>
-                <div className={cn(wrap, 'flex flex-col gap-12 py-[88px]')}>
+                <div
+                    className={cn(
+                        wrap,
+                        'flex flex-col gap-12 py-16 sm:py-[104px]',
+                    )}
+                >
                     <SectionHead
                         title={t('landing.roles.title')}
                         sub={t('landing.roles.sub')}
@@ -392,7 +425,7 @@ export function LandingPage() {
                                 <div
                                     className={cn(
                                         card,
-                                        'flex w-full flex-col gap-3 p-6 shadow-none',
+                                        'flex w-full flex-col gap-3 p-6',
                                     )}
                                 >
                                     <IconTile icon={icon} />
@@ -411,7 +444,12 @@ export function LandingPage() {
 
             {/* Trust */}
             <Section subtle>
-                <div className={cn(wrap, 'flex flex-col gap-12 py-[88px]')}>
+                <div
+                    className={cn(
+                        wrap,
+                        'flex flex-col gap-12 py-16 sm:py-[104px]',
+                    )}
+                >
                     <SectionHead
                         title={t('landing.trust.title')}
                         sub={t('landing.trust.sub')}
@@ -426,7 +464,7 @@ export function LandingPage() {
                                 <div
                                     className={cn(
                                         card,
-                                        'flex w-full flex-col gap-3 p-7 shadow-none',
+                                        'flex w-full flex-col gap-3 p-7',
                                     )}
                                 >
                                     <IconTile icon={icon} />
@@ -453,7 +491,12 @@ export function LandingPage() {
 
             {/* Plans */}
             <Section id="plans">
-                <div className={cn(wrap, 'flex flex-col gap-12 py-[88px]')}>
+                <div
+                    className={cn(
+                        wrap,
+                        'flex flex-col gap-12 py-16 sm:py-[104px]',
+                    )}
+                >
                     <SectionHead
                         title={t('landing.plans.title')}
                         sub={
@@ -469,7 +512,7 @@ export function LandingPage() {
                                 delay={index * 70}
                                 className="flex"
                             >
-                                <div className="flex w-full flex-col items-start gap-3.5 rounded-xl border border-dashed border-line-dashed p-7 transition-colors duration-300 hover:border-brand-line hover:bg-brand-tint/40">
+                                <div className="flex w-full flex-col items-start gap-3.5 rounded-[20px] border border-dashed border-line-dashed p-7 transition-colors duration-300 hover:border-brand-line hover:bg-brand-tint/40">
                                     <h3 className="text-[1.3125rem] leading-[1.3] font-bold text-ink">
                                         <Placeholders>
                                             {t('landing.plans.name')}
@@ -487,6 +530,7 @@ export function LandingPage() {
                                     </p>
                                     <Button
                                         variant="outline"
+                                        className={marketingSecondary}
                                         onClick={() => setDialog('request')}
                                     >
                                         {t('landing.hero.ctaDemo')}
@@ -500,9 +544,9 @@ export function LandingPage() {
 
             {/* FAQ */}
             <Section id="faq" subtle>
-                <div className="mx-auto flex w-full max-w-[820px] flex-col gap-8 px-6 py-[88px]">
+                <div className="mx-auto flex w-full max-w-[820px] flex-col gap-8 px-6 py-16 sm:py-[104px]">
                     <Reveal>
-                        <h2 className="text-section font-bold text-ink">
+                        <h2 className="text-section font-bold text-ink ltr:tracking-[-0.02em] rtl:tracking-normal">
                             {t('landing.faq.title')}
                         </h2>
                     </Reveal>
@@ -514,9 +558,9 @@ export function LandingPage() {
 
             {/* Closing call to action */}
             <Section id="cta">
-                <div className={cn(wrap, 'py-[88px]')}>
+                <div className={cn(wrap, 'py-16 sm:py-[104px]')}>
                     <Reveal>
-                        <div className="flex flex-col items-center gap-5 rounded-[20px] bg-navy px-8 py-14 text-center text-white">
+                        <div className="flex flex-col items-center gap-5 rounded-[28px] bg-navy px-8 py-16 text-center text-white">
                             <h2 className="max-w-[640px] text-section font-bold text-balance text-white">
                                 {t('landing.cta.title')}
                             </h2>
@@ -526,7 +570,7 @@ export function LandingPage() {
                             <div className="flex flex-wrap justify-center gap-3">
                                 <Button
                                     size="lg"
-                                    className="bg-white px-7 text-navy hover:bg-brand-tint hover:shadow-none"
+                                    className={cn(marketingOnNavy, 'px-8')}
                                     asChild
                                 >
                                     <Link href="/register">
@@ -536,7 +580,7 @@ export function LandingPage() {
                                 <Button
                                     size="lg"
                                     variant="ghost"
-                                    className="border border-navy-line px-7 text-white hover:bg-white/10 hover:text-white"
+                                    className="rounded-full border border-navy-line px-8 text-white hover:bg-white/10 hover:text-white"
                                     onClick={() => setDialog('request')}
                                 >
                                     {t('landing.hero.ctaDemo')}

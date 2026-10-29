@@ -53,7 +53,7 @@ export function AuditTable({
     const { t, locale } = useT();
 
     return (
-        <div className="overflow-x-auto rounded-xl border border-line">
+        <div className="overflow-x-auto rounded-xl border border-line shadow-soft">
             <div
                 role="table"
                 aria-label={t('admin.audit.title')}

@@ -12,9 +12,11 @@ import { ClinicShell } from '@/components/vocamed/clinic-shell';
 import { ReconnectingBanner } from '@/components/vocamed/states';
 import type { Crumb } from '@/components/vocamed/top-bar';
 import { DataSourceProvider } from '@/hooks/use-data';
+import { useSessionUser } from '@/hooks/use-session-user';
 import { useStaffRuntime } from '@/hooks/use-staff-runtime';
 import { useShortcut } from '@/hooks/use-shortcut';
 import { useT } from '@/i18n/scope';
+import { initialsOf } from '@/components/reception/format';
 import { getRoleDataSource, type Appointment } from '@/lib/data';
 
 type PageKey = {
@@ -71,6 +73,7 @@ export default function ReceptionLayout({ children }: { children: ReactNode }) {
     const { component } = usePage();
     const { t } = useT();
     const source = getRoleDataSource('receptionist');
+    const me = useSessionUser('receptionist');
     const page = PAGES[component] ?? PAGES['reception/today'];
 
     const [panel, setPanel] = useState<PanelState>({
@@ -129,7 +132,7 @@ export default function ReceptionLayout({ children }: { children: ReactNode }) {
                     role="receptionist"
                     active={page.active}
                     crumbs={crumbs}
-                    user={{ name: t('shell.userName') }}
+                    user={{ name: me.name, initials: initialsOf(me.name) }}
                     onNewBooking={() => openBooking()}
                     onSearch={(query) =>
                         router.visit(

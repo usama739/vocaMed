@@ -3,6 +3,7 @@ import authUr from './auth-ur';
 import landingUr from './landing-ur';
 import patientUr from './patient-ur';
 import privacyUr from './privacy-ur';
+import accountUr from './account-ur';
 import adminUr from './admin-ur';
 import doctorUr from './doctor-ur';
 import receptionUr from './reception-ur';
@@ -191,6 +192,7 @@ const ur: DeepString<typeof en> = {
     doctor: doctorUr,
     admin: adminUr,
     patient: patientUr,
+    account: accountUr,
 };
 
 export default ur;

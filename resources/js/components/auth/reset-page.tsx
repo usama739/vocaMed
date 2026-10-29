@@ -19,6 +19,8 @@ import { useAsyncValue } from '@/hooks/use-async-value';
 import { useT } from '@/i18n/scope';
 import { auth, type AuthSource } from '@/lib/data';
 import { meetsPasswordRule } from '@/lib/validation';
+import { marketingPrimary } from '@/components/public/marketing';
+import { cn } from '@/lib/utils';
 
 /**
  * A5. Choose a new password from a reset link. Unknown, used and expired links all show the
@@ -77,7 +79,11 @@ export function ResetPage({
                         tone="success"
                         title={t('auth.reset.doneTitle')}
                         actions={
-                            <Button size="lg" asChild>
+                            <Button
+                                size="lg"
+                                className={marketingPrimary}
+                                asChild
+                            >
                                 <Link href="/login">
                                     {t('auth.common.signIn')}
                                 </Link>
@@ -91,7 +97,11 @@ export function ResetPage({
                         tone="warning"
                         title={t('auth.reset.expTitle')}
                         actions={
-                            <Button size="lg" asChild>
+                            <Button
+                                size="lg"
+                                className={marketingPrimary}
+                                asChild
+                            >
                                 <Link href="/forgot-password">
                                     {t('auth.reset.expBtn')}
                                 </Link>
@@ -153,7 +163,7 @@ export function ResetPage({
                             <Button
                                 type="submit"
                                 size="lg"
-                                className="w-full"
+                                className={cn(marketingPrimary, 'w-full')}
                                 disabled={!ready}
                                 aria-busy={phase === 'submitting'}
                             >

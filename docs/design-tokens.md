@@ -37,7 +37,7 @@ The design only uses these sizes. Use the utility, not a pixel value.
 | `text-heading` | 26px            | Page titles (h1)                                          |
 | `text-section` | 28–38px (fluid) | Landing section titles                                    |
 | `text-display` | 30–42px (fluid) | Document page titles (privacy)                            |
-| `text-hero`    | 34–56px (fluid) | Landing hero only                                         |
+| `text-hero`    | 36–64px (fluid) | Landing hero only                                         |
 
 ## Colour
 
@@ -51,6 +51,7 @@ The design only uses these sizes. Use the utility, not a pixel value.
 | `brand-tint`  | `#EAF2FE` | Selected chip, pressed toggle, hold banner          |
 | `brand-wash`  | `#DDEBFE` | Avatar background                                   |
 | `brand-line`  | `#BCD6FA` | Border of brand-tint surfaces                       |
+| `brand-bright` | `#2B7BE6` | Top of the marketing button gradient               |
 
 ### Navy (landing band)
 
@@ -156,6 +157,7 @@ The starter kit's components read semantic variables. They are mapped to the tok
 | `rounded-lg`   | 12px  | Alerts, toasts                        |
 | `rounded-xl`   | 14px  | Tables, inner cards                   |
 | `rounded-2xl`  | 16px  | Page cards, dialogs, slide-over       |
+| `rounded-3xl`  | 24px  | Hero window, sign-in cards            |
 | `rounded-full` | 999px | Badges, pills, avatars                |
 
 ## Shadows
@@ -169,6 +171,14 @@ The starter kit's components read semantic variables. They are mapped to the tok
 | `shadow-panel` | `0 20px 50px rgba(7, 20, 55, 0.14)`   | Booking slide-over     |
 | `shadow-glow`  | `0 6px 16px rgba(19, 102, 214, 0.28)` | Hovered primary button |
 | `shadow-modal` | `0 20px 50px rgba(7, 20, 55, 0.25)`   | Confirm dialog         |
+| `shadow-soft`  | `0 4px 14px rgba(7, 20, 55, 0.05), 0 1px 2px rgba(7, 20, 55, 0.04)` | Raised marketing cards |
+| `shadow-pill`  | `0 8px 24px rgba(7, 20, 55, 0.08), 0 1px 2px rgba(7, 20, 55, 0.05)` | Floating header |
+| `shadow-float` | `0 16px 40px rgba(7, 20, 55, 0.12), 0 2px 6px rgba(7, 20, 55, 0.06)` | Floating cards, sign-in cards |
+| `shadow-window` | `0 30px 70px rgba(7, 20, 55, 0.14), 0 8px 20px rgba(7, 20, 55, 0.06)` | Hero product window |
+| `shadow-cta`   | `0 10px 24px rgba(19, 102, 214, 0.3)` | Marketing primary button |
+| `shadow-bar`   | `0 8px 20px -14px rgba(7, 20, 55, 0.18)` | Top bar over the page |
+| `shadow-btn`   | `0 2px 6px rgba(19, 102, 214, 0.25)` | Resting primary button in the app |
+| `shadow-cta-lift` | `0 14px 30px rgba(19, 102, 214, 0.38)` | Hovered marketing primary button |
 
 ## Motion
 

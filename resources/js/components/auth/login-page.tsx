@@ -22,6 +22,8 @@ import {
 import { useT } from '@/i18n/scope';
 import { auth, type AuthSource, type Role } from '@/lib/data';
 import { isEmail } from '@/lib/validation';
+import { marketingPrimary } from '@/components/public/marketing';
+import { cn } from '@/lib/utils';
 
 type Phase = 'idle' | 'submitting' | 'invalid' | 'throttled' | 'error' | 'done';
 
@@ -205,7 +207,7 @@ export function LoginPage({
                         <Button
                             type="submit"
                             size="lg"
-                            className="w-full"
+                            className={cn(marketingPrimary, 'w-full')}
                             disabled={phase === 'throttled'}
                             aria-busy={busy}
                         >

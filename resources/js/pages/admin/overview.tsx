@@ -293,7 +293,7 @@ export default function AdminOverview() {
                         </section>
 
                         {data.kpis.booked.value === 0 ? (
-                            <section className="rounded-xl border border-line bg-white">
+                            <section className="rounded-xl border border-line bg-white shadow-soft">
                                 <EmptyState
                                     icon={CalendarDays}
                                     title={t('admin.overview.empty.title')}
@@ -383,7 +383,7 @@ export default function AdminOverview() {
                             >
                                 {t('admin.overview.today.title')}
                             </h2>
-                            <div className="overflow-x-auto rounded-xl border border-line">
+                            <div className="overflow-x-auto rounded-xl border border-line shadow-soft">
                                 <div
                                     role="table"
                                     aria-label={t('admin.overview.today.title')}

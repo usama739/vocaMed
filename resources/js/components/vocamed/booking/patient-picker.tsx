@@ -117,7 +117,7 @@ export function PatientPicker({
                 </li>
             </ul>
             {creating && (
-                <div className="mt-2 flex flex-col gap-3.5 rounded-xl border border-line p-4">
+                <div className="mt-2 flex flex-col gap-3.5 rounded-xl border border-line p-4 shadow-soft">
                     <TextField
                         label={t('booking.newPatientName')}
                         value={newName}

@@ -69,7 +69,7 @@ export function WalkInForm({
         <form
             onSubmit={submit}
             noValidate
-            className="flex flex-wrap items-start gap-3 rounded-xl border border-line bg-surface-subtle p-4"
+            className="flex flex-wrap items-start gap-3 rounded-xl border border-line bg-surface-subtle p-4 shadow-soft"
         >
             <FormField
                 label={t('reception.today.walkin')}
