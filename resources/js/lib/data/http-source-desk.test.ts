@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import appointment from '../../../../tests/fixtures/appointment.json';
 import appointmentsPage from '../../../../tests/fixtures/appointments-page.json';
 import clinicLookup from '../../../../tests/fixtures/clinic-lookup.json';
+import doctorOverview from '../../../../tests/fixtures/doctor-overview-view.json';
+import doctorRequests from '../../../../tests/fixtures/doctor-requests-view.json';
+import doctorShell from '../../../../tests/fixtures/doctor-shell-view.json';
 import doctorHours from '../../../../tests/fixtures/doctor-hours.json';
 import patient from '../../../../tests/fixtures/patient.json';
 import receptionAppointment from '../../../../tests/fixtures/reception-appointment-view.json';
@@ -472,5 +475,66 @@ describe('the front desk source: appointments and slots', () => {
                 }).source.appointments.cancel('a1'),
             ),
         ).toMatchObject({ code: 'FORBIDDEN' });
+    });
+});
+
+describe("the doctor source: the doctor's own pages", () => {
+    const asDoctor = (status: number, body: unknown = {}) => {
+        const { impl, calls } = fakeFetch(status, body);
+
+        return {
+            source: createHttpSource(mock, impl, { doctor: true }),
+            calls,
+        };
+    };
+
+    it('reads the overview, the schedule, the requests and the badge from their own addresses', async () => {
+        const cases: [string, unknown, (s: DataSource) => Promise<unknown>][] =
+            [
+                ['/doctor', doctorOverview, (s) => s.views.doctorOverview()],
+                [
+                    '/doctor/schedule?view=day',
+                    receptionCalendar,
+                    (s) => s.views.doctorSchedule({ view: 'day', date: null }),
+                ],
+                [
+                    '/doctor/schedule?view=week&date=2026-11-03',
+                    receptionCalendar,
+                    (s) =>
+                        s.views.doctorSchedule({
+                            view: 'week',
+                            date: '2026-11-03',
+                        }),
+                ],
+                ['/doctor/requests', doctorRequests, (s) => s.views.requests()],
+                ['/doctor/shell', doctorShell, (s) => s.views.doctorShell()],
+            ];
+
+        for (const [url, fixture, read] of cases) {
+            const { source, calls } = asDoctor(200, fixture);
+
+            expect(await read(source)).toEqual(fixture);
+            expect(calls[0].url).toBe(url);
+        }
+    });
+
+    it('moves their own consultations through the real status endpoint', async () => {
+        const { source, calls } = asDoctor(200, appointment);
+
+        await source.appointments.setStatus('a1', 'in_consultation');
+
+        expect(calls[0]).toMatchObject({
+            url: '/api/appointments/a1/status',
+            init: { method: 'PATCH' },
+        });
+    });
+
+    it('leaves the front desk, and the other roles, as they were', () => {
+        const { source } = asDoctor(200, {});
+
+        expect(source.views.today).toBe(mock.views.today);
+        expect(source.patients).toBe(mock.patients);
+        expect(source.slots).toBe(mock.slots);
+        expect(source.views.notifications).toBe(mock.views.notifications);
     });
 });

@@ -1,0 +1,101 @@
+{
+    "clinic": {
+        "id": "01JCLINIC0000000000000000A",
+        "name": "Shifa Clinic",
+        "country": "PK",
+        "phoneCountryCode": "+92",
+        "timezone": "Asia/Karachi",
+        "defaultLocale": "en",
+        "address": "12 Main Road, Lahore",
+        "phone": "+923001234567"
+    },
+    "today": "2026-11-02",
+    "doctor": {
+        "id": "01JDOCTOR0000000000000000A",
+        "clinicId": "01JCLINIC0000000000000000A",
+        "userId": null,
+        "name": "Dr. Sana Malik",
+        "specialty": "General physician",
+        "languages": [
+            "en",
+            "ur"
+        ],
+        "serviceIds": [
+            "01JSERVICE000000000000000A"
+        ],
+        "active": true
+    },
+    "rows": [
+        {
+            "appointment": {
+                "id": "01JAPPOINT000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "patientId": "01JPATIENT000000000000000A",
+                "doctorId": "01JDOCTOR0000000000000000A",
+                "serviceId": "01JSERVICE000000000000000A",
+                "startsAt": "2026-11-02T05:00:00.000Z",
+                "endsAt": "2026-11-02T05:30:00.000Z",
+                "status": "booked",
+                "source": "manual",
+                "reason": "Check-up",
+                "notes": null,
+                "createdAt": "2026-11-01T10:00:00.000Z",
+                "createdBy": "7"
+            },
+            "patient": {
+                "id": "01JPATIENT000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "name": "Ayesha Khan",
+                "phone": "+923001234567",
+                "preferredLocale": "ur",
+                "preferredChannel": "sms",
+                "consent": true,
+                "noShowCount": 0,
+                "notes": "Prefers mornings",
+                "createdAt": "2026-10-30T09:00:00.000Z"
+            },
+            "doctor": {
+                "id": "01JDOCTOR0000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "userId": null,
+                "name": "Dr. Sana Malik",
+                "specialty": "General physician",
+                "languages": [
+                    "en",
+                    "ur"
+                ],
+                "serviceIds": [
+                    "01JSERVICE000000000000000A"
+                ],
+                "active": true
+            },
+            "service": {
+                "id": "01JSERVICE000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "name": "Check-up",
+                "durationMin": 30,
+                "bufferMin": 10,
+                "active": true
+            },
+            "createdBy": {
+                "kind": "user",
+                "name": "Nida Reception"
+            },
+            "allowed": {
+                "transitions": [
+                    "confirmed",
+                    "arrived",
+                    "in_consultation",
+                    "done",
+                    "cancelled",
+                    "no_show"
+                ],
+                "canUndo": false,
+                "canReschedule": true,
+                "canCancel": true
+            }
+        }
+    ],
+    "daysAhead": 3,
+    "pendingRequests": 0
+}

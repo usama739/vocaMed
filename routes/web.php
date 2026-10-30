@@ -19,6 +19,7 @@ use App\Http\Controllers\Auth\PasswordResetStatusController;
 use App\Http\Controllers\Auth\SignUpController;
 use App\Http\Controllers\DevInboxController;
 use App\Http\Controllers\Doctor\AvailabilityController;
+use App\Http\Controllers\Doctor\PagesController as DoctorPagesController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PatientsController;
 use App\Http\Controllers\Reception\ReceptionController;
@@ -108,12 +109,14 @@ Route::middleware(EnsureStaffRole::for(Role::ClinicAdmin))->prefix('admin')->nam
 
 // Doctor workspace.
 Route::middleware(EnsureStaffRole::for(Role::Doctor))->prefix('doctor')->name('doctor.')->group(function () {
-    Route::inertia('/', 'doctor/overview')->name('overview');
-    Route::inertia('schedule', 'doctor/schedule')->name('schedule');
+    // Each page is the Inertia page; the same address asked for JSON is that page's read model.
+    Route::get('/', [DoctorPagesController::class, 'overview'])->name('overview');
+    Route::get('schedule', [DoctorPagesController::class, 'schedule'])->name('schedule');
+    Route::get('shell', [DoctorPagesController::class, 'shell'])->name('shell');
     Route::get('availability', [AvailabilityController::class, 'show'])->name('availability');
     Route::put('availability', [AvailabilityController::class, 'save'])->name('availability.save');
     Route::post('availability/preview', [AvailabilityController::class, 'preview'])->name('availability.preview');
-    Route::inertia('requests', 'doctor/requests')->name('requests');
+    Route::get('requests', [DoctorPagesController::class, 'requests'])->name('requests');
 });
 
 // Receptionist console.

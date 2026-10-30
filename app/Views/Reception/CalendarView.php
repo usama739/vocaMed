@@ -46,7 +46,11 @@ final class CalendarView
         $range = CalendarRange::of($params['view'], $date);
 
         $services = Service::query()->get()->sortBy('name')->values();
-        $allDoctors = Doctor::query()->with('services')->where('is_active', true)->orderBy('display_name')->get();
+        $own = Permissions::access($viewer, Ability::ViewAppointments) === Access::Own;
+        // A doctor sees only themselves (even when switched off for booking); everyone else sees the clinic's active doctors.
+        $allDoctors = $own
+            ? Doctor::query()->with('services')->where('user_id', $viewer->id)->get()
+            : Doctor::query()->with('services')->where('is_active', true)->orderBy('display_name')->get();
         $shown = $params['doctorId'] === 'all' ? $allDoctors : $allDoctors->where('id', $params['doctorId'])->values();
 
         $query = Appointment::query()
@@ -57,7 +61,7 @@ final class CalendarView
             $query->where('doctor_id', $params['doctorId']);
         }
 
-        if (Permissions::access($viewer, Ability::ViewAppointments) === Access::Own) {
+        if ($own) {
             $query->whereIn('doctor_id', Doctor::query()->where('user_id', $viewer->id)->select('id'));
         }
 

@@ -49,8 +49,12 @@ import type {
     AvailabilityView,
     CalendarParams,
     CalendarViewData,
+    DoctorOverviewView,
+    DoctorScheduleParams,
+    DoctorShellView,
     PatientDetailView,
     PatientsView,
+    RequestsView,
     TodayView,
 } from './views';
 
@@ -120,14 +124,17 @@ const query = (params: Record<string, string | number | undefined>) => {
  * Laravel and everything else still answered by `mock`. With `desk` (the receptionist's console) the whole front desk is
  * Laravel's as well: the six reception pages, the booking panel, patients, slots, appointments and the clinic's doctors and
  * services. They switch together because the sample appointments point at sample patients, so mixing them would break
- * booking. The doctor's pages and the notifications stay on `mock` until their steps. Used only when real sign-in is on.
+ * booking. With `doctor` the doctor's own Overview, Schedule, Requests and sidebar badge, and the status moves they make, are
+ * Laravel's too (requests are empty until patients can ask to reschedule). The notifications stay on `mock` until their step.
+ * Used only when real sign-in is on.
  */
 export function createHttpSource(
     mock: DataSource,
     fetchImpl: typeof fetch = fetch,
-    options: { desk?: boolean } = {},
+    options: { desk?: boolean; doctor?: boolean } = {},
 ): DataSource {
     const desk = options.desk === true;
+    const doctor = options.doctor === true;
 
     const send = (
         method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
@@ -216,6 +223,22 @@ export function createHttpSource(
                 'patient',
                 `/reception/patients/${enc(id)}`,
             ),
+    };
+
+    // The doctor's own pages. Requests and the badge are real but empty until patients can ask to reschedule.
+    const doctorViews = {
+        doctorOverview: () =>
+            call<DoctorOverviewView>('overview', 'GET', '/doctor'),
+        doctorSchedule: (p: DoctorScheduleParams) =>
+            call<CalendarViewData>(
+                'schedule',
+                'GET',
+                `/doctor/schedule${query({ view: p.view, date: p.date ?? undefined })}`,
+            ),
+        requests: () =>
+            call<RequestsView>('requests', 'GET', '/doctor/requests'),
+        doctorShell: () =>
+            call<DoctorShellView>('shell', 'GET', '/doctor/shell'),
     };
 
     const deskClinic = {
@@ -375,12 +398,13 @@ export function createHttpSource(
 
         clinic: desk ? deskClinic : mock.clinic,
         patients: desk ? deskPatients : mock.patients,
-        appointments: desk ? deskAppointments : mock.appointments,
+        appointments: desk || doctor ? deskAppointments : mock.appointments,
         slots: desk ? deskSlots : mock.slots,
 
         views: {
             ...mock.views,
             ...(desk ? deskViews : {}),
+            ...(doctor ? doctorViews : {}),
 
             adminDoctors: (params: AdminDoctorsParams) =>
                 call<AdminDoctorsView>(
