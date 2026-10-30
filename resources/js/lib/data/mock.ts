@@ -596,7 +596,14 @@ function buildCore(
                         (a) => a.doctorId === id,
                     );
 
-                    return found ?? { doctorId: id, windows: [], timeOff: [] };
+                    return (
+                        found ?? {
+                            doctorId: id,
+                            windows: [],
+                            timeOff: [],
+                            blocked: [],
+                        }
+                    );
                 }),
             me: () => call(() => myDoctor()),
             ...admin.doctors,

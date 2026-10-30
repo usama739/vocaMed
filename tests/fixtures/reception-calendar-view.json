@@ -1,0 +1,212 @@
+{
+    "clinic": {
+        "id": "01JCLINIC0000000000000000A",
+        "name": "Shifa Clinic",
+        "country": "PK",
+        "phoneCountryCode": "+92",
+        "timezone": "Asia/Karachi",
+        "defaultLocale": "en",
+        "address": "12 Main Road, Lahore",
+        "phone": "+923001234567"
+    },
+    "settings": {
+        "clinicId": "01JCLINIC0000000000000000A",
+        "businessHours": [
+            {
+                "weekday": 1,
+                "open": "09:00",
+                "close": "17:00"
+            }
+        ],
+        "holidays": [
+            {
+                "date": "2026-11-20",
+                "name": "Public holiday"
+            }
+        ],
+        "reminderHoursBefore": [
+            24,
+            2
+        ],
+        "cancellationWindowHours": 4,
+        "rescheduleRequiresApproval": false,
+        "voiceEnabled": false,
+        "voiceAudioRetentionDays": 0
+    },
+    "today": "2026-11-02",
+    "date": "2026-11-02",
+    "allDoctors": [
+        {
+            "id": "01JDOCTOR0000000000000000A",
+            "clinicId": "01JCLINIC0000000000000000A",
+            "userId": null,
+            "name": "Dr. Sana Malik",
+            "specialty": "General physician",
+            "languages": [
+                "en",
+                "ur"
+            ],
+            "serviceIds": [
+                "01JSERVICE000000000000000A"
+            ],
+            "active": true
+        }
+    ],
+    "doctors": [
+        {
+            "id": "01JDOCTOR0000000000000000A",
+            "clinicId": "01JCLINIC0000000000000000A",
+            "userId": null,
+            "name": "Dr. Sana Malik",
+            "specialty": "General physician",
+            "languages": [
+                "en",
+                "ur"
+            ],
+            "serviceIds": [
+                "01JSERVICE000000000000000A"
+            ],
+            "active": true
+        }
+    ],
+    "rows": [
+        {
+            "appointment": {
+                "id": "01JAPPOINT000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "patientId": "01JPATIENT000000000000000A",
+                "doctorId": "01JDOCTOR0000000000000000A",
+                "serviceId": "01JSERVICE000000000000000A",
+                "startsAt": "2026-11-02T05:00:00.000Z",
+                "endsAt": "2026-11-02T05:30:00.000Z",
+                "status": "booked",
+                "source": "manual",
+                "reason": "Check-up",
+                "notes": null,
+                "createdAt": "2026-11-01T10:00:00.000Z",
+                "createdBy": "7"
+            },
+            "patient": {
+                "id": "01JPATIENT000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "name": "Ayesha Khan",
+                "phone": "+923001234567",
+                "preferredLocale": "ur",
+                "preferredChannel": "sms",
+                "consent": true,
+                "noShowCount": 0,
+                "notes": "Prefers mornings",
+                "createdAt": "2026-10-30T09:00:00.000Z"
+            },
+            "doctor": {
+                "id": "01JDOCTOR0000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "userId": null,
+                "name": "Dr. Sana Malik",
+                "specialty": "General physician",
+                "languages": [
+                    "en",
+                    "ur"
+                ],
+                "serviceIds": [
+                    "01JSERVICE000000000000000A"
+                ],
+                "active": true
+            },
+            "service": {
+                "id": "01JSERVICE000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "name": "Check-up",
+                "durationMin": 30,
+                "bufferMin": 10,
+                "active": true
+            },
+            "createdBy": {
+                "kind": "user",
+                "name": "Nida Reception"
+            },
+            "allowed": {
+                "transitions": [
+                    "confirmed",
+                    "arrived",
+                    "in_consultation",
+                    "done",
+                    "cancelled",
+                    "no_show"
+                ],
+                "canUndo": false,
+                "canReschedule": true,
+                "canCancel": true
+            }
+        }
+    ],
+    "columns": [
+        {
+            "doctor": {
+                "id": "01JDOCTOR0000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "userId": null,
+                "name": "Dr. Sana Malik",
+                "specialty": "General physician",
+                "languages": [
+                    "en",
+                    "ur"
+                ],
+                "serviceIds": [
+                    "01JSERVICE000000000000000A"
+                ],
+                "active": true
+            },
+            "service": {
+                "id": "01JSERVICE000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "name": "Check-up",
+                "durationMin": 30,
+                "bufferMin": 10,
+                "active": true
+            },
+            "slots": [
+                {
+                    "doctorId": "01JDOCTOR0000000000000000A",
+                    "serviceId": "01JSERVICE000000000000000A",
+                    "startsAt": "2026-11-02T04:00:00.000Z",
+                    "endsAt": "2026-11-02T04:30:00.000Z",
+                    "state": "free"
+                }
+            ],
+            "availability": {
+                "doctorId": "01JDOCTOR0000000000000000A",
+                "windows": [
+                    {
+                        "weekday": 1,
+                        "start": "09:00",
+                        "end": "17:00",
+                        "breaks": [
+                            {
+                                "start": "13:00",
+                                "end": "14:00"
+                            }
+                        ]
+                    }
+                ],
+                "timeOff": [
+                    {
+                        "id": "01JTIMEOFF0000000000000000",
+                        "doctorId": "01JDOCTOR0000000000000000A",
+                        "startDate": "2026-11-10",
+                        "endDate": "2026-11-12",
+                        "reason": "Conference"
+                    }
+                ],
+                "blocked": [
+                    {
+                        "weekday": 1,
+                        "time": "12:30"
+                    }
+                ]
+            },
+            "offToday": false
+        }
+    ],
+    "nowIso": "2026-11-02T05:15:00.000Z"
+}

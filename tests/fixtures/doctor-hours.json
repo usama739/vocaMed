@@ -1,0 +1,31 @@
+{
+    "doctorId": "01JDOCTOR0000000000000000A",
+    "windows": [
+        {
+            "weekday": 1,
+            "start": "09:00",
+            "end": "17:00",
+            "breaks": [
+                {
+                    "start": "13:00",
+                    "end": "14:00"
+                }
+            ]
+        }
+    ],
+    "timeOff": [
+        {
+            "id": "01JTIMEOFF0000000000000000",
+            "doctorId": "01JDOCTOR0000000000000000A",
+            "startDate": "2026-11-10",
+            "endDate": "2026-11-12",
+            "reason": "Conference"
+        }
+    ],
+    "blocked": [
+        {
+            "weekday": 1,
+            "time": "12:30"
+        }
+    ]
+}

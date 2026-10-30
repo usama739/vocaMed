@@ -77,19 +77,29 @@ export function getRoleDataSource(role: Role): DataSource {
 
     if (!source) {
         const mock = getDataSource(DEMO_CLINIC_ID, SAMPLE_USERS[role]);
-        // With real sign-in, clinic setup (admin pages and the doctor's availability) comes from Laravel; the rest of
-        // the staff pages stay on the sample data until their steps.
-        source = REAL_AUTH ? createHttpSource(mock) : mock;
+        // With real sign-in, clinic setup (admin pages and the doctor's availability) comes from Laravel, and so does the
+        // whole front desk for the receptionist; the doctor's pages, the admin Overview and notifications stay on the
+        // sample data until their steps.
+        source = REAL_AUTH
+            ? createHttpSource(mock, fetch, { desk: role === 'receptionist' })
+            : mock;
         roleSources.set(role, source);
     }
 
     return source;
 }
 
-/** Live-looking activity for the demo data (messages advancing, other receptionists holding slots). */
+/**
+ * Live-looking activity for the demo data (messages advancing, other receptionists holding slots). With real sign-in
+ * there is a real server, so nothing is simulated.
+ */
 export function startDemoActivity(
     options: { otherReceptionist?: boolean } = {},
 ) {
+    if (REAL_AUTH) {
+        return () => {};
+    }
+
     return startActivitySimulator(database, {
         clinicId: DEMO_CLINIC_ID,
         now: clockNow,

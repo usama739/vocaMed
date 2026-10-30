@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\TemplatesController;
 use App\Http\Controllers\Api\AppointmentsController;
 use App\Http\Controllers\Api\AvailabilityController as BookingAvailabilityController;
+use App\Http\Controllers\Api\LookupsController;
 use App\Http\Controllers\Api\SlotHoldsController;
 use App\Http\Controllers\Auth\ConfirmEmailController;
 use App\Http\Controllers\Auth\DemoRequestController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\DevInboxController;
 use App\Http\Controllers\Doctor\AvailabilityController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PatientsController;
+use App\Http\Controllers\Reception\ReceptionController;
 use App\Http\Middleware\EnsureStaffRole;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -116,14 +118,13 @@ Route::middleware(EnsureStaffRole::for(Role::Doctor))->prefix('doctor')->name('d
 
 // Receptionist console.
 Route::middleware(EnsureStaffRole::for(Role::Receptionist))->prefix('reception')->name('reception.')->group(function () {
-    Route::inertia('/', 'reception/today')->name('today');
-    Route::inertia('appointments', 'reception/appointments')->name('appointments');
-    Route::get('appointments/{id}', fn (string $id) => Inertia::render('reception/appointment', ['id' => $id]))
-        ->name('appointment');
-    Route::inertia('calendar', 'reception/calendar')->name('calendar');
-    Route::inertia('patients', 'reception/patients')->name('patients');
-    Route::get('patients/{id}', fn (string $id) => Inertia::render('reception/patient', ['id' => $id]))
-        ->name('patient');
+    // Each page is the Inertia page; the same address asked for JSON is that page's read model.
+    Route::get('/', [ReceptionController::class, 'today'])->name('today');
+    Route::get('appointments', [ReceptionController::class, 'appointments'])->name('appointments');
+    Route::get('appointments/{id}', [ReceptionController::class, 'appointment'])->name('appointment');
+    Route::get('calendar', [ReceptionController::class, 'calendar'])->name('calendar');
+    Route::get('patients', [ReceptionController::class, 'patients'])->name('patients');
+    Route::get('patients/{id}', [ReceptionController::class, 'patient'])->name('patient');
     Route::inertia('notifications', 'reception/notifications')->name('notifications');
 });
 
@@ -147,6 +148,16 @@ Route::middleware(EnsureStaffRole::for(Role::ClinicAdmin, Role::Receptionist))->
     Route::post('/', [AppointmentsController::class, 'store'])->middleware('throttle:booking')->name('store');
     Route::patch('{appointment}/reschedule', [AppointmentsController::class, 'reschedule'])->name('reschedule');
     Route::post('{appointment}/cancel', [AppointmentsController::class, 'cancel'])->name('cancel');
+});
+
+// What every staff screen needs to show names and options (the clinic, doctors, services, a doctor's hours). Read only.
+Route::middleware(EnsureStaffRole::for())->prefix('api')->name('api.')->group(function () {
+    Route::get('clinic', [LookupsController::class, 'clinic'])->name('clinic');
+    Route::get('doctors', [LookupsController::class, 'doctors'])->name('doctors');
+    Route::get('doctors/{doctor}', [LookupsController::class, 'doctor'])->name('doctor');
+    Route::get('doctors/{doctor}/availability', [LookupsController::class, 'availability'])->name('doctor.availability');
+    Route::get('doctors/{doctor}/next-free', [LookupsController::class, 'nextFree'])->name('doctor.next-free');
+    Route::get('services', [LookupsController::class, 'services'])->name('services');
 });
 
 // Finding and holding a slot for the people who book (admin and receptionist).

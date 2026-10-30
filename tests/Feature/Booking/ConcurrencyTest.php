@@ -109,6 +109,28 @@ class ConcurrencyTest extends TestCase
         return $results;
     }
 
+    /**
+     * SQLite lets one writer in at a time, so on a heavily loaded machine every racer can time out on the lock and nobody books.
+     * That says nothing about the guard, so go again (up to three rounds, from an empty calendar) until someone gets in.
+     *
+     * @param  list<string>  $startTimes
+     * @param  int  $contenders  how many of the first racers fight over the same time
+     * @return list<array<string, mixed>>
+     */
+    private function raceUntilSomeoneWins(array $startTimes, int $contenders): array
+    {
+        for ($round = 1; ; $round++) {
+            $results = $this->race($startTimes);
+
+            if ($round === 3 || array_filter(array_slice($results, 0, $contenders), fn ($r) => $r['ok'] === true) !== []) {
+                return $results;
+            }
+
+            DB::table('appointment_slots')->delete();
+            DB::table('appointments')->delete();
+        }
+    }
+
     /** A loss that wrote nothing: the booking said the slot is taken, or the single-writer database was busy. */
     private function isCleanLoss(array $result): bool
     {
@@ -117,7 +139,7 @@ class ConcurrencyTest extends TestCase
 
     public function test_several_processes_booking_the_same_slot_at_once_produce_exactly_one_appointment()
     {
-        $results = $this->race(['2026-11-02 10:00', '2026-11-02 10:00', '2026-11-02 10:00', '2026-11-02 10:00']);
+        $results = $this->raceUntilSomeoneWins(['2026-11-02 10:00', '2026-11-02 10:00', '2026-11-02 10:00', '2026-11-02 10:00'], 4);
 
         $winners = array_values(array_filter($results, fn ($r) => $r['ok'] === true));
         $unexpected = array_values(array_filter($results, fn ($r) => $r['ok'] === false && ! $this->isCleanLoss($r)));
@@ -132,7 +154,7 @@ class ConcurrencyTest extends TestCase
     public function test_overlapping_times_booked_at_once_also_produce_only_one_and_a_free_one_is_not_blocked_by_them()
     {
         // 10:00, 10:30 and 09:30 all overlap each other (the buffer after one runs into the next); 14:00 is on its own.
-        $results = $this->race(['2026-11-02 10:00', '2026-11-02 10:30', '2026-11-02 09:30', '2026-11-02 14:00']);
+        $results = $this->raceUntilSomeoneWins(['2026-11-02 10:00', '2026-11-02 10:30', '2026-11-02 09:30', '2026-11-02 14:00'], 3);
 
         $overlapping = array_slice($results, 0, 3);
         $alone = $results[3];

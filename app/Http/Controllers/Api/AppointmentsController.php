@@ -12,11 +12,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Booking\CreateAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\Clinic;
-use App\Models\Doctor;
-use App\Models\Patient;
 use App\Models\User;
-use App\Support\ClinicClock;
-use App\Support\PhoneNumber;
+use App\Services\AppointmentSearch;
 use App\Views\AppointmentView;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -27,7 +24,11 @@ use Illuminate\Validation\Rule;
 /** Booking, moving, cancelling and taking appointments through their day, and reading them back. */
 class AppointmentsController extends Controller
 {
-    public function __construct(private readonly BookingService $booking, private readonly BookingIntakeManager $intake) {}
+    public function __construct(
+        private readonly BookingService $booking,
+        private readonly BookingIntakeManager $intake,
+        private readonly AppointmentSearch $search,
+    ) {}
 
     /** Book. The panel's typed entry is turned into a booking request by the configured intake driver. */
     public function store(CreateAppointmentRequest $request): JsonResponse
@@ -73,45 +74,13 @@ class AppointmentsController extends Controller
             'perPage' => ['sometimes', 'integer', 'between:1,100'],
         ]);
 
-        $clock = ClinicClock::for($this->clinic($request));
-        $query = Appointment::query();
-
-        if ($access === Access::Own) {
-            $query->whereIn('doctor_id', Doctor::query()->where('user_id', $user->id)->select('id'));
-        }
-
-        isset($filters['from']) && $query->where('starts_at', '>=', $clock->startOfDay($filters['from']));
-        isset($filters['to']) && $query->where('starts_at', '<', $clock->endOfDay($filters['to']));
-        isset($filters['doctorId']) && $query->where('doctor_id', $filters['doctorId']);
-        isset($filters['patientId']) && $query->where('patient_id', $filters['patientId']);
-        isset($filters['status']) && $query->where('status', $filters['status']);
-
-        if (isset($filters['patient']) && trim($filters['patient']) !== '') {
-            $needle = trim($filters['patient']);
-            $digits = PhoneNumber::searchDigits($needle);
-            $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($needle)).'%';
-
-            $query->whereIn('patient_id', Patient::query()
-                ->where(function ($patients) use ($like, $digits) {
-                    $patients->whereRaw("lower(name) like ? escape '!'", [$like]);
-
-                    if (strlen($digits) >= 3) {
-                        $patients->orWhere('phone', 'like', '%'.$digits.'%');
-                    }
-                })->select('id'));
-        }
-
-        $perPage = (int) ($filters['perPage'] ?? 20);
-        $page = (int) ($filters['page'] ?? 1);
-        $total = (clone $query)->count();
-        $direction = ($filters['sort'] ?? 'startsAt') === '-startsAt' ? 'desc' : 'asc';
-        $items = $query->orderBy('starts_at', $direction)->orderBy('id', $direction)->forPage($page, $perPage)->get();
+        $result = $this->search->page($this->clinic($request), $filters, $access === Access::Own ? $user : null);
 
         return response()->json([
-            'items' => $items->map(fn (Appointment $a) => AppointmentView::of($a))->all(),
-            'total' => $total,
-            'page' => $page,
-            'perPage' => $perPage,
+            'items' => $result['items']->map(fn (Appointment $a) => AppointmentView::of($a))->all(),
+            'total' => $result['total'],
+            'page' => $result['page'],
+            'perPage' => $result['perPage'],
         ]);
     }
 
