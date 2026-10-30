@@ -1,0 +1,22 @@
+{
+    "clinic": {
+        "id": "01JCLINIC0000000000000000A",
+        "name": "Shifa Clinic",
+        "country": "PK",
+        "phoneCountryCode": "+92",
+        "timezone": "Asia/Karachi",
+        "defaultLocale": "en",
+        "address": "12 Main Road, Lahore",
+        "phone": "+923001234567"
+    },
+    "settings": {
+        "clinicId": "01JCLINIC0000000000000000A",
+        "businessHours": [{ "weekday": 1, "open": "09:00", "close": "17:00" }],
+        "holidays": [{ "date": "2026-11-20", "name": "Public holiday" }],
+        "reminderHoursBefore": [24, 2],
+        "cancellationWindowHours": 4,
+        "rescheduleRequiresApproval": false,
+        "voiceEnabled": false,
+        "voiceAudioRetentionDays": 0
+    }
+}

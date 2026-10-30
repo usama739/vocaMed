@@ -1,0 +1,15 @@
+{
+    "id": "01JAPPOINT000000000000000A",
+    "clinicId": "01JCLINIC0000000000000000A",
+    "patientId": "01JPATIENT000000000000000A",
+    "doctorId": "01JDOCTOR0000000000000000A",
+    "serviceId": "01JSERVICE000000000000000A",
+    "startsAt": "2026-11-02T05:00:00.000Z",
+    "endsAt": "2026-11-02T05:30:00.000Z",
+    "status": "booked",
+    "source": "manual",
+    "reason": "Check-up",
+    "notes": null,
+    "createdAt": "2026-11-01T10:00:00.000Z",
+    "createdBy": "7"
+}

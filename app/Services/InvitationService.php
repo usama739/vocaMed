@@ -8,6 +8,7 @@ use App\Exceptions\DuplicateEmail;
 use App\Exceptions\InvitationExpired;
 use App\Exceptions\InvitationUsed;
 use App\Models\Clinic;
+use App\Models\Doctor;
 use App\Models\Invitation;
 use App\Models\User;
 use App\Support\TenantContext;
@@ -24,7 +25,7 @@ class InvitationService
      *
      * @return array{0: Invitation, 1: string}
      */
-    public function issue(Clinic $clinic, string $email, Role $role): array
+    public function issue(Clinic $clinic, string $email, Role $role, ?Doctor $doctor = null): array
     {
         $email = strtolower(trim($email));
 
@@ -32,7 +33,7 @@ class InvitationService
             throw new DuplicateEmail;
         }
 
-        return $this->tenant->run($clinic, fn (): array => DB::transaction(function () use ($clinic, $email, $role): array {
+        return $this->tenant->run($clinic, fn (): array => DB::transaction(function () use ($clinic, $email, $role, $doctor): array {
             Invitation::query()
                 ->where('email', $email)
                 ->whereNull('accepted_at')
@@ -45,6 +46,7 @@ class InvitationService
                 'clinic_id' => $clinic->id,
                 'email' => $email,
                 'role' => $role,
+                'doctor_id' => $doctor?->id,
                 'token_hash' => Invitation::hashToken($token),
                 'expires_at' => now()->addDays((int) config('vocamed.invitation_days')),
             ])->save();
@@ -63,6 +65,29 @@ class InvitationService
             ->with('clinic')
             ->where('token_hash', Invitation::hashToken($token))
             ->first());
+    }
+
+    /**
+     * Give a waiting or expired invitation a fresh link and a fresh seven days; the old link stops working. Returns the
+     * new plain token (shown once, in the email).
+     */
+    public function resend(Invitation $invitation): string
+    {
+        $token = bin2hex(random_bytes(32));
+
+        $invitation->forceFill([
+            'token_hash' => Invitation::hashToken($token),
+            'expires_at' => now()->addDays((int) config('vocamed.invitation_days')),
+            'revoked_at' => null,
+        ])->save();
+
+        return $token;
+    }
+
+    /** Cancel an invitation that has not been accepted. Its link reads as expired from now on. */
+    public function revoke(Invitation $invitation): void
+    {
+        $invitation->forceFill(['revoked_at' => now()])->save();
     }
 
     /** An unknown token reads as expired, so a link's history is never revealed. */
@@ -91,6 +116,17 @@ class InvitationService
             };
 
             /** @var Invitation $invitation */
+            $doctor = null;
+
+            if ($invitation->doctor_id !== null) {
+                // A doctor's invitation links the new login to that doctor; a doctor already linked cannot be linked twice.
+                $doctor = Doctor::query()->lockForUpdate()->find($invitation->doctor_id);
+
+                if ($doctor === null || $doctor->user_id !== null) {
+                    throw new InvitationUsed;
+                }
+            }
+
             if (User::query()->where('email', $invitation->email)->exists()) {
                 throw new InvitationUsed;
             }
@@ -108,6 +144,7 @@ class InvitationService
                 'email_verified_at' => now(),
             ])->save();
 
+            $doctor?->forceFill(['user_id' => $user->id])->save();
             $invitation->forceFill(['accepted_at' => now()])->save();
 
             return $user;

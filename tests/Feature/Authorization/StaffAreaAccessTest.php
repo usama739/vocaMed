@@ -35,17 +35,58 @@ class StaffAreaAccessTest extends TestCase
     {
         $pages = [];
 
+        foreach ($this->staffRoutes() as [$name, $url, $areaRole, $methods]) {
+            if (in_array('GET', $methods, true)) {
+                $pages[] = [$name, $url, $areaRole];
+            }
+        }
+
+        return $pages;
+    }
+
+    /**
+     * Every registered staff route (pages and writes): [name, url, the role its area is for or null for any, methods].
+     *
+     * @return list<array{0: string, 1: string, 2: Role|null, 3: list<string>}>
+     */
+    private function staffRoutes(): array
+    {
+        $routes = [];
+
         /** @var Route $route */
         foreach (RouteFacade::getRoutes() as $route) {
             $name = (string) $route->getName();
             $area = str_contains($name, '.') ? explode('.', $name)[0] : $name;
 
-            if ($name === 'account' || isset(self::AREAS[$area])) {
-                $pages[] = [$name, route($name, array_fill_keys($route->parameterNames(), 'x')), self::AREAS[$area] ?? null];
+            if ($name === 'account' || isset(self::AREAS[$area]) || ($area === 'account')) {
+                $routes[] = [$name, route($name, array_fill_keys($route->parameterNames(), 'x')), self::AREAS[$area] ?? null, $route->methods()];
             }
         }
 
-        return $pages;
+        return $routes;
+    }
+
+    #[DataProvider('roles')]
+    public function test_every_write_in_another_roles_area_is_refused_before_it_does_anything(Role $role)
+    {
+        $user = $this->signedInAs($role);
+
+        foreach ($this->staffRoutes() as [$name, $url, $areaRole, $methods]) {
+            foreach (array_diff($methods, ['GET', 'HEAD']) as $method) {
+                if ($areaRole !== null && $areaRole !== $role) {
+                    $this->actingAs($user)->json($method, $url)->assertForbidden();
+                }
+            }
+        }
+    }
+
+    public function test_every_write_needs_a_signed_in_person()
+    {
+        foreach ($this->staffRoutes() as [$name, $url, $areaRole, $methods]) {
+            foreach (array_diff($methods, ['GET', 'HEAD']) as $method) {
+                $this->json($method, $url)->assertUnauthorized();
+            }
+        }
     }
 
     /**

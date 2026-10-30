@@ -2,6 +2,7 @@
 
 use App\Exceptions\JsonErrorMapper;
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsureStaffRole;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
@@ -27,6 +28,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Before route binding, so a record of another clinic in the URL is simply not found.
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: SetTenantContext::class);
+
+        // The role guard also answers before binding, so a person who may not use an area is told so (401 or 403) rather
+        // than learning whether a record exists (404).
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnsureStaffRole::class);
 
         $middleware->web(append: [
             // A signed-in person who has since been deactivated, or whose clinic was suspended, is sent away.

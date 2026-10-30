@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Support\DevInbox;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Notifications\Messages\MailMessage;
 
@@ -16,9 +17,12 @@ class RecordDevMail
         }
 
         $mail = $event->notification->toMail($event->notifiable);
+        $to = $event->notifiable instanceof AnonymousNotifiable
+            ? $event->notifiable->routeNotificationFor('mail')
+            : ($event->notifiable->email ?? null);
 
-        if ($mail instanceof MailMessage && isset($event->notifiable->email)) {
-            DevInbox::record((string) $event->notifiable->email, $mail);
+        if ($mail instanceof MailMessage && is_string($to) && $to !== '') {
+            DevInbox::record($to, $mail);
         }
     }
 }

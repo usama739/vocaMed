@@ -1,0 +1,28 @@
+{
+    "clinic": {
+        "id": "01JCLINIC0000000000000000A",
+        "name": "Shifa Clinic",
+        "country": "PK",
+        "phoneCountryCode": "+92",
+        "timezone": "Asia/Karachi",
+        "defaultLocale": "en",
+        "address": "12 Main Road, Lahore",
+        "phone": "+923001234567"
+    },
+    "rows": [
+        {
+            "id": "7",
+            "name": "Ayesha Khan",
+            "email": "ayesha@shifa.example",
+            "role": "clinic_admin",
+            "status": "active",
+            "isYou": true,
+            "allowed": {
+                "resend": false,
+                "revoke": false,
+                "deactivate": false,
+                "reactivate": false
+            }
+        }
+    ]
+}

@@ -1,0 +1,108 @@
+{
+    "clinic": {
+        "id": "01JCLINIC0000000000000000A",
+        "name": "Shifa Clinic",
+        "country": "PK",
+        "phoneCountryCode": "+92",
+        "timezone": "Asia/Karachi",
+        "defaultLocale": "en",
+        "address": "12 Main Road, Lahore",
+        "phone": "+923001234567"
+    },
+    "today": "2026-10-30",
+    "doctor": {
+        "id": "01JDOCTOR0000000000000000A",
+        "clinicId": "01JCLINIC0000000000000000A",
+        "userId": null,
+        "name": "Dr. Sana Malik",
+        "specialty": "General physician",
+        "languages": [
+            "en",
+            "ur"
+        ],
+        "serviceIds": [
+            "01JSERVICE000000000000000A"
+        ],
+        "active": true
+    },
+    "draft": {
+        "days": [
+            {
+                "weekday": 1,
+                "on": true,
+                "start": "09:00",
+                "end": "17:00",
+                "lunch": true
+            },
+            {
+                "weekday": 2,
+                "on": true,
+                "start": "09:00",
+                "end": "17:00",
+                "lunch": false
+            },
+            {
+                "weekday": 3,
+                "on": true,
+                "start": "09:00",
+                "end": "17:00",
+                "lunch": false
+            },
+            {
+                "weekday": 4,
+                "on": true,
+                "start": "09:00",
+                "end": "17:00",
+                "lunch": false
+            },
+            {
+                "weekday": 5,
+                "on": true,
+                "start": "09:00",
+                "end": "17:00",
+                "lunch": false
+            },
+            {
+                "weekday": 6,
+                "on": false,
+                "start": "09:00",
+                "end": "13:00",
+                "lunch": false
+            },
+            {
+                "weekday": 0,
+                "on": false,
+                "start": "09:00",
+                "end": "13:00",
+                "lunch": false
+            }
+        ],
+        "timeOff": [
+            {
+                "id": "01JTIMEOFF000000000000000A",
+                "startDate": "2026-11-02",
+                "endDate": "2026-11-04",
+                "reason": "Conference"
+            }
+        ],
+        "blocked": [
+            {
+                "weekday": 1,
+                "time": "10:00"
+            }
+        ]
+    },
+    "preview": {
+        "slotsPerWeekday": [
+            14,
+            16,
+            16,
+            16,
+            16,
+            0,
+            0
+        ],
+        "total": 78,
+        "affected": []
+    }
+}

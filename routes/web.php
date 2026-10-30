@@ -2,13 +2,24 @@
 
 use App\Enums\Role;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\Admin\AuditController;
+use App\Http\Controllers\Admin\DoctorsController;
+use App\Http\Controllers\Admin\ServicesController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\TemplatesController;
+use App\Http\Controllers\Api\AppointmentsController;
+use App\Http\Controllers\Api\AvailabilityController as BookingAvailabilityController;
+use App\Http\Controllers\Api\SlotHoldsController;
 use App\Http\Controllers\Auth\ConfirmEmailController;
 use App\Http\Controllers\Auth\DemoRequestController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\PasswordResetStatusController;
 use App\Http\Controllers\Auth\SignUpController;
 use App\Http\Controllers\DevInboxController;
+use App\Http\Controllers\Doctor\AvailabilityController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PatientsController;
 use App\Http\Middleware\EnsureStaffRole;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -66,22 +77,40 @@ Route::middleware(EnsureStaffRole::for())->prefix('account')->group(function () 
 // Clinic admin.
 Route::middleware(EnsureStaffRole::for(Role::ClinicAdmin))->prefix('admin')->name('admin.')->group(function () {
     Route::inertia('/', 'admin/overview')->name('overview');
-    Route::inertia('doctors', 'admin/doctors')->name('doctors');
+    Route::get('doctors', [DoctorsController::class, 'index'])->name('doctors');
+    Route::post('doctors', [DoctorsController::class, 'store'])->name('doctors.store');
     // `new` is the blank form for a doctor who does not exist yet.
-    Route::get('doctors/{id}', fn (string $id) => Inertia::render('admin/doctor', ['id' => $id]))
-        ->name('doctor');
-    Route::inertia('staff', 'admin/staff')->name('staff');
-    Route::inertia('services', 'admin/services')->name('services');
-    Route::inertia('settings', 'admin/settings')->name('settings');
-    Route::inertia('templates', 'admin/templates')->name('templates');
-    Route::inertia('audit', 'admin/audit')->name('audit');
+    Route::get('doctors/{id}', [DoctorsController::class, 'show'])->name('doctor');
+    Route::put('doctors/{doctor}', [DoctorsController::class, 'update'])->name('doctors.update');
+    Route::patch('doctors/{doctor}', [DoctorsController::class, 'toggle'])->name('doctors.toggle');
+    Route::post('doctors/{doctorId}/availability/preview', [DoctorsController::class, 'preview'])->name('doctors.availability.preview');
+    Route::put('doctors/{doctor}/availability', [DoctorsController::class, 'saveAvailability'])->name('doctors.availability');
+    Route::post('doctors/{doctor}/invite', [DoctorsController::class, 'invite'])->name('doctors.invite');
+    Route::get('staff', [StaffController::class, 'index'])->name('staff');
+    Route::post('staff/invite', [StaffController::class, 'invite'])->name('staff.invite');
+    Route::post('staff/{invitation}/resend', [StaffController::class, 'resend'])->name('staff.resend');
+    Route::delete('staff/{invitation}/invite', [StaffController::class, 'revoke'])->name('staff.revoke');
+    Route::patch('staff/{id}/deactivate', [StaffController::class, 'setActive'])->name('staff.deactivate');
+    Route::get('services', [ServicesController::class, 'index'])->name('services');
+    Route::post('services', [ServicesController::class, 'store'])->name('services.store');
+    Route::put('services/{service}', [ServicesController::class, 'update'])->name('services.update');
+    Route::patch('services/{service}', [ServicesController::class, 'toggle'])->name('services.toggle');
+    Route::get('settings', [SettingsController::class, 'show'])->name('settings');
+    Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::get('templates', [TemplatesController::class, 'index'])->name('templates');
+    Route::put('templates', [TemplatesController::class, 'update'])->name('templates.update');
+    Route::delete('templates', [TemplatesController::class, 'destroy'])->name('templates.destroy');
+    Route::post('templates/test', [TemplatesController::class, 'test'])->name('templates.test');
+    Route::get('audit', [AuditController::class, 'index'])->name('audit');
 });
 
 // Doctor workspace.
 Route::middleware(EnsureStaffRole::for(Role::Doctor))->prefix('doctor')->name('doctor.')->group(function () {
     Route::inertia('/', 'doctor/overview')->name('overview');
     Route::inertia('schedule', 'doctor/schedule')->name('schedule');
-    Route::inertia('availability', 'doctor/availability')->name('availability');
+    Route::get('availability', [AvailabilityController::class, 'show'])->name('availability');
+    Route::put('availability', [AvailabilityController::class, 'save'])->name('availability.save');
+    Route::post('availability/preview', [AvailabilityController::class, 'preview'])->name('availability.preview');
     Route::inertia('requests', 'doctor/requests')->name('requests');
 });
 
@@ -96,6 +125,37 @@ Route::middleware(EnsureStaffRole::for(Role::Receptionist))->prefix('reception')
     Route::get('patients/{id}', fn (string $id) => Inertia::render('reception/patient', ['id' => $id]))
         ->name('patient');
     Route::inertia('notifications', 'reception/notifications')->name('notifications');
+});
+
+// The clinic's patients (booking panel, Patients page): JSON for both roles that book, behind the ability check.
+Route::middleware(EnsureStaffRole::for(Role::ClinicAdmin, Role::Receptionist))->prefix('api/patients')->name('api.patients.')->group(function () {
+    Route::get('search', [PatientsController::class, 'search'])->middleware('throttle:patient-search')->name('search');
+    Route::get('recent', [PatientsController::class, 'recent'])->name('recent');
+    Route::post('/', [PatientsController::class, 'store'])->name('store');
+    Route::get('{patient}', [PatientsController::class, 'show'])->name('show');
+    Route::patch('{patient}', [PatientsController::class, 'update'])->name('update');
+});
+
+// Appointments. Reading and moving through the day is for every staff role (the policy narrows a doctor to their own);
+// booking, moving and cancelling is for the people who run the desk.
+Route::middleware(EnsureStaffRole::for())->prefix('api/appointments')->name('api.appointments.')->group(function () {
+    Route::get('/', [AppointmentsController::class, 'index'])->name('index');
+    Route::get('{appointment}', [AppointmentsController::class, 'show'])->name('show');
+    Route::patch('{appointment}/status', [AppointmentsController::class, 'status'])->name('status');
+});
+Route::middleware(EnsureStaffRole::for(Role::ClinicAdmin, Role::Receptionist))->prefix('api/appointments')->name('api.appointments.')->group(function () {
+    Route::post('/', [AppointmentsController::class, 'store'])->middleware('throttle:booking')->name('store');
+    Route::patch('{appointment}/reschedule', [AppointmentsController::class, 'reschedule'])->name('reschedule');
+    Route::post('{appointment}/cancel', [AppointmentsController::class, 'cancel'])->name('cancel');
+});
+
+// Finding and holding a slot for the people who book (admin and receptionist).
+Route::middleware(EnsureStaffRole::for(Role::ClinicAdmin, Role::Receptionist))->prefix('api')->name('api.')->group(function () {
+    Route::get('availability', [BookingAvailabilityController::class, 'index'])->middleware('throttle:booking')->name('availability');
+    Route::get('availability/alternatives', [BookingAvailabilityController::class, 'alternatives'])->middleware('throttle:booking')->name('availability.alternatives');
+    Route::post('slot-holds', [SlotHoldsController::class, 'store'])->middleware('throttle:booking')->name('holds.store');
+    Route::get('slot-holds', [SlotHoldsController::class, 'index'])->name('holds.index');
+    Route::delete('slot-holds/{holdId}', [SlotHoldsController::class, 'destroy'])->name('holds.destroy');
 });
 
 // Developer preview of the shared components (en + ur). Not available in production.

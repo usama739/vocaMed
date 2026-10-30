@@ -47,4 +47,64 @@ return [
 
     'confirmation_hours' => 24,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Phone country codes
+    |--------------------------------------------------------------------------
+    |
+    | A clinic's country (ISO code) gives the code that a number typed with a leading 0 is completed with.
+    | Add a country here before a clinic in it is opened.
+    |
+    */
+
+    'calling_codes' => [
+        'PK' => '+92',
+        'IN' => '+91',
+        'AE' => '+971',
+        'SA' => '+966',
+        'GB' => '+44',
+        'US' => '+1',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Clinic setting choices
+    |--------------------------------------------------------------------------
+    |
+    | The values the Settings page offers; the server accepts nothing else.
+    |
+    */
+
+    'reminder_hours_options' => [48, 24, 12, 4, 2, 1],
+    'cancellation_window_options' => [1, 2, 4, 24],
+    'voice_retention_options' => [0, 7, 30],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Slot holds
+    |--------------------------------------------------------------------------
+    |
+    | A hold is the two-minute "someone is booking this slot" a receptionist places while filling the booking panel. It lives
+    | in a cache store, never in the database tables the bookings use, so the no-double-booking guarantee never depends on it.
+    | The store is the database cache today; set HOLDS_CACHE_STORE=redis (with a Redis server and the predis package) to move
+    | it to Redis with no code change.
+    |
+    */
+
+    'holds_store' => env('HOLDS_CACHE_STORE', 'database'),
+
+    'hold_seconds' => 120,
+
+    /*
+    |--------------------------------------------------------------------------
+    | How a booking is requested
+    |--------------------------------------------------------------------------
+    |
+    | The intake driver turns what a person typed (or, later, said) into the booking request the engine understands.
+    | "typed" is the booking panel; "voice" is added in the voice step.
+    |
+    */
+
+    'booking_intake' => env('BOOKING_INTAKE', 'typed'),
+
 ];

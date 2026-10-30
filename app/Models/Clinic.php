@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Data\ClinicSettings;
 use App\Enums\ClinicStatus;
 use Database\Factories\ClinicFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -20,6 +21,8 @@ use Illuminate\Support\Carbon;
  * @property string $country
  * @property string $timezone
  * @property string $default_locale
+ * @property string|null $phone
+ * @property string|null $address
  * @property array<string, mixed>|null $settings
  * @property ClinicStatus $status
  * @property Carbon|null $created_at
@@ -50,6 +53,25 @@ class Clinic extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    /** The country's phone code with the plus, such as "+92". */
+    public function callingCode(): string
+    {
+        return (string) config('vocamed.calling_codes.'.$this->country, '+');
+    }
+
+    public function settingsData(): ClinicSettings
+    {
+        return ClinicSettings::fromArray($this->settings);
+    }
+
+    /**
+     * @return HasMany<ClinicHoliday, $this>
+     */
+    public function holidays(): HasMany
+    {
+        return $this->hasMany(ClinicHoliday::class)->orderBy('date');
     }
 
     public function isActive(): bool

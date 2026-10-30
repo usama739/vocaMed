@@ -18,7 +18,7 @@ const xsrfToken = (): string | null => {
  * a server error or an expired CSRF token, which the pages show as a retryable error.
  */
 export async function sendJson(
-    method: 'GET' | 'POST' | 'PUT' | 'PATCH',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     url: string,
     data?: Record<string, unknown>,
     fetchImpl: typeof fetch = fetch,

@@ -1,0 +1,9 @@
+{
+    "id": "01JHOLD00000000000000000A",
+    "clinicId": "01JCLINIC0000000000000000A",
+    "doctorId": "01JDOCTOR0000000000000000A",
+    "serviceId": "01JSERVICE000000000000000A",
+    "startsAt": "2026-11-02T05:00:00.000Z",
+    "heldBy": "7",
+    "expiresAt": "2026-11-01T10:02:00.000Z"
+}

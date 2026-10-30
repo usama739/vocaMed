@@ -4,6 +4,7 @@ import { clockNow } from '@/lib/clock';
 import type { AccountSource, SessionUser } from './account';
 import { createHttpAccount } from './account-http';
 import { createHttpAuth } from './auth-http';
+import { createHttpSource } from './http-source';
 import { createMockAuth, SAMPLE_PASSWORD } from './auth-mock';
 import { createMockAccounts } from './mock-account';
 import { createSessionUserStore } from './session-user';
@@ -42,6 +43,7 @@ export {
  * To move to the real API, build an implementation of DataSource / PatientLinkSource
  * that talks to Laravel and return it from these two functions.
  */
+const REAL_AUTH = import.meta.env.VITE_REAL_AUTH === 'true';
 const database = createSeedDatabase(clockNow());
 const latencyMs = import.meta.env.MODE === 'test' ? 0 : 150;
 
@@ -74,7 +76,10 @@ export function getRoleDataSource(role: Role): DataSource {
     let source = roleSources.get(role);
 
     if (!source) {
-        source = getDataSource(DEMO_CLINIC_ID, SAMPLE_USERS[role]);
+        const mock = getDataSource(DEMO_CLINIC_ID, SAMPLE_USERS[role]);
+        // With real sign-in, clinic setup (admin pages and the doctor's availability) comes from Laravel; the rest of
+        // the staff pages stay on the sample data until their steps.
+        source = REAL_AUTH ? createHttpSource(mock) : mock;
         roleSources.set(role, source);
     }
 
@@ -101,8 +106,6 @@ export const patientLinks: PatientLinkSource = createMockPatientLinks(
  * Sign-in, password recovery, invitations and sign-up. The mock by default (the demo and the browser specs);
  * Laravel's endpoints when VITE_REAL_AUTH=true.
  */
-const REAL_AUTH = import.meta.env.VITE_REAL_AUTH === 'true';
-
 export const auth: AuthSource = REAL_AUTH
     ? createHttpAuth()
     : createMockAuth({

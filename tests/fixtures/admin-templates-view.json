@@ -1,0 +1,45 @@
+{
+    "clinic": {
+        "id": "01JCLINIC0000000000000000A",
+        "name": "Shifa Clinic",
+        "country": "PK",
+        "phoneCountryCode": "+92",
+        "timezone": "Asia/Karachi",
+        "defaultLocale": "en",
+        "address": "12 Main Road, Lahore",
+        "phone": "+923001234567"
+    },
+    "templates": [
+        {
+            "kind": "confirmation",
+            "channel": "sms",
+            "locale": "en",
+            "body": "Hi {patient_name}…",
+            "defaultBody": "Hi {patient_name}…",
+            "isCustom": false
+        }
+    ],
+    "variables": [
+        "patient_name",
+        "doctor",
+        "time",
+        "clinic_name",
+        "link"
+    ],
+    "sample": {
+        "en": {
+            "patient_name": "Ayesha Khan",
+            "doctor": "Dr. Rahman",
+            "time": "Tomorrow, 4:00 PM",
+            "clinic_name": "Your clinic",
+            "link": "vocamed.link/p/…"
+        },
+        "ur": {
+            "patient_name": "Ayesha Khan",
+            "doctor": "Dr. Rahman",
+            "time": "Tomorrow, 4:00 PM",
+            "clinic_name": "Your clinic",
+            "link": "vocamed.link/p/…"
+        }
+    }
+}

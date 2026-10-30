@@ -1,0 +1,12 @@
+{
+    "id": "01JPATIENT000000000000000A",
+    "clinicId": "01JCLINIC0000000000000000A",
+    "name": "Ayesha Khan",
+    "phone": "+923001234567",
+    "preferredLocale": "ur",
+    "preferredChannel": "sms",
+    "consent": true,
+    "noShowCount": 0,
+    "notes": "Prefers mornings",
+    "createdAt": "2026-10-30T09:00:00.000Z"
+}

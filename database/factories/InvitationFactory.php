@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\Role;
 use App\Models\Clinic;
+use App\Models\Doctor;
 use App\Models\Invitation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -43,6 +44,16 @@ class InvitationFactory extends Factory
     public function expired(): static
     {
         return $this->state(fn (array $attributes) => ['expires_at' => now()->subMinute()]);
+    }
+
+    public function revoked(): static
+    {
+        return $this->state(fn (array $attributes) => ['revoked_at' => now()->subMinute()]);
+    }
+
+    public function forDoctor(Doctor $doctor): static
+    {
+        return $this->state(fn (array $attributes) => ['clinic_id' => $doctor->clinic_id, 'doctor_id' => $doctor->id, 'role' => Role::Doctor]);
     }
 
     public function accepted(): static
