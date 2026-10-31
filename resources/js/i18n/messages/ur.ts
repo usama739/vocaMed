@@ -49,6 +49,7 @@ const ur: DeepString<typeof en> = {
     channel: {
         sms: 'ایس ایم ایس',
         whatsapp: 'واٹس ایپ',
+        email: 'ای میل',
     },
     notificationStatus: {
         queued: 'قطار میں',

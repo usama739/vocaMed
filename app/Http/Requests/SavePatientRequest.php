@@ -31,7 +31,8 @@ class SavePatientRequest extends FormRequest
             'phone' => $creating ? ['nullable', 'string', 'max:40'] : ['sometimes', 'nullable', 'string', 'max:40'],
             'noPhone' => ['sometimes', 'boolean'],
             'preferredLocale' => ['sometimes', Rule::in(['en', 'ur'])],
-            'preferredChannel' => ['sometimes', Rule::in(['sms', 'whatsapp'])],
+            'email' => ['sometimes', 'nullable', 'string', 'email:rfc', 'max:190'],
+            'preferredChannel' => ['sometimes', Rule::in(['sms', 'whatsapp', 'email'])],
             'consent' => ['sometimes', 'boolean'],
             'notes' => ['sometimes', 'nullable', 'string', 'max:1000'],
         ];

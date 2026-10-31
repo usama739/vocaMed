@@ -46,6 +46,7 @@ import {
 
 type Draft = {
     phone: string;
+    email: string;
     preferredLocale: Locale;
     preferredChannel: Channel;
     consent: boolean;
@@ -54,11 +55,15 @@ type Draft = {
 
 const draftOf = (patient: Patient, clinic: Clinic): Draft => ({
     phone: formatPhone(patient.phone, clinic.phoneCountryCode),
+    email: patient.email ?? '',
     preferredLocale: patient.preferredLocale,
     preferredChannel: patient.preferredChannel,
     consent: patient.consent,
     notes: patient.notes,
 });
+
+/** A plain check on the screen; the server holds the real rule. */
+const EMAIL = /^[^s@]+@[^s@]+.[^s@]+$/;
 
 const OPEN_STATUSES = new Set([
     'booked',
@@ -79,7 +84,11 @@ export default function PatientProfile({ id }: { id: string }) {
     const patient = data?.patient;
     const clinic = data?.clinic;
     const [draft, setDraft] = useState<Draft | null>(null);
-    const [errors, setErrors] = useState<{ phone?: string; form?: string }>({});
+    const [errors, setErrors] = useState<{
+        phone?: string;
+        email?: string;
+        form?: string;
+    }>({});
     const [saving, setSaving] = useState(false);
 
     // The form starts from the saved record. A reload (after booking from here, say) only
@@ -151,9 +160,13 @@ export default function PatientProfile({ id }: { id: string }) {
             next.phone = t('reception.patient.errPhone');
         }
 
+        if (draft.email.trim() !== '' && !EMAIL.test(draft.email.trim())) {
+            next.email = t('reception.patient.errEmail');
+        }
+
         setErrors(next);
 
-        if (next.phone) {
+        if (next.phone || next.email) {
             return;
         }
 
@@ -162,6 +175,7 @@ export default function PatientProfile({ id }: { id: string }) {
         try {
             await source.patients.update(patient.id, {
                 ...(phoneChanged ? { phone: draft.phone.trim() } : {}),
+                email: draft.email.trim(),
                 preferredLocale: draft.preferredLocale,
                 preferredChannel: draft.preferredChannel,
                 consent: draft.consent,
@@ -173,8 +187,8 @@ export default function PatientProfile({ id }: { id: string }) {
             const { field, message } = forField(caught);
 
             setErrors(
-                field === 'phone'
-                    ? { phone: message }
+                field === 'phone' || field === 'email'
+                    ? { [field]: message }
                     : { form: t('reception.patient.saveFailed') },
             );
         } finally {
@@ -296,6 +310,30 @@ export default function PatientProfile({ id }: { id: string }) {
                                     )}
                                 </FormField>
 
+                                <FormField
+                                    label={t('reception.patient.email')}
+                                    error={errors.email}
+                                    hint={t('reception.patient.emailHint')}
+                                >
+                                    {(control) => (
+                                        <Input
+                                            {...control}
+                                            type="email"
+                                            inputMode="email"
+                                            dir="ltr"
+                                            value={draft.email}
+                                            autoComplete="off"
+                                            onChange={(event) =>
+                                                setDraft({
+                                                    ...draft,
+                                                    email: event.target.value,
+                                                })
+                                            }
+                                            className="text-start"
+                                        />
+                                    )}
+                                </FormField>
+
                                 <ChoiceGroup
                                     label={t('reception.patient.language')}
                                     value={draft.preferredLocale}
@@ -317,6 +355,7 @@ export default function PatientProfile({ id }: { id: string }) {
                                     options={[
                                         ['whatsapp', t('channel.whatsapp')],
                                         ['sms', t('channel.sms')],
+                                        ['email', t('channel.email')],
                                     ]}
                                     onChange={(preferredChannel) =>
                                         setDraft({

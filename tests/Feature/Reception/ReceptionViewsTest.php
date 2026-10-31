@@ -227,6 +227,8 @@ class ReceptionViewsTest extends TestCase
 
     public function test_the_list_filters_by_when_doctor_status_and_patient()
     {
+        // A fixed number: a random one could by chance contain the digits searched for below.
+        $this->patient->forceFill(['phone' => '+923001111111'])->save();
         $other = Patient::factory()->forClinic($this->clinic)->create(['name' => 'Bilal Ahmed', 'phone' => '+923007654321']);
         $today = $this->row('2026-11-02 10:00');
         $soon = $this->row('2026-11-09 10:00', [], null, $other);
@@ -289,7 +291,9 @@ class ReceptionViewsTest extends TestCase
         $this->assertSame(['appointment.created', 'appointment.status_changed'], array_column($view['history'], 'action'));
         $this->assertSame(['source' => 'manual'], $view['history'][0]['meta']);
         $this->assertSame(['kind' => 'user', 'name' => $this->reception->name], $view['history'][1]['actor']);
-        $this->assertSame([], $view['timeline']);
+        // Only the confirmation message filed at booking (the patient has not consented, so it is recorded as failed).
+        $this->assertSame(['message'], array_column($view['timeline'], 'type'));
+        $this->assertSame(['confirmation', 'failed', 'no_consent'], [$view['timeline'][0]['entry']['kind'], $view['timeline'][0]['entry']['status'], $view['timeline'][0]['entry']['failureReason']]);
     }
 
     public function test_an_unknown_appointment_or_one_from_another_clinic_is_not_found()

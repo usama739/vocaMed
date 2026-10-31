@@ -3,7 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\QueuedResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -29,7 +29,7 @@ class PasswordResetTest extends TestCase
         $this->postJson(route('password.email'), ['email' => $user->email])->assertOk();
 
         $token = null;
-        Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use (&$token) {
+        Notification::assertSentTo($user, QueuedResetPassword::class, function (QueuedResetPassword $notification) use (&$token) {
             $token = $notification->token;
 
             return true;
@@ -60,7 +60,7 @@ class PasswordResetTest extends TestCase
 
         $this->postJson(route('password.email'), ['email' => $user->email])->assertOk()->assertExactJson(['ok' => true]);
 
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, QueuedResetPassword::class);
     }
 
     public function test_asking_for_a_link_never_reveals_whether_the_address_has_an_account()
@@ -73,7 +73,7 @@ class PasswordResetTest extends TestCase
 
         $this->assertSame($known->status(), $unknown->status());
         $this->assertSame($known->json(), $unknown->json());
-        Notification::assertSentToTimes($user, ResetPassword::class, 1);
+        Notification::assertSentToTimes($user, QueuedResetPassword::class, 1);
         Notification::assertCount(1);
     }
 
@@ -85,7 +85,7 @@ class PasswordResetTest extends TestCase
         $this->postJson(route('password.email'), ['email' => $user->email])->assertOk();
         $this->postJson(route('password.email'), ['email' => $user->email])->assertOk()->assertExactJson(['ok' => true]);
 
-        Notification::assertSentToTimes($user, ResetPassword::class, 1);
+        Notification::assertSentToTimes($user, QueuedResetPassword::class, 1);
     }
 
     public function test_the_page_can_check_a_link_before_showing_the_form()

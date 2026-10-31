@@ -17,6 +17,7 @@
                 "clinicId": "01JCLINIC0000000000000000A",
                 "name": "Ayesha Khan",
                 "phone": "+923001234567",
+                "email": "ayesha@example.test",
                 "preferredLocale": "ur",
                 "preferredChannel": "sms",
                 "consent": true,

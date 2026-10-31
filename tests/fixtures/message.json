@@ -1,0 +1,12 @@
+{
+    "id": "01JMESSAGE0000000000000000A",
+    "clinicId": "01JCLINIC0000000000000000A",
+    "appointmentId": "01JAPPOINT000000000000000A",
+    "patientId": "01JPATIENT000000000000000A",
+    "kind": "confirmation",
+    "channel": "email",
+    "status": "failed",
+    "createdAt": "2026-11-02T05:00:00.000Z",
+    "sentAt": null,
+    "failureReason": "no_consent"
+}

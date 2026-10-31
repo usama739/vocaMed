@@ -41,6 +41,16 @@ return [
         ],
     ],
 
+    /*
+    | The subject line of an email, by kind and language. Email uses the SMS wording for its body.
+    */
+    'subjects' => [
+        'confirmation' => ['en' => 'Your appointment at {clinic_name}', 'ur' => '{clinic_name} میں آپ کی اپائنٹمنٹ'],
+        'reminder' => ['en' => 'Reminder: your appointment at {clinic_name}', 'ur' => 'یاد دہانی: {clinic_name} میں آپ کی اپائنٹمنٹ'],
+        'reschedule' => ['en' => 'Your appointment at {clinic_name} has moved', 'ur' => '{clinic_name} میں آپ کی اپائنٹمنٹ کا وقت بدل گیا ہے'],
+        'cancellation' => ['en' => 'Your appointment at {clinic_name} was cancelled', 'ur' => '{clinic_name} میں آپ کی اپائنٹمنٹ منسوخ ہو گئی ہے'],
+    ],
+
     'sample' => [
         'en' => [
             'patient_name' => 'Ayesha Khan',

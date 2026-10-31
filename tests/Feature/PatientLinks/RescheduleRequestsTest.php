@@ -244,8 +244,9 @@ class RescheduleRequestsTest extends TestCase
 
         $view = $this->actingAs($this->reception)->getJson("/reception/appointments/{$this->appointment->id}")->assertOk()->json();
 
-        $this->assertSame(['reply', 'reply'], array_column($view['timeline'], 'type'));
-        $this->assertSame(['reschedule', 'confirm'], array_column(array_column($view['timeline'], 'reply'), 'action'), 'newest first');
+        // The two replies, then the confirmation message filed when the visit was booked (the patient has not consented, so it failed).
+        $this->assertSame(['reply', 'reply', 'message'], array_column($view['timeline'], 'type'));
+        $this->assertSame(['reschedule', 'confirm'], array_column(array_column(array_slice($view['timeline'], 0, 2), 'reply'), 'action'), 'newest first');
         $this->assertSame($this->appointment->id, $view['timeline'][0]['reply']['appointmentId']);
         $actors = collect($view['history'])->keyBy('action');
         $this->assertSame(['kind' => 'patient', 'name' => null], $actors['appointment.status_changed']['actor']);

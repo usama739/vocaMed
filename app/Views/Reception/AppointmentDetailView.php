@@ -5,10 +5,12 @@ namespace App\Views\Reception;
 use App\Models\Appointment;
 use App\Models\AuditLog;
 use App\Models\Clinic;
+use App\Models\Message;
 use App\Models\PatientReply;
 use App\Models\User;
 use App\Support\ClinicClock;
 use App\Views\ClinicView;
+use App\Views\MessageView;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -52,8 +54,8 @@ final class AppointmentDetailView
     }
 
     /**
-     * What happened around the appointment outside the desk, newest first: what the patient did through their link. Messages join
-     * them in the messaging step.
+     * What happened around the appointment outside the desk, newest first: the messages sent to the patient and what
+     * the patient did through their link.
      *
      * @return list<array<string, mixed>>
      */
@@ -78,6 +80,14 @@ final class AppointmentDetailView
                 ],
             ];
         }
+
+        foreach (Message::query()->where('appointment_id', $appointment->id)->get() as $message) {
+            $entry = MessageView::of($message);
+
+            $items[] = ['type' => 'message', 'id' => $message->id, 'at' => $entry['createdAt'], 'entry' => $entry];
+        }
+
+        usort($items, fn (array $a, array $b) => [$b['at'], $b['id']] <=> [$a['at'], $a['id']]);
 
         return $items;
     }

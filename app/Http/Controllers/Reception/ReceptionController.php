@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Reception;
 
 use App\Authorization\Ability;
 use App\Http\Controllers\Controller;
+use App\Messaging\Messenger;
 use App\Models\Appointment;
 use App\Models\Clinic;
+use App\Models\Message;
 use App\Models\Patient;
 use App\Models\User;
+use App\Views\MessageView;
 use App\Views\Reception\AppointmentDetailView;
 use App\Views\Reception\AppointmentsView;
 use App\Views\Reception\CalendarView;
+use App\Views\Reception\NotificationsView;
 use App\Views\Reception\PatientDetailView;
 use App\Views\Reception\PatientsView;
 use App\Views\Reception\TodayView;
@@ -121,6 +125,25 @@ class ReceptionController extends Controller
         Gate::authorize(Ability::ManagePatients->value);
 
         return response()->json($view->of($this->clinic($request), $this->user($request), Patient::query()->findOrFail($id)));
+    }
+
+    public function notifications(Request $request, NotificationsView $view): Response|JsonResponse
+    {
+        if (! $request->expectsJson()) {
+            return Inertia::render('reception/notifications');
+        }
+
+        Gate::authorize(Ability::ViewAppointments->value);
+
+        return response()->json($view->of($this->clinic($request)));
+    }
+
+    /** Send a failed message again (as a new message; the failed one is stamped as sent again). */
+    public function resend(Message $message, Messenger $messenger): JsonResponse
+    {
+        Gate::authorize(Ability::BookAppointments->value);
+
+        return response()->json(MessageView::of($messenger->resend($message)));
     }
 
     private function clinic(Request $request): Clinic

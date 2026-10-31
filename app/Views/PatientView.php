@@ -11,7 +11,7 @@ use App\Models\Patient;
 final class PatientView
 {
     /**
-     * @return array{id: string, clinicId: string, name: string, phone: string, preferredLocale: string, preferredChannel: string, consent: bool, noShowCount: int, notes: string, createdAt: string}
+     * @return array{id: string, clinicId: string, name: string, phone: string, email: string, preferredLocale: string, preferredChannel: string, consent: bool, noShowCount: int, notes: string, createdAt: string}
      */
     public static function of(Patient $patient): array
     {
@@ -24,6 +24,7 @@ final class PatientView
             'preferredChannel' => $patient->preferred_channel,
             'consent' => $patient->consent_at !== null,
             'noShowCount' => $patient->no_show_count ?? $patient->appointments()->where('status', 'no_show')->count(),
+            'email' => $patient->email ?? '',
             'notes' => $patient->notes ?? '',
             'createdAt' => $patient->created_at?->utc()->format('Y-m-d\TH:i:s.v\Z') ?? '',
         ];

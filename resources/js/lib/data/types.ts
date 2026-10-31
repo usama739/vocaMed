@@ -13,7 +13,7 @@ export type IsoDate = string; // 2026-10-26 (clinic-local calendar date)
 export type TimeOfDay = string; // 09:30 (clinic-local, 24h)
 
 export type Locale = 'en' | 'ur';
-export type Channel = 'sms' | 'whatsapp';
+export type Channel = 'sms' | 'whatsapp' | 'email';
 export type Role = 'clinic_admin' | 'receptionist' | 'doctor';
 
 export type AppointmentStatus =
@@ -196,6 +196,8 @@ export interface Patient {
     clinicId: Id;
     name: string;
     phone: string; // E.164, e.g. +923001234567; '' for a walk-in added without a number
+    /** Optional; needed to reach the patient by email. '' when none. */
+    email?: string;
     preferredLocale: Locale;
     preferredChannel: Channel;
     consent: boolean;
@@ -406,6 +408,7 @@ export interface SlotQuery {
 export interface NewPatientInput {
     name: string;
     phone: string;
+    email?: string;
     /** Walk-ins may be added with a name only; the profile then says messages cannot be sent. */
     noPhone?: boolean;
     preferredLocale?: Locale;
@@ -419,6 +422,7 @@ export type PatientPatch = Partial<
         Patient,
         | 'name'
         | 'phone'
+        | 'email'
         | 'preferredLocale'
         | 'preferredChannel'
         | 'consent'

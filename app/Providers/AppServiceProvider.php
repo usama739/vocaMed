@@ -8,6 +8,8 @@ use App\Authorization\Permissions;
 use App\Booking\BookingIntakeManager;
 use App\Booking\CacheSlotHolds;
 use App\Booking\Contracts\SlotHolds;
+use App\Events\AppointmentChanged;
+use App\Listeners\FileAppointmentMessages;
 use App\Listeners\RecordDevMail;
 use App\Listeners\RecordSignIn;
 use App\Models\User;
@@ -76,6 +78,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('patient-link-request', fn (Request $request) => Limit::perMinute(3)->by('patient-link-request:'.$request->ip().':'.hash('sha256', (string) $request->route('token'))));
 
         Event::listen(Login::class, RecordSignIn::class);
+        Event::listen(AppointmentChanged::class, FileAppointmentMessages::class);
 
         // On a developer machine the emails the app sends are readable at /dev/inbox.
         if (app()->environment(['local', 'testing'])) {

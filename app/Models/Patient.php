@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string $preferred_locale
  * @property string $preferred_channel
  * @property Carbon|null $consent_at
+ * @property string|null $email optional, encrypted at rest; lets the patient be reached by email
  * @property string|null $notes
  * @property Carbon|null $created_at
  * @property int|null $no_show_count how many appointments were no-shows (present when loaded with withCount)
@@ -42,6 +43,6 @@ class Patient extends Model
      */
     protected function casts(): array
     {
-        return ['consent_at' => 'datetime', 'notes' => 'encrypted'];
+        return ['consent_at' => 'datetime', 'email' => 'encrypted', 'notes' => 'encrypted'];
     }
 }

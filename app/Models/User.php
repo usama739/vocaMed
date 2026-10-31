@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AccountNotification;
 use App\Enums\Role;
+use App\Notifications\QueuedResetPassword;
 use App\Support\TenantContext;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -44,6 +45,12 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /** The reset-password email goes through the queue (same wording and link as Laravel's own). */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new QueuedResetPassword($token));
+    }
 
     /**
      * Get the attributes that should be cast.

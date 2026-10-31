@@ -4,6 +4,7 @@ namespace App\Booking;
 
 use App\Booking\Contracts\SlotHolds;
 use App\Enums\AppointmentStatus;
+use App\Events\AppointmentChanged;
 use App\Exceptions\InvalidTransition;
 use App\Exceptions\SlotUnavailable;
 use App\Models\Appointment;
@@ -46,6 +47,8 @@ class BookingService
         // The booker's own hold has done its job.
         $this->holds->releaseFor($clinic, $by);
 
+        event(new AppointmentChanged($appointment->id, 'booked'));
+
         return $appointment;
     }
 
@@ -86,6 +89,8 @@ class BookingService
         // The booker's own hold has done its job (a patient moving their own appointment holds nothing).
         $by !== null && $this->holds->releaseFor($clinic, $by);
 
+        event(new AppointmentChanged($appointment->id, 'rescheduled'));
+
         return $appointment;
     }
 
@@ -94,13 +99,17 @@ class BookingService
     {
         $this->assertMove($appointment, AppointmentStatus::Cancelled);
 
-        return DB::transaction(function () use ($appointment): Appointment {
+        $cancelled = DB::transaction(function () use ($appointment): Appointment {
             $appointment->forceFill(['status' => AppointmentStatus::Cancelled])->save();
             $this->releaseCells($appointment);
             $this->audit->record('appointment.cancelled', $appointment);
 
             return $appointment;
         });
+
+        event(new AppointmentChanged($cancelled->id, 'cancelled'));
+
+        return $cancelled;
     }
 
     /**

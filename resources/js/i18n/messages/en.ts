@@ -46,6 +46,7 @@ const en = {
     channel: {
         sms: 'SMS',
         whatsapp: 'WhatsApp',
+        email: 'Email',
     },
     notificationStatus: {
         queued: 'Queued',

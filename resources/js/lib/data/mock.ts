@@ -819,6 +819,9 @@ function buildCore(
                         clinicId,
                         name,
                         phone,
+                        ...(input.email?.trim()
+                            ? { email: input.email.trim() }
+                            : {}),
                         preferredLocale:
                             input.preferredLocale ?? clinic().defaultLocale,
                         preferredChannel: input.preferredChannel ?? 'sms',

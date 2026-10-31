@@ -95,6 +95,17 @@ class TemplateCatalog
         return $body;
     }
 
+    /**
+     * The wording a message goes out with: the clinic's own text for it if it has edited it, the built-in text otherwise. Email has no
+     * wording of its own: it sends the SMS text (with a subject line from the config).
+     */
+    public function bodyFor(string $kind, string $channel, string $locale): string
+    {
+        $channel = $channel === 'email' ? 'sms' : $channel;
+
+        return $this->find($kind, $channel, $locale)->body ?? $this->defaultBody($kind, $locale);
+    }
+
     /** The built-in wording for a kind and language. */
     public function defaultBody(string $kind, string $locale): string
     {

@@ -3,6 +3,8 @@
 namespace App\Notifications;
 
 use App\Models\User;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
@@ -11,8 +13,10 @@ use Illuminate\Support\Facades\URL;
  * The "confirm your address" email a clinic admin gets after signing up. The workspace opens only once
  * the link is followed, so nobody can start a clinic with an address that is not theirs.
  */
-class ConfirmClinicEmail extends Notification
+class ConfirmClinicEmail extends Notification implements ShouldQueue
 {
+    use Queueable;
+
     /**
      * @return array<int, string>
      */

@@ -107,4 +107,25 @@ return [
 
     'booking_intake' => env('BOOKING_INTAKE', 'typed'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Messages to patients
+    |--------------------------------------------------------------------------
+    |
+    | Each channel a patient can choose is sent by a driver: "mail" really sends through Laravel's mail (whatever MAIL_MAILER
+    | says), "log" only writes the message to the log and sends nothing. SMS and WhatsApp stay on "log" until a provider is
+    | chosen; a provider is one new driver class and one value here. A reminder is sent when its hour comes round, and never
+    | more than this many minutes late (so a scheduler that was off does not send yesterday's 24-hour reminder this morning).
+    |
+    */
+
+    'messages' => [
+        'drivers' => [
+            'email' => env('MESSAGES_EMAIL_DRIVER', 'mail'),
+            'sms' => env('MESSAGES_SMS_DRIVER', 'log'),
+            'whatsapp' => env('MESSAGES_WHATSAPP_DRIVER', 'log'),
+        ],
+        'reminder_grace_minutes' => 60,
+    ],
+
 ];

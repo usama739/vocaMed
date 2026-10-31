@@ -142,7 +142,8 @@ Route::middleware(EnsureStaffRole::for(Role::Receptionist))->prefix('reception')
     Route::get('calendar', [ReceptionController::class, 'calendar'])->name('calendar');
     Route::get('patients', [ReceptionController::class, 'patients'])->name('patients');
     Route::get('patients/{id}', [ReceptionController::class, 'patient'])->name('patient');
-    Route::inertia('notifications', 'reception/notifications')->name('notifications');
+    Route::get('notifications', [ReceptionController::class, 'notifications'])->name('notifications');
+    Route::post('notifications/{message}/resend', [ReceptionController::class, 'resend'])->name('notifications.resend');
 });
 
 // The clinic's patients (booking panel, Patients page): JSON for both roles that book, behind the ability check.

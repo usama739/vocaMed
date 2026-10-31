@@ -37,6 +37,7 @@ class PatientDirectory
                     'preferred_locale' => $input['preferredLocale'] ?? $clinic->default_locale,
                     'preferred_channel' => $input['preferredChannel'] ?? 'sms',
                     'consent_at' => ! empty($input['consent']) ? now() : null,
+                    'email' => $this->email($input['email'] ?? null),
                     'notes' => $this->notes($input['notes'] ?? null),
                 ])->save();
 
@@ -80,6 +81,10 @@ class PatientDirectory
         if (array_key_exists('consent', $patch)) {
             // Turning consent on records when; leaving it on keeps the first time; turning it off clears it.
             $changes['consent_at'] = $patch['consent'] ? ($patient->consent_at ?? now()) : null;
+        }
+
+        if (array_key_exists('email', $patch)) {
+            $changes['email'] = $this->email($patch['email']);
         }
 
         if (array_key_exists('notes', $patch)) {
@@ -186,6 +191,14 @@ class PatientDirectory
         return trim(preg_replace('/\s+/u', ' ', $name) ?? $name);
     }
 
+    /** An address is kept in lower case; empty means none. */
+    private function email(mixed $email): ?string
+    {
+        $email = is_string($email) ? mb_strtolower(trim($email)) : '';
+
+        return $email === '' ? null : $email;
+    }
+
     private function notes(mixed $notes): ?string
     {
         $notes = is_string($notes) ? trim($notes) : '';
@@ -200,7 +213,7 @@ class PatientDirectory
      */
     private function touched(Patient $patient): array
     {
-        $map = ['name' => 'name', 'phone' => 'phone', 'preferred_locale' => 'preferredLocale', 'preferred_channel' => 'preferredChannel', 'consent_at' => 'consent', 'notes' => 'notes'];
+        $map = ['name' => 'name', 'phone' => 'phone', 'preferred_locale' => 'preferredLocale', 'preferred_channel' => 'preferredChannel', 'consent_at' => 'consent', 'email' => 'email', 'notes' => 'notes'];
         $touched = [];
 
         foreach ($map as $column => $name) {

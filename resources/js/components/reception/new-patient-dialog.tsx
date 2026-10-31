@@ -17,6 +17,9 @@ import { useT } from '@/i18n/scope';
 import type { Locale } from '@/i18n/locales';
 import type { Patient } from '@/lib/data';
 
+/** A plain check on the screen; the server holds the real rule. */
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /**
  * "Add a patient": name, mobile phone and message language. Field errors sit under the field;
  * a phone number that already belongs to someone is reported instead of creating a duplicate.
@@ -71,6 +74,7 @@ function NewPatientForm({
     onSubmit: (input: {
         name: string;
         phone: string;
+        email?: string;
         preferredLocale: Locale;
     }) => Promise<void>;
 }) {
@@ -78,10 +82,12 @@ function NewPatientForm({
     const { forField } = useErrorText();
     const [name, setName] = useState('');
     const [phone, setPhone] = useState(initialPhone);
+    const [email, setEmail] = useState('');
     const [language, setLanguage] = useState<Locale>('ur');
     const [errors, setErrors] = useState<{
         name?: string;
         phone?: string;
+        email?: string;
         form?: string;
     }>({});
     const [saving, setSaving] = useState(false);
@@ -98,9 +104,13 @@ function NewPatientForm({
             next.phone = t('reception.patients.errPhone');
         }
 
+        if (email.trim() !== '' && !EMAIL.test(email.trim())) {
+            next.email = t('reception.patients.errEmail');
+        }
+
         setErrors(next);
 
-        if (next.name || next.phone) {
+        if (next.name || next.phone || next.email) {
             return;
         }
 
@@ -110,13 +120,14 @@ function NewPatientForm({
             await onSubmit({
                 name: name.trim(),
                 phone: phone.trim(),
+                ...(email.trim() === '' ? {} : { email: email.trim() }),
                 preferredLocale: language,
             });
         } catch (caught) {
             const { field, message } = forField(caught);
 
             setErrors(
-                field === 'phone' || field === 'name'
+                field === 'phone' || field === 'name' || field === 'email'
                     ? { [field]: message }
                     : { form: t('reception.patients.saveFailed') },
             );
@@ -153,6 +164,23 @@ function NewPatientForm({
                         autoComplete="off"
                         placeholder="03xx xxxxxxx"
                         onChange={(event) => setPhone(event.target.value)}
+                        className="text-start"
+                    />
+                )}
+            </FormField>
+            <FormField
+                label={t('reception.patients.fEmail')}
+                error={errors.email}
+            >
+                {(control) => (
+                    <Input
+                        {...control}
+                        type="email"
+                        inputMode="email"
+                        dir="ltr"
+                        value={email}
+                        autoComplete="off"
+                        onChange={(event) => setEmail(event.target.value)}
                         className="text-start"
                     />
                 )}

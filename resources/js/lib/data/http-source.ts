@@ -18,6 +18,8 @@ import {
     type IsoDateTime,
     type NewAppointmentInput,
     type NewPatientInput,
+    type NotificationLogEntry,
+    type NotificationStatus,
     type Page,
     type Patient,
     type PatientPatch,
@@ -51,6 +53,7 @@ import type {
     AvailabilityView,
     CalendarParams,
     CalendarViewData,
+    NotificationsView,
     DoctorOverviewView,
     DoctorScheduleParams,
     DoctorShellView,
@@ -124,10 +127,10 @@ const query = (params: Record<string, string | number | undefined>) => {
 /**
  * The staff DataSource with the clinic-setup parts (admin pages D2 to D8 and the doctor's own availability) answered by
  * Laravel and everything else still answered by `mock`. With `desk` (the receptionist's console) the whole front desk is
- * Laravel's as well: the six reception pages, the booking panel, patients, slots, appointments and the clinic's doctors and
- * services. They switch together because the sample appointments point at sample patients, so mixing them would break
- * booking. With `doctor` the doctor's own Overview, Schedule, Requests and sidebar badge, and the status moves they make, are
- * Laravel's too, with their answer to a patient's reschedule request. The notifications stay on `mock` until their step.
+ * Laravel's as well: the reception pages, the booking panel, patients, slots, appointments, the clinic's doctors and services,
+ * and the messages to patients (Notifications and Resend). They switch together because the sample appointments point at
+ * sample patients, so mixing them would break booking. With `doctor` the doctor's own Overview, Schedule, Requests and
+ * sidebar badge, and the status moves they make, are Laravel's too, with their answer to a patient's reschedule request.
  * Used only when real sign-in is on.
  */
 export function createHttpSource(
@@ -220,6 +223,12 @@ export function createHttpSource(
                 'GET',
                 `/reception/patients${query({ q })}`,
             ),
+        notifications: () =>
+            call<NotificationsView>(
+                'notifications',
+                'GET',
+                '/reception/notifications',
+            ),
         patient: (id: Id) =>
             orNull<PatientDetailView>(
                 'patient',
@@ -251,6 +260,24 @@ export function createHttpSource(
             call<RequestsView>('requests', 'GET', '/doctor/requests'),
         doctorShell: () =>
             call<DoctorShellView>('shell', 'GET', '/doctor/shell'),
+    };
+
+    const deskNotifications = {
+        list: async (filter?: { status?: NotificationStatus }) =>
+            (await deskViews.notifications()).rows
+                .map((row) => row.entry)
+                .filter(
+                    (entry) =>
+                        !filter?.status || entry.status === filter.status,
+                ),
+        /** Files the message again as a new one; the answer is that new message (the worker sends it). */
+        resend: (id: Id) =>
+            call<NotificationLogEntry>(
+                'resend',
+                'POST',
+                `/reception/notifications/${enc(id)}/resend`,
+            ),
+        templates: () => mock.notifications.templates(),
     };
 
     const deskClinic = {
@@ -412,6 +439,7 @@ export function createHttpSource(
         patients: desk ? deskPatients : mock.patients,
         appointments: desk || doctor ? deskAppointments : mock.appointments,
         slots: desk ? deskSlots : mock.slots,
+        notifications: desk ? deskNotifications : mock.notifications,
 
         views: {
             ...mock.views,

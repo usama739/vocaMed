@@ -10,6 +10,8 @@ import patient from '../../../../tests/fixtures/patient.json';
 import receptionAppointment from '../../../../tests/fixtures/reception-appointment-view.json';
 import receptionAppointments from '../../../../tests/fixtures/reception-appointments-view.json';
 import receptionCalendar from '../../../../tests/fixtures/reception-calendar-view.json';
+import messageFixture from '../../../../tests/fixtures/message.json';
+import receptionNotifications from '../../../../tests/fixtures/reception-notifications-view.json';
 import receptionPatient from '../../../../tests/fixtures/reception-patient-view.json';
 import receptionPatients from '../../../../tests/fixtures/reception-patients-view.json';
 import receptionToday from '../../../../tests/fixtures/reception-today-view.json';
@@ -49,7 +51,7 @@ const mock = {
     patients: { search: vi.fn() },
     appointments: { list: vi.fn() },
     slots: { list: vi.fn() },
-    notifications: { list: vi.fn() },
+    notifications: { list: vi.fn(), resend: vi.fn(), templates: vi.fn() },
     requests: { decide: vi.fn() },
 } as unknown as DataSource;
 
@@ -182,9 +184,9 @@ describe('the front desk source: what the reception pages read', () => {
         expect(source.slots).not.toBe(mock.slots);
         expect(source.doctors.list).not.toBe(mock.doctors.list);
         expect(source.services.list).not.toBe(mock.services.list);
-        // Messages arrive with the messaging step, and the doctor's own record is the doctor's area.
-        expect(source.views.notifications).toBe(mock.views.notifications);
-        expect(source.notifications).toBe(mock.notifications);
+        expect(source.views.notifications).not.toBe(mock.views.notifications);
+        expect(source.notifications).not.toBe(mock.notifications);
+        // The doctor's own record is the doctor's area.
         expect(source.doctors.me).toBe(mock.doctors.me);
     });
 });
@@ -594,6 +596,56 @@ describe('the doctor source: answering a reschedule request', () => {
 
         expect(createHttpSource(mock, impl, { desk: true }).requests).toBe(
             mock.requests,
+        );
+    });
+});
+
+describe('the front desk source: messages to patients', () => {
+    it('reads the notifications page and lists its messages, newest first as the server sent them', async () => {
+        const read = desk(200, receptionNotifications);
+
+        expect(await read.source.views.notifications()).toEqual(
+            receptionNotifications,
+        );
+        expect(read.calls[0].url).toBe('/reception/notifications');
+
+        const list = desk(200, receptionNotifications);
+        expect(await list.source.notifications.list()).toEqual(
+            receptionNotifications.rows.map((row) => row.entry),
+        );
+        expect(
+            await desk(200, receptionNotifications).source.notifications.list({
+                status: 'sent',
+            }),
+        ).toEqual([]);
+    });
+
+    it('sends a failed message again through the real endpoint and answers with the new message', async () => {
+        const { source, calls } = desk(200, messageFixture);
+
+        expect(await source.notifications.resend('m1')).toEqual(messageFixture);
+        expect(calls[0]).toMatchObject({
+            url: '/reception/notifications/m1/resend',
+            init: { method: 'POST' },
+        });
+    });
+
+    it('turns a refused resend into INVALID_TRANSITION', async () => {
+        expect(
+            await caught(
+                desk(422, {
+                    code: 'INVALID_TRANSITION',
+                    message: 'No',
+                }).source.notifications.resend('m1'),
+            ),
+        ).toMatchObject({ code: 'INVALID_TRANSITION' });
+    });
+
+    it('keeps the message wording on the sample data', () => {
+        const { source } = desk(200, {});
+
+        expect(source.notifications.templates).not.toBe(
+            mock.notifications.templates,
         );
     });
 });

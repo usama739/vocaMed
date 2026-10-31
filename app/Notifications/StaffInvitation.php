@@ -3,6 +3,8 @@
 namespace App\Notifications;
 
 use App\Enums\Role;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -10,8 +12,10 @@ use Illuminate\Notifications\Notification;
  * The email that carries a staff or doctor sign-in invitation. The link is the credential: it works once, for seven
  * days, and the plain token is never stored (only its hash). Sent to an address that has no account yet.
  */
-class StaffInvitation extends Notification
+class StaffInvitation extends Notification implements ShouldQueue
 {
+    use Queueable;
+
     public function __construct(
         private readonly string $clinicName,
         private readonly Role $role,
