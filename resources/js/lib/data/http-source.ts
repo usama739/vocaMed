@@ -41,6 +41,8 @@ import type {
     AdminDoctorsParams,
     AdminDoctorsView,
     AdminDoctorView,
+    AdminOverviewView,
+    AdminPeriod,
     AdminServicesView,
     AdminSettingsView,
     AdminStaffView,
@@ -125,7 +127,7 @@ const query = (params: Record<string, string | number | undefined>) => {
 };
 
 /**
- * The staff DataSource with the clinic-setup parts (admin pages D2 to D8 and the doctor's own availability) answered by
+ * The staff DataSource with the clinic admin's pages (Overview and D2 to D8) and the doctor's own availability answered by
  * Laravel and everything else still answered by `mock`. With `desk` (the receptionist's console) the whole front desk is
  * Laravel's as well: the reception pages, the booking panel, patients, slots, appointments, the clinic's doctors and services,
  * and the messages to patients (Notifications and Resend). They switch together because the sample appointments point at
@@ -445,6 +447,13 @@ export function createHttpSource(
             ...mock.views,
             ...(desk ? deskViews : {}),
             ...(doctor ? doctorViews : {}),
+
+            adminOverview: (params: { period: AdminPeriod }) =>
+                call<AdminOverviewView>(
+                    'overview',
+                    'GET',
+                    `/admin${query({ period: params.period })}`,
+                ),
 
             adminDoctors: (params: AdminDoctorsParams) =>
                 call<AdminDoctorsView>(

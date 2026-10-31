@@ -1,0 +1,87 @@
+{
+    "clinic": {
+        "id": "01JCLINIC0000000000000000A",
+        "name": "Shifa Clinic",
+        "country": "PK",
+        "phoneCountryCode": "+92",
+        "timezone": "Asia/Karachi",
+        "defaultLocale": "en",
+        "address": "12 Main Road, Lahore",
+        "phone": "+923001234567"
+    },
+    "today": "2026-11-02",
+    "period": {
+        "id": "month",
+        "from": "2026-11-01",
+        "to": "2026-11-02",
+        "previousFrom": "2026-10-01",
+        "previousTo": "2026-10-02"
+    },
+    "kpis": {
+        "booked": { "value": 12, "previous": 10 },
+        "done": { "value": 6, "previous": 7 },
+        "cancellationRate": { "value": 8.3, "previous": 10.5 },
+        "noShowRate": { "value": 4.2, "previous": 5.5 },
+        "newPatients": { "value": 3, "previous": 2 },
+        "reminderDelivery": { "value": 95.5, "previous": 94.5 },
+        "confirmed": { "value": 66.7, "previous": 62.5 },
+        "doctorTimeUsed": { "value": 41.5, "previous": 38.5 }
+    },
+    "trend": {
+        "granularity": "day",
+        "points": [
+            { "date": "2026-11-01", "current": 0, "previous": 3 },
+            { "date": "2026-11-02", "current": 12, "previous": 7 }
+        ]
+    },
+    "weekdays": [12, 0, 0, 0, 0, 0, 0],
+    "outcomes": { "done": 6, "upcoming": 4, "cancelled": 1, "noShow": 1 },
+    "sources": { "voice": 5, "manual": 7 },
+    "doctorUse": [
+        {
+            "doctorId": "01JDOCTOR0000000000000000A",
+            "name": "Dr. Sana Malik",
+            "utilisation": 0.415,
+            "booked": 11
+        }
+    ],
+    "services": [
+        {
+            "serviceId": "01JSERVICE000000000000000A",
+            "name": "Check-up",
+            "share": 0.6,
+            "booked": 11
+        }
+    ],
+    "todayDoctors": [
+        {
+            "doctor": {
+                "id": "01JDOCTOR0000000000000000A",
+                "clinicId": "01JCLINIC0000000000000000A",
+                "userId": null,
+                "name": "Dr. Sana Malik",
+                "specialty": "General physician",
+                "languages": ["en", "ur"],
+                "serviceIds": ["01JSERVICE000000000000000A"],
+                "active": true
+            },
+            "booked": 5,
+            "arrived": 1,
+            "inConsultation": 1,
+            "done": 2,
+            "nextFree": {
+                "doctorId": "01JDOCTOR0000000000000000A",
+                "serviceId": "01JSERVICE000000000000000A",
+                "startsAt": "2026-11-02T04:00:00.000Z",
+                "endsAt": "2026-11-02T04:30:00.000Z",
+                "state": "free"
+            }
+        }
+    ],
+    "alerts": {
+        "failedMessages": 2,
+        "doctorsWithoutHours": [
+            { "id": "01JDOCTOR0000000000000000B", "name": "Dr. Zain Ali" }
+        ]
+    }
+}

@@ -3,6 +3,7 @@ import doctorAvailability from '../../../../tests/fixtures/doctor-availability-v
 import adminAudit from '../../../../tests/fixtures/admin-audit-view.json';
 import adminDoctor from '../../../../tests/fixtures/admin-doctor-view.json';
 import adminDoctors from '../../../../tests/fixtures/admin-doctors-view.json';
+import adminOverview from '../../../../tests/fixtures/admin-overview-view.json';
 import adminServices from '../../../../tests/fixtures/admin-services-view.json';
 import adminSettings from '../../../../tests/fixtures/admin-settings-view.json';
 import adminStaff from '../../../../tests/fixtures/admin-staff-view.json';
@@ -68,6 +69,11 @@ describe('the real staff source: what the pages read', () => {
     it('reads each admin page from its address and hands the screen exactly what the server sent', async () => {
         const cases: [string, unknown, (s: DataSource) => Promise<unknown>][] =
             [
+                [
+                    '/admin?period=last7',
+                    adminOverview,
+                    (s) => s.views.adminOverview({ period: 'last7' }),
+                ],
                 [
                     '/admin/doctors?status=all',
                     adminDoctors,
@@ -149,11 +155,11 @@ describe('the real staff source: what the pages read', () => {
         ).toBeNull();
     });
 
-    it('leaves everything that is not clinic setup to the sample-data source', () => {
+    it('leaves everything that is not the clinic admin or the availability to the sample-data source', () => {
         const { source } = sourceWith(200);
 
         expect(source.views.today).toBe(mock.views.today);
-        expect(source.views.adminOverview).toBe(mock.views.adminOverview);
+        expect(source.views.adminOverview).not.toBe(mock.views.adminOverview);
         expect(source.doctors.list).toBe(mock.doctors.list);
         expect(source.doctors.me).toBe(mock.doctors.me);
         expect(source.services.list).toBe(mock.services.list);

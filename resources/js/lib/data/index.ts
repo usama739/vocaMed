@@ -78,9 +78,9 @@ export function getRoleDataSource(role: Role): DataSource {
 
     if (!source) {
         const mock = getDataSource(DEMO_CLINIC_ID, SAMPLE_USERS[role]);
-        // With real sign-in, clinic setup (admin pages and the doctor's availability) comes from Laravel, and so does the
-        // whole front desk for the receptionist and the Overview and Schedule for the doctor; the admin Overview,
-        // notifications and the patient links stay on the sample data until their steps.
+        // With real sign-in the admin pages (Overview included) and the doctor's availability come from Laravel, and so does
+        // the whole front desk for the receptionist and the Overview and Schedule for the doctor. Only the sample demo
+        // (VITE_REAL_AUTH=false) still runs on the sample data.
         source = REAL_AUTH
             ? createHttpSource(mock, fetch, {
                   desk: role === 'receptionist',

@@ -4,6 +4,7 @@ use App\Enums\Role;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\DoctorsController;
+use App\Http\Controllers\Admin\OverviewController;
 use App\Http\Controllers\Admin\ServicesController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\StaffController;
@@ -92,7 +93,8 @@ Route::middleware(EnsureStaffRole::for())->prefix('account')->group(function () 
 
 // Clinic admin.
 Route::middleware(EnsureStaffRole::for(Role::ClinicAdmin))->prefix('admin')->name('admin.')->group(function () {
-    Route::inertia('/', 'admin/overview')->name('overview');
+    // The page is the Inertia page; the same address asked for JSON is its read model.
+    Route::get('/', [OverviewController::class, 'index'])->name('overview');
     Route::get('doctors', [DoctorsController::class, 'index'])->name('doctors');
     Route::post('doctors', [DoctorsController::class, 'store'])->name('doctors.store');
     // `new` is the blank form for a doctor who does not exist yet.
