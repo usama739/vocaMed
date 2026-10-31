@@ -11,6 +11,9 @@ use App\Booking\Contracts\SlotHolds;
 use App\Listeners\RecordDevMail;
 use App\Listeners\RecordSignIn;
 use App\Models\User;
+use App\PatientLinks\Contracts\PatientLinkDelivery;
+use App\PatientLinks\LogPatientLinkDelivery;
+use App\Support\ActingAs;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
@@ -36,6 +39,12 @@ class AppServiceProvider extends ServiceProvider
         // One per request or queued job: which clinic the code is acting for.
         $this->app->scoped(TenantContext::class);
 
+        // One per request: whether the patient who opened a link is the one acting (the audit reads it).
+        $this->app->scoped(ActingAs::class);
+
+        // How a new patient link reaches the patient: only logged on a developer machine until the messages step.
+        $this->app->bind(PatientLinkDelivery::class, LogPatientLinkDelivery::class);
+
         // Where slot holds are kept (the cache store is a setting); swap the class to change how holds work.
         $this->app->bind(SlotHolds::class, CacheSlotHolds::class);
 
@@ -59,6 +68,12 @@ class AppServiceProvider extends ServiceProvider
 
         // Finding and holding slots: 240 requests a minute per person (a booking panel polls while it is open).
         RateLimiter::for('booking', fn (Request $request) => Limit::perMinute(240)->by('booking:'.(Auth::id() ?? $request->ip())));
+
+        // Patient links are public (the token is the credential), so each address is slowed down: pages 60 a minute, actions 20, and
+        // "send me a new link" 3 for one link from one address.
+        RateLimiter::for('patient-link', fn (Request $request) => Limit::perMinute(60)->by('patient-link:'.$request->ip()));
+        RateLimiter::for('patient-link-action', fn (Request $request) => Limit::perMinute(20)->by('patient-link-action:'.$request->ip()));
+        RateLimiter::for('patient-link-request', fn (Request $request) => Limit::perMinute(3)->by('patient-link-request:'.$request->ip().':'.hash('sha256', (string) $request->route('token'))));
 
         Event::listen(Login::class, RecordSignIn::class);
 

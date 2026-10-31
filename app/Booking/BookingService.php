@@ -50,7 +50,7 @@ class BookingService
     }
 
     /** Move an appointment that is still to come (booked or confirmed) to another bookable time. It goes back to booked. */
-    public function reschedule(Clinic $clinic, User $by, Appointment $appointment, CarbonImmutable $startsAt): Appointment
+    public function reschedule(Clinic $clinic, ?User $by, Appointment $appointment, CarbonImmutable $startsAt): Appointment
     {
         if (! $appointment->status->isOpen()) {
             throw new InvalidTransition("Cannot reschedule a {$appointment->status->value} appointment.");
@@ -83,7 +83,8 @@ class BookingService
             throw new SlotUnavailable($this->slots->alternatives($clinic, $doctor, $service, $startsAt, 3, $appointment->id, $by));
         }
 
-        $this->holds->releaseFor($clinic, $by);
+        // The booker's own hold has done its job (a patient moving their own appointment holds nothing).
+        $by !== null && $this->holds->releaseFor($clinic, $by);
 
         return $appointment;
     }

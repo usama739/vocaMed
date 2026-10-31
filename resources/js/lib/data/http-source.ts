@@ -21,6 +21,8 @@ import {
     type Page,
     type Patient,
     type PatientPatch,
+    type RequestDecisionInput,
+    type RescheduleRequest,
     type Service,
     type ServiceInput,
     type SettingsDraft,
@@ -125,7 +127,7 @@ const query = (params: Record<string, string | number | undefined>) => {
  * Laravel's as well: the six reception pages, the booking panel, patients, slots, appointments and the clinic's doctors and
  * services. They switch together because the sample appointments point at sample patients, so mixing them would break
  * booking. With `doctor` the doctor's own Overview, Schedule, Requests and sidebar badge, and the status moves they make, are
- * Laravel's too (requests are empty until patients can ask to reschedule). The notifications stay on `mock` until their step.
+ * Laravel's too, with their answer to a patient's reschedule request. The notifications stay on `mock` until their step.
  * Used only when real sign-in is on.
  */
 export function createHttpSource(
@@ -225,7 +227,17 @@ export function createHttpSource(
             ),
     };
 
-    // The doctor's own pages. Requests and the badge are real but empty until patients can ask to reschedule.
+    // The doctor's own pages, and their answer to a patient's request to move a visit.
+    const doctorRequests = {
+        decide: (id: Id, input: RequestDecisionInput) =>
+            call<RescheduleRequest>(
+                'request decision',
+                'PATCH',
+                `/doctor/requests/${enc(id)}`,
+                { ...input },
+            ),
+    };
+
     const doctorViews = {
         doctorOverview: () =>
             call<DoctorOverviewView>('overview', 'GET', '/doctor'),
@@ -546,6 +558,8 @@ export function createHttpSource(
                     { active },
                 ),
         },
+
+        requests: doctor ? doctorRequests : mock.requests,
 
         services: {
             ...mock.services,

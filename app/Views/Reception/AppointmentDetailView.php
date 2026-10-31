@@ -5,6 +5,7 @@ namespace App\Views\Reception;
 use App\Models\Appointment;
 use App\Models\AuditLog;
 use App\Models\Clinic;
+use App\Models\PatientReply;
 use App\Models\User;
 use App\Support\ClinicClock;
 use App\Views\ClinicView;
@@ -37,7 +38,7 @@ final class AppointmentDetailView
             'clinic' => ClinicView::of($clinic),
             'today' => ClinicClock::for($clinic)->today(),
             'row' => $this->rows->of($clinic, $viewer, $one)[0],
-            'timeline' => [],
+            'timeline' => $this->timeline($appointment),
             'history' => $entries->map(fn (AuditLog $entry) => [
                 'id' => $entry->id,
                 'action' => $entry->action,
@@ -48,5 +49,36 @@ final class AppointmentDetailView
                     : AppointmentRows::actor($entry->actor_type === 'user' ? $entry->actor_id : null, $names),
             ])->all(),
         ];
+    }
+
+    /**
+     * What happened around the appointment outside the desk, newest first: what the patient did through their link. Messages join
+     * them in the messaging step.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function timeline(Appointment $appointment): array
+    {
+        $items = [];
+
+        foreach (PatientReply::query()->where('appointment_id', $appointment->id)->orderByDesc('created_at')->orderByDesc('id')->get() as $reply) {
+            $at = $reply->created_at->utc()->format('Y-m-d\TH:i:s.v\Z');
+
+            $items[] = [
+                'type' => 'reply',
+                'id' => $reply->id,
+                'at' => $at,
+                'reply' => [
+                    'id' => $reply->id,
+                    'clinicId' => $reply->clinic_id,
+                    'appointmentId' => $reply->appointment_id,
+                    'patientId' => $reply->patient_id,
+                    'at' => $at,
+                    'action' => $reply->action,
+                ],
+            ];
+        }
+
+        return $items;
     }
 }

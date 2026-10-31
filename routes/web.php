@@ -21,9 +21,11 @@ use App\Http\Controllers\DevInboxController;
 use App\Http\Controllers\Doctor\AvailabilityController;
 use App\Http\Controllers\Doctor\PagesController as DoctorPagesController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PatientLinkController;
 use App\Http\Controllers\PatientsController;
 use App\Http\Controllers\Reception\ReceptionController;
 use App\Http\Middleware\EnsureStaffRole;
+use App\Http\Middleware\PatientLinkHeaders;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -53,13 +55,24 @@ Route::get('invite/{token}', fn (string $token) => Inertia::render('auth/invite'
 Route::get('invitations/{token}', [InvitationController::class, 'show'])->middleware('throttle:30,1,invitation-show')->name('invitations.show');
 Route::post('invitations/{token}/accept', [InvitationController::class, 'accept'])->middleware('throttle:10,1,invitation-accept')->name('invitations.accept');
 
-// Patient link pages: no sign-in, one appointment, reached from the message the patient received.
-// UI only for now; the token is passed to the page as it arrives.
-Route::prefix('p/{token}')->name('patient.')->group(function () {
-    Route::get('/', fn (string $token) => Inertia::render('patient/manage', ['token' => $token]))->name('manage');
-    Route::get('reschedule', fn (string $token) => Inertia::render('patient/reschedule', ['token' => $token]))->name('reschedule');
-    Route::get('status', fn (string $token) => Inertia::render('patient/status', ['token' => $token]))->name('status');
-    Route::get('expired', fn (string $token) => Inertia::render('patient/expired', ['token' => $token]))->name('expired');
+// Patient link pages: no sign-in, one appointment, reached from the message the patient received. The token in the address is the
+// credential (stored only as a hash). Each page is the Inertia page, or its read model when asked for JSON; the actions are POSTs.
+// Never indexed, cached or passed on in a Referer header, and slowed down per address.
+Route::prefix('p/{token}')->name('patient.')->middleware(PatientLinkHeaders::class)->group(function () {
+    Route::middleware('throttle:patient-link')->group(function () {
+        Route::get('/', [PatientLinkController::class, 'manage'])->name('manage');
+        Route::get('reschedule', [PatientLinkController::class, 'reschedule'])->name('reschedule');
+        Route::get('status', [PatientLinkController::class, 'status'])->name('status');
+        Route::get('expired', [PatientLinkController::class, 'expired'])->name('expired');
+    });
+
+    Route::middleware('throttle:patient-link-action')->group(function () {
+        Route::post('confirm', [PatientLinkController::class, 'confirm'])->name('confirm');
+        Route::post('cancel', [PatientLinkController::class, 'cancel'])->name('cancel');
+        Route::post('reschedule', [PatientLinkController::class, 'submitReschedule'])->name('reschedule.submit');
+    });
+
+    Route::post('request-link', [PatientLinkController::class, 'requestLink'])->middleware('throttle:patient-link-request')->name('request-link');
 });
 
 // Staff areas. Each is guarded by role (EnsureStaffRole): not signed in goes to the sign-in page, another role's area
@@ -117,6 +130,7 @@ Route::middleware(EnsureStaffRole::for(Role::Doctor))->prefix('doctor')->name('d
     Route::put('availability', [AvailabilityController::class, 'save'])->name('availability.save');
     Route::post('availability/preview', [AvailabilityController::class, 'preview'])->name('availability.preview');
     Route::get('requests', [DoctorPagesController::class, 'requests'])->name('requests');
+    Route::patch('requests/{rescheduleRequest}', [DoctorPagesController::class, 'decide'])->name('requests.decide');
 });
 
 // Receptionist console.

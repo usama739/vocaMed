@@ -5,6 +5,7 @@ import type { AccountSource, SessionUser } from './account';
 import { createHttpAccount } from './account-http';
 import { createHttpAuth } from './auth-http';
 import { createHttpSource } from './http-source';
+import { createHttpPatientLinks } from './patient-http';
 import { createMockAuth, SAMPLE_PASSWORD } from './auth-mock';
 import { createMockAccounts } from './mock-account';
 import { createSessionUserStore } from './session-user';
@@ -110,10 +111,13 @@ export function startDemoActivity(
     });
 }
 
-export const patientLinks: PatientLinkSource = createMockPatientLinks(
-    database,
-    { latencyMs, now: clockNow },
-);
+/**
+ * The patient link pages and actions. The sample links by default (the demo and the browser specs); Laravel's, opened by the signed
+ * token in the address, when VITE_REAL_AUTH=true.
+ */
+export const patientLinks: PatientLinkSource = REAL_AUTH
+    ? createHttpPatientLinks()
+    : createMockPatientLinks(database, { latencyMs, now: clockNow });
 
 /**
  * Sign-in, password recovery, invitations and sign-up. The mock by default (the demo and the browser specs);

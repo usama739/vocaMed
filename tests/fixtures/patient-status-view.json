@@ -1,0 +1,23 @@
+{
+    "state": "valid",
+    "clinic": {
+        "name": "Shifa Clinic",
+        "phone": "+923001234567",
+        "address": "12 Main Road, Lahore",
+        "timezone": "Asia/Karachi"
+    },
+    "today": "2026-11-02",
+    "appointment": {
+        "firstName": "Ayesha",
+        "doctorName": "Dr. Sana Malik",
+        "serviceName": "Check-up",
+        "durationMin": 30,
+        "startsAt": "2026-11-04T05:00:00.000Z",
+        "status": "booked"
+    },
+    "preferredLocale": "en",
+    "stage": "notToday",
+    "ahead": 0,
+    "waitMin": 0,
+    "updatedAt": "2026-11-02T05:00:00.000Z"
+}

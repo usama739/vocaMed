@@ -8,22 +8,24 @@ use App\Authorization\Permissions;
 use App\Http\Controllers\Controller;
 use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\RescheduleRequest;
 use App\Models\User;
-use App\Support\ClinicClock;
-use App\Views\ClinicView;
+use App\PatientLinks\RescheduleRequests;
 use App\Views\Doctor\OverviewView;
-use App\Views\DoctorView;
+use App\Views\Doctor\RequestsView;
+use App\Views\Doctor\RequestView;
 use App\Views\Reception\CalendarView;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * The doctor's pages (C1 Overview, C2 Schedule, C4 Requests, and the sidebar badge). The page itself is the Inertia page; the same
- * address asked for JSON answers with that page's read model. A doctor only ever reads their own appointments, and a login with no
- * doctor linked to it gets a 404.
+ * address asked for JSON answers with that page's read model. A doctor only ever reads their own appointments and requests, and a
+ * login with no doctor linked to it gets a 404.
  */
 class PagesController extends Controller
 {
@@ -57,29 +59,42 @@ class PagesController extends Controller
         ]));
     }
 
-    /** Reschedule requests arrive with patient links; until then there are none to show. */
-    public function requests(Request $request): Response|JsonResponse
+    public function requests(Request $request, RequestsView $view): Response|JsonResponse
     {
         if (! $request->expectsJson()) {
             return Inertia::render('doctor/requests');
         }
 
         $doctor = $this->mine($request);
-        $clinic = $this->clinic($request);
 
-        return response()->json([
-            'clinic' => ClinicView::of($clinic),
-            'today' => ClinicClock::for($clinic)->today(),
-            'doctor' => DoctorView::of($doctor->loadMissing('services')),
-            'pending' => [],
-            'history' => [],
-        ]);
+        return response()->json($view->of($this->clinic($request), $this->user($request), $doctor));
     }
 
-    /** The sidebar badge. It never fails the page around it, so it needs nothing beyond the area's own guard. */
-    public function shell(): JsonResponse
+    /** Approve or reject one request. Approving moves the appointment (409 with alternatives if that time has gone). */
+    public function decide(Request $request, RescheduleRequest $rescheduleRequest, RescheduleRequests $requests): JsonResponse
     {
-        return response()->json(['pendingRequests' => 0]);
+        Gate::authorize(Ability::DecideRequests->value, $rescheduleRequest);
+
+        $input = $request->validate([
+            'decision' => ['required', Rule::in(['approved', 'rejected'])],
+            'message' => ['sometimes', 'nullable', 'string', 'max:500'],
+        ]);
+
+        return response()->json(RequestView::of($requests->decide(
+            $this->user($request),
+            $rescheduleRequest,
+            $input['decision'],
+            $input['message'] ?? null,
+        )));
+    }
+
+    /** The sidebar badge: the requests waiting for this doctor. It never fails the page around it (a login with no doctor has none). */
+    public function shell(Request $request, RescheduleRequests $requests): JsonResponse
+    {
+        // The open demo (real sign-in off) has nobody signed in, and so nothing to count.
+        $doctor = $request->user() === null ? null : Doctor::query()->where('user_id', $request->user()->id)->first();
+
+        return response()->json(['pendingRequests' => $doctor === null ? 0 : $requests->pendingCount($doctor)]);
     }
 
     /** The signed-in doctor's own record: 404 when no doctor is linked to this login, 403 when the role may not read appointments. */

@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\User;
+use App\PatientLinks\RescheduleRequests;
 use App\Support\ClinicClock;
 use App\Views\ClinicView;
 use App\Views\DoctorView;
@@ -14,11 +15,11 @@ use Carbon\CarbonImmutable;
 
 /**
  * `DoctorOverviewView` (C1): the doctor's own appointments today in time order, how many of the next 30 days they have anything on,
- * and the reschedule requests waiting for them (none until patients can ask for one).
+ * and the reschedule requests waiting for them.
  */
 final class OverviewView
 {
-    public function __construct(private readonly AppointmentRows $rows) {}
+    public function __construct(private readonly AppointmentRows $rows, private readonly RescheduleRequests $requests) {}
 
     /**
      * @return array<string, mixed>
@@ -48,7 +49,7 @@ final class OverviewView
             'doctor' => DoctorView::of($doctor->loadMissing('services')),
             'rows' => $this->rows->of($clinic, $viewer, $todays),
             'daysAhead' => count($days),
-            'pendingRequests' => 0,
+            'pendingRequests' => $this->requests->pendingCount($doctor),
         ];
     }
 }

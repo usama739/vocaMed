@@ -1,0 +1,13 @@
+{
+    "id": "01JREQUEST00000000000000A",
+    "clinicId": "01JCLINIC0000000000000000A",
+    "appointmentId": "01JAPPOINT000000000000000A",
+    "patientId": "01JPATIENT000000000000000A",
+    "doctorId": "01JDOCTOR0000000000000000A",
+    "fromStartsAt": "2026-11-02T05:00:00.000Z",
+    "proposedStartsAt": "2026-11-03T05:00:00.000Z",
+    "status": "approved",
+    "message": "Fine",
+    "createdAt": "2026-11-01T10:00:00.000Z",
+    "decidedAt": "2026-11-01T11:00:00.000Z"
+}

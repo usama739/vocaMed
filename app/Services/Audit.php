@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Support\ActingAs;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,16 +15,20 @@ use Illuminate\Support\Facades\Auth;
  */
 class Audit
 {
+    public function __construct(private readonly ActingAs $acting) {}
+
     /**
      * @param  array<string, mixed>  $meta  names and small facts only: never passwords, notes or other sensitive values
      */
     public function record(string $action, ?Model $subject = null, array $meta = [], ?User $actor = null): AuditLog
     {
         $actor ??= Auth::user();
+        // Nobody signed in, but a patient acting through their link: the history says so.
+        $patient = $actor === null && $this->acting->isPatient();
 
         $entry = new AuditLog;
         $entry->forceFill([
-            'actor_type' => $actor === null ? 'system' : 'user',
+            'actor_type' => $patient ? 'patient' : ($actor === null ? 'system' : 'user'),
             'actor_id' => $actor === null ? null : (string) $actor->id,
             'action' => $action,
             'subject_type' => $subject === null ? null : class_basename($subject),

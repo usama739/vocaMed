@@ -13,6 +13,7 @@ import receptionCalendar from '../../../../tests/fixtures/reception-calendar-vie
 import receptionPatient from '../../../../tests/fixtures/reception-patient-view.json';
 import receptionPatients from '../../../../tests/fixtures/reception-patients-view.json';
 import receptionToday from '../../../../tests/fixtures/reception-today-view.json';
+import requestFixture from '../../../../tests/fixtures/reschedule-request.json';
 import slot from '../../../../tests/fixtures/slot.json';
 import slotHold from '../../../../tests/fixtures/slot-hold.json';
 import { createHttpSource } from './http-source';
@@ -49,6 +50,7 @@ const mock = {
     appointments: { list: vi.fn() },
     slots: { list: vi.fn() },
     notifications: { list: vi.fn() },
+    requests: { decide: vi.fn() },
 } as unknown as DataSource;
 
 const desk = (status: number, body: unknown = {}) => {
@@ -536,5 +538,62 @@ describe("the doctor source: the doctor's own pages", () => {
         expect(source.patients).toBe(mock.patients);
         expect(source.slots).toBe(mock.slots);
         expect(source.views.notifications).toBe(mock.views.notifications);
+    });
+});
+
+describe('the doctor source: answering a reschedule request', () => {
+    it('approves or rejects through the real endpoint, with the message for reception', async () => {
+        const { impl, calls } = fakeFetch(200, requestFixture);
+        const source = createHttpSource(mock, impl, { doctor: true });
+
+        expect(
+            await source.requests.decide('r1', {
+                decision: 'approved',
+                message: 'See you then',
+            }),
+        ).toEqual(requestFixture);
+        expect(calls[0]).toMatchObject({
+            url: '/doctor/requests/r1',
+            init: { method: 'PATCH' },
+        });
+        expect(JSON.parse(String(calls[0].init.body))).toEqual({
+            decision: 'approved',
+            message: 'See you then',
+        });
+    });
+
+    it('turns a taken time into SLOT_UNAVAILABLE and a decided request into INVALID_TRANSITION', async () => {
+        const taken = fakeFetch(409, {
+            code: 'SLOT_UNAVAILABLE',
+            message: 'Gone',
+            alternatives: [slot],
+        });
+        expect(
+            await caught(
+                createHttpSource(mock, taken.impl, {
+                    doctor: true,
+                }).requests.decide('r1', { decision: 'approved' }),
+            ),
+        ).toMatchObject({ code: 'SLOT_UNAVAILABLE', alternatives: [slot] });
+
+        const decided = fakeFetch(422, {
+            code: 'INVALID_TRANSITION',
+            message: 'Already',
+        });
+        expect(
+            await caught(
+                createHttpSource(mock, decided.impl, {
+                    doctor: true,
+                }).requests.decide('r1', { decision: 'rejected' }),
+            ),
+        ).toMatchObject({ code: 'INVALID_TRANSITION' });
+    });
+
+    it('is not the real answer for the other roles', () => {
+        const { impl } = fakeFetch(200, {});
+
+        expect(createHttpSource(mock, impl, { desk: true }).requests).toBe(
+            mock.requests,
+        );
     });
 });
