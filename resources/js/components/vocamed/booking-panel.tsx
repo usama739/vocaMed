@@ -38,6 +38,7 @@ import {
 import { useAsyncValue } from '@/hooks/use-async-value';
 import { useShortcut } from '@/hooks/use-shortcut';
 import { clockNow } from '@/lib/clock';
+import { SLOT_TOPICS } from '@/lib/live-topics';
 import { useT } from '@/i18n/scope';
 import {
     addDaysToDate,
@@ -280,7 +281,7 @@ export function BookingPanelBody({
                 serviceId: mServiceId as Id,
                 date: mDate as string,
             }),
-        { refreshMs: refreshSlotsMs },
+        { refreshMs: refreshSlotsMs, topics: SLOT_TOPICS },
     );
 
     const patchManual = (patch: Partial<typeof manual>) => {

@@ -17,6 +17,17 @@ class ConfirmClinicEmail extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /** A mail server that drops one connection must not lose the email: tried three times, with a wait between. */
+    public int $tries = 3;
+
+    /**
+     * @return list<int>
+     */
+    public function backoff(): array
+    {
+        return [10, 60];
+    }
+
     /**
      * @return array<int, string>
      */

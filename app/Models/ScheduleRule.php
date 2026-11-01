@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ScheduleRule extends Model
 {
-    use BelongsToClinic, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasUlids;
 
     /**
      * @return array<string, string>
@@ -26,5 +28,10 @@ class ScheduleRule extends Model
     protected function casts(): array
     {
         return ['weekday' => 'integer'];
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Directory;
     }
 }

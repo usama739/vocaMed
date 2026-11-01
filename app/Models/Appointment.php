@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Authorization\OwnedByStaff;
 use App\Enums\AppointmentStatus;
 use App\Enums\BookingSource;
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Database\Factories\AppointmentFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -37,7 +39,7 @@ use Illuminate\Support\Carbon;
 class Appointment extends Model implements OwnedByStaff
 {
     /** @use HasFactory<AppointmentFactory> */
-    use BelongsToClinic, HasFactory, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasFactory, HasUlids;
 
     /**
      * @return array<string, mixed>
@@ -81,5 +83,10 @@ class Appointment extends Model implements OwnedByStaff
     public function isOwnedBy(User $user): bool
     {
         return Doctor::query()->whereKey($this->doctor_id)->where('user_id', $user->id)->exists();
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Appointments;
     }
 }

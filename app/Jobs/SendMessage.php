@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Live\LiveTopic;
+use App\Live\LiveUpdates;
 use App\Messaging\DeliveryFailed;
 use App\Messaging\MessageChannels;
 use App\Messaging\MessageRenderer;
@@ -75,6 +77,9 @@ class SendMessage implements ShouldQueue
 
         $tenant->run($this->clinic($tenant), function (): void {
             Message::query()->whereKey($this->messageId)->where('status', 'queued')->update(['status' => 'failed', 'failure_reason' => 'unreachable']);
+
+            // A query update raises no model event, so reception's Notifications is told here.
+            LiveUpdates::announce($this->clinicId, LiveTopic::Messages, id: $this->messageId);
         });
     }
 

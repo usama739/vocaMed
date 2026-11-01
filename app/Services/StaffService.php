@@ -9,6 +9,8 @@ use App\Exceptions\DuplicateEmail;
 use App\Exceptions\Forbidden;
 use App\Exceptions\InvitationUsed;
 use App\Exceptions\LastAdmin;
+use App\Live\LiveTopic;
+use App\Live\LiveUpdates;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Invitation;
@@ -116,6 +118,7 @@ class StaffService
             }
 
             $target->forceFill(['is_active' => $active])->save();
+            LiveUpdates::announce($target->clinic_id, LiveTopic::Directory, id: (string) $target->id);
 
             if (! $active) {
                 $this->sessions->endAll($target);

@@ -13,6 +13,7 @@ import { ChoiceChip } from '@/components/vocamed/choice-chip';
 import { LoadingState } from '@/components/vocamed/states';
 import { useAsyncValue } from '@/hooks/use-async-value';
 import { clockNow } from '@/lib/clock';
+import { SLOT_TOPICS } from '@/lib/live-topics';
 import { useT } from '@/i18n/scope';
 import {
     addDaysToDate,
@@ -89,7 +90,7 @@ export function RescheduleBody({
                 serviceId: appointment.serviceId,
                 date: currentDate as string,
             }),
-        { refreshMs: refreshSlotsMs },
+        { refreshMs: refreshSlotsMs, topics: SLOT_TOPICS },
     );
 
     const pick = async (slot: Slot) => {

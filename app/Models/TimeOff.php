@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +21,7 @@ use Illuminate\Support\Carbon;
  */
 class TimeOff extends Model
 {
-    use BelongsToClinic, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasUlids;
 
     protected $table = 'time_offs';
 
@@ -29,5 +31,10 @@ class TimeOff extends Model
     protected function casts(): array
     {
         return ['start_date' => 'date:Y-m-d', 'end_date' => 'date:Y-m-d'];
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Directory;
     }
 }

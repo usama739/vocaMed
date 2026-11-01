@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\InvitationState;
 use App\Enums\Role;
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Database\Factories\InvitationFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -32,7 +34,7 @@ use Illuminate\Support\Carbon;
 class Invitation extends Model
 {
     /** @use HasFactory<InvitationFactory> */
-    use BelongsToClinic, HasFactory, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasFactory, HasUlids;
 
     /**
      * Get the attributes that should be cast.
@@ -70,5 +72,10 @@ class Invitation extends Model
     public static function hashToken(string $token): string
     {
         return hash('sha256', $token);
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Directory;
     }
 }

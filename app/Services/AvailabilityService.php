@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Data\AvailabilityDraft;
 use App\Enums\AppointmentStatus;
+use App\Live\LiveTopic;
+use App\Live\LiveUpdates;
 use App\Models\Appointment;
 use App\Models\BlockedSlot;
 use App\Models\Clinic;
@@ -95,6 +97,9 @@ class AvailabilityService
             foreach ($draft['blocked'] as $slot) {
                 (new BlockedSlot)->forceFill(['doctor_id' => $doctor->id, 'weekday' => $slot['weekday'], 'time' => $slot['time']])->save();
             }
+
+            // Clearing every window deletes rows without a model event, so the change is announced here.
+            LiveUpdates::announce($doctor->clinic_id, LiveTopic::Directory, $doctor->id, $doctor->id);
 
             return $this->draftOf($doctor) !== $before;
         });

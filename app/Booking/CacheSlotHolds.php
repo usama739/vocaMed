@@ -4,6 +4,8 @@ namespace App\Booking;
 
 use App\Booking\Contracts\SlotHolds;
 use App\Exceptions\SlotUnavailable;
+use App\Live\LiveTopic;
+use App\Live\LiveUpdates;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Service;
@@ -115,6 +117,9 @@ class CacheSlotHolds implements SlotHolds
     private function save(Clinic $clinic, array $holds): void
     {
         $this->store()->put($this->key($clinic), array_map(fn (SlotHold $hold) => $hold->toStore(), $holds), (int) config('vocamed.hold_seconds') + 60);
+
+        // Other people booking at the same moment see the slot taken, or free again, without waiting for their next refresh.
+        LiveUpdates::announce($clinic->id, LiveTopic::Slots);
     }
 
     /**

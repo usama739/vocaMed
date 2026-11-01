@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Database\Factories\PatientFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -28,7 +30,7 @@ use Illuminate\Support\Carbon;
 class Patient extends Model
 {
     /** @use HasFactory<PatientFactory> */
-    use BelongsToClinic, HasFactory, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasFactory, HasUlids;
 
     /**
      * @return HasMany<Appointment, $this>
@@ -44,5 +46,10 @@ class Patient extends Model
     protected function casts(): array
     {
         return ['consent_at' => 'datetime', 'email' => 'encrypted', 'notes' => 'encrypted'];
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Directory;
     }
 }

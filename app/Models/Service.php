@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Database\Factories\ServiceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -22,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Service extends Model
 {
     /** @use HasFactory<ServiceFactory> */
-    use BelongsToClinic, HasFactory, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasFactory, HasUlids;
 
     /**
      * @return array<string, string>
@@ -38,5 +40,10 @@ class Service extends Model
     public function doctors(): BelongsToMany
     {
         return $this->belongsToMany(Doctor::class, 'doctor_service');
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Directory;
     }
 }

@@ -38,6 +38,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Telescope (a developer's window into requests, queries, jobs, mail and logs at /telescope) exists only on a developer machine.
+        if ($this->app->environment('local') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
+            $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
+            $this->app->register(TelescopeServiceProvider::class);
+        }
+
         // One per request or queued job: which clinic the code is acting for.
         $this->app->scoped(TenantContext::class);
 

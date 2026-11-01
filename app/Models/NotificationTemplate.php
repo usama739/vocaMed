@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -18,5 +20,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class NotificationTemplate extends Model
 {
-    use BelongsToClinic, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasUlids;
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Directory;
+    }
 }

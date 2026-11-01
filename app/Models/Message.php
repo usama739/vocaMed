@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +30,7 @@ use Illuminate\Support\Carbon;
  */
 class Message extends Model
 {
-    use BelongsToClinic, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasUlids;
 
     /**
      * @return BelongsTo<Appointment, $this>
@@ -52,5 +54,10 @@ class Message extends Model
     protected function casts(): array
     {
         return ['sent_at' => 'datetime', 'resent_at' => 'datetime'];
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Messages;
     }
 }

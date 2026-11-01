@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Authorization\OwnedByStaff;
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Database\Factories\DoctorFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -27,7 +29,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Doctor extends Model implements OwnedByStaff
 {
     /** @use HasFactory<DoctorFactory> */
-    use BelongsToClinic, HasFactory, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasFactory, HasUlids;
 
     /**
      * @return array<string, string>
@@ -56,5 +58,15 @@ class Doctor extends Model implements OwnedByStaff
     public function isOwnedBy(User $user): bool
     {
         return $this->user_id !== null && $this->user_id === $user->id;
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Directory;
+    }
+
+    protected function liveDoctorId(): ?string
+    {
+        return (string) $this->getKey();
     }
 }

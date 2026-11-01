@@ -4,4 +4,6 @@ import type { SessionUser } from '@/lib/data';
 export type Auth = {
     user: SessionUser | null;
     clinic: { name: string } | null;
+    /** The private channel this person's screens listen on for live updates; null when there is none. */
+    liveChannel?: string | null;
 };

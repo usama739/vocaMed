@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +22,7 @@ use Illuminate\Support\Carbon;
  */
 class PatientReply extends Model
 {
-    use BelongsToClinic, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasUlids;
 
     public const UPDATED_AT = null;
 
@@ -30,5 +32,10 @@ class PatientReply extends Model
     protected function casts(): array
     {
         return ['created_at' => 'datetime'];
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Messages;
     }
 }

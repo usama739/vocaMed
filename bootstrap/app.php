@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Role;
 use App\Exceptions\JsonErrorMapper;
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureStaffRole;
@@ -20,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    // Live updates: the browser proves it may listen with its own session; only signed-in staff are asked at all.
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['middleware' => ['web', EnsureStaffRole::for(Role::ClinicAdmin, Role::Receptionist, Role::Doctor)]])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'locale']);
 

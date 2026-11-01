@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Data\ClinicSettings;
 use App\Enums\ClinicStatus;
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use Database\Factories\ClinicFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -32,7 +34,7 @@ use Illuminate\Support\Carbon;
 class Clinic extends Model
 {
     /** @use HasFactory<ClinicFactory> */
-    use HasFactory, HasUlids;
+    use AnnouncesLiveUpdates, HasFactory, HasUlids;
 
     /**
      * Get the attributes that should be cast.
@@ -77,5 +79,15 @@ class Clinic extends Model
     public function isActive(): bool
     {
         return $this->status === ClinicStatus::Active;
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Directory;
+    }
+
+    protected function liveClinicId(): ?string
+    {
+        return (string) $this->getKey();
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Live\LiveTopic;
+use App\Models\Concerns\AnnouncesLiveUpdates;
 use App\Models\Concerns\BelongsToClinic;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +26,7 @@ use LogicException;
  */
 class AuditLog extends Model
 {
-    use BelongsToClinic, HasUlids;
+    use AnnouncesLiveUpdates, BelongsToClinic, HasUlids;
 
     public const UPDATED_AT = null;
 
@@ -42,5 +44,10 @@ class AuditLog extends Model
     {
         static::updating(fn () => throw new LogicException('The audit log is append-only: entries cannot be changed.'));
         static::deleting(fn () => throw new LogicException('The audit log is append-only: entries cannot be deleted.'));
+    }
+
+    protected function liveTopic(): LiveTopic
+    {
+        return LiveTopic::Audit;
     }
 }
