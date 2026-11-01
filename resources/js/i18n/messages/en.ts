@@ -144,6 +144,8 @@ const en = {
         date: 'Date',
         slot: 'Time',
         noSlots: 'No free times on this day. Try another day.',
+        noServices:
+            'This doctor has no service to book yet. The clinic admin adds one under Services and picks this doctor.',
         notes: 'Notes (non-clinical)',
         notesPlaceholder: 'e.g. Prefers a morning slot',
         doneTitle: 'Booking confirmed',

@@ -1059,6 +1059,11 @@ export function BookingPanelBody({
                                 </ChoiceChip>
                             ))}
                         </div>
+                        {mOffered.length === 0 && (
+                            <p role="status" className="text-control">
+                                {t('booking.noServices')}
+                            </p>
+                        )}
                     </div>
 
                     <div
@@ -1096,13 +1101,19 @@ export function BookingPanelBody({
                         <span className="text-label font-semibold text-ink">
                             {t('booking.slot')}
                         </span>
-                        <SlotPicker
-                            slots={mSlots.value}
-                            loading={mSlots.loading}
-                            selected={manual.slotStart}
-                            timeZone={tz}
-                            onSelect={pickManualSlot}
-                        />
+                        {mOffered.length === 0 ? (
+                            <p className="text-control">
+                                {t('booking.noSlots')}
+                            </p>
+                        ) : (
+                            <SlotPicker
+                                slots={mSlots.value}
+                                loading={mSlots.loading}
+                                selected={manual.slotStart}
+                                timeZone={tz}
+                                onSelect={pickManualSlot}
+                            />
+                        )}
                     </div>
 
                     {manual.slotStart && !error && (

@@ -113,6 +113,36 @@ describe('BookingPanelBody · manual tab', () => {
         );
     });
 
+    it('says so when the doctor has no service to book, instead of loading forever', async () => {
+        const { db, source } = setup();
+
+        for (const doctor of db.doctors) {
+            doctor.serviceIds = [];
+        }
+
+        renderIn(
+            'en',
+            <BookingPanelBody source={source} initial={{ tab: 'manual' }} />,
+        );
+
+        const serviceGroup = await screen.findByRole('group', {
+            name: 'Service',
+        });
+
+        expect(
+            within(serviceGroup).getByText(/no service to book yet/),
+        ).toBeInTheDocument();
+
+        const timeGroup = screen.getByRole('group', { name: 'Time' });
+
+        expect(
+            within(timeGroup).queryByText('Loading…'),
+        ).not.toBeInTheDocument();
+        expect(
+            within(timeGroup).getByText(/No free times/),
+        ).toBeInTheDocument();
+    });
+
     it('shows a slot held by another receptionist as disabled "Held"', async () => {
         const { db, source } = setup();
         const other = createMockDataSource(db, {
