@@ -460,7 +460,11 @@ export type DataErrorCode =
     | 'OUTSIDE_WINDOW'
     | 'RATE_LIMITED'
     | 'INVALID_PASSWORD'
-    | 'FORBIDDEN';
+    | 'FORBIDDEN'
+    /** The clinic has voice booking switched off in its settings (403 from the voice endpoints). */
+    | 'VOICE_OFF'
+    /** A voice request was still not ready after the screen's patience ran out (made on the client). */
+    | 'VOICE_TIMEOUT';
 
 export class DataError extends Error {
     readonly code: DataErrorCode;

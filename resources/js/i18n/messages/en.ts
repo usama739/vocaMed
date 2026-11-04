@@ -105,7 +105,17 @@ const en = {
         deniedBody:
             'Microphone access is off for this site. Allow it in the browser address bar, or type the request below.',
         typeInstead: 'Type instead',
-        silence: 'Stops by itself after 15 seconds of silence.',
+        silence: 'Stops by itself after 15 seconds.',
+        noSpeech:
+            'We did not hear anything. Hold the microphone closer and try again, or type the request below.',
+        busy: 'Voice is busy right now. Wait a minute and try again, or type the request below.',
+        notSetUp:
+            'Voice is not set up for this clinic yet. Type the request below, or book on the Manual tab.',
+        off: 'Voice booking is switched off for this clinic. A clinic admin can switch it on under Settings. Until then, book on the Manual tab.',
+        unsupportedBody:
+            'This browser or address cannot record. Voice needs Chrome, Edge or Safari on https or localhost. Type the request below instead.',
+        notBooking:
+            'That sounds like cancelling or moving a visit. Voice only makes new bookings: use the appointment screens for that, or say a new booking.',
     },
     booking: {
         title: 'New booking',
@@ -146,6 +156,8 @@ const en = {
         noSlots: 'No free times on this day. Try another day.',
         noServices:
             'This doctor has no service to book yet. The clinic admin adds one under Services and picks this doctor.',
+        voicePartial:
+            'We understood part of the request: “{{heard}}”. Choose the missing details below.',
         notes: 'Notes (non-clinical)',
         notesPlaceholder: 'e.g. Prefers a morning slot',
         doneTitle: 'Booking confirmed',

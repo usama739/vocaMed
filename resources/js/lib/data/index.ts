@@ -20,6 +20,7 @@ export * from './auth';
 export { SAMPLE_ACCOUNTS, SAMPLE_PASSWORD } from './auth-mock';
 export type { DataSource, PatientLinkSource } from './source';
 export * from './views';
+export * from './voice';
 export * from './patient-views';
 export * from './account';
 export { rangeOf, weekStart, monthStart, monthEnd } from './calendar-range';

@@ -45,6 +45,7 @@ type ReceptionT = (
         | `doctor.${string}`
         | `admin.${string}`
         | `booking.${string}`
+        | `voice.${string}`
         | `patient.${string}`
         | `account.${string}`,
     options?: Record<string, unknown>,

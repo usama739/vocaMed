@@ -35,14 +35,16 @@ const SPEC = {
 
 /**
  * The one voice control, reused on every booking screen. It is a view of a state the
- * caller owns (recording itself is wired up later), so the same component serves the real
- * recorder and the preview. A typed command box always sits beside it (see BookingPanel):
- * voice is never required.
+ * caller owns (the booking panel runs the microphone recorder and the upload), so the same
+ * component serves the real recorder and the preview. A typed command box always sits beside
+ * it (see BookingPanel): voice is never required.
  */
 export function VoiceCaptureButton({
     state,
     onToggle,
     onTypeInstead,
+    errorMessage,
+    deniedMessage,
     className,
 }: {
     state: VoiceState;
@@ -50,6 +52,10 @@ export function VoiceCaptureButton({
     onToggle: () => void;
     /** Shown with the permission-denied and error messages. */
     onTypeInstead?: () => void;
+    /** What went wrong, when it is more specific than "we could not hear that" (silence, busy, not set up). */
+    errorMessage?: string;
+    /** Why the microphone cannot be used, when it is not the browser's permission (an address that cannot record). */
+    deniedMessage?: string;
     className?: string;
 }) {
     const { t } = useT();
@@ -108,7 +114,9 @@ export function VoiceCaptureButton({
                         className="mt-1 size-[18px] shrink-0"
                     />
                     <span className="flex flex-col items-start gap-1">
-                        {blocked ? t('voice.deniedBody') : t('voice.errorBody')}
+                        {blocked
+                            ? (deniedMessage ?? t('voice.deniedBody'))
+                            : (errorMessage ?? t('voice.errorBody'))}
                         {onTypeInstead && (
                             <button
                                 type="button"

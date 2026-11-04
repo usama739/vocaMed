@@ -23,6 +23,34 @@ export async function sendJson(
     data?: Record<string, unknown>,
     fetchImpl: typeof fetch = fetch,
 ): Promise<HttpResult> {
+    return send(
+        method,
+        url,
+        data ? JSON.stringify(data) : undefined,
+        data ? { 'Content-Type': 'application/json' } : {},
+        fetchImpl,
+    );
+}
+
+/**
+ * A multipart upload (a recording): the same session cookie and CSRF token, but no Content-Type of our own, so the browser
+ * adds the one with the form's boundary.
+ */
+export async function sendForm(
+    url: string,
+    form: FormData,
+    fetchImpl: typeof fetch = fetch,
+): Promise<HttpResult> {
+    return send('POST', url, form, {}, fetchImpl);
+}
+
+async function send(
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+    url: string,
+    body: string | FormData | undefined,
+    contentHeaders: Record<string, string>,
+    fetchImpl: typeof fetch,
+): Promise<HttpResult> {
     const token = xsrfToken();
     const response = await fetchImpl(url, {
         method,
@@ -30,10 +58,10 @@ export async function sendJson(
         headers: {
             Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
-            ...(data ? { 'Content-Type': 'application/json' } : {}),
+            ...contentHeaders,
             ...(token ? { 'X-XSRF-TOKEN': token } : {}),
         },
-        body: data ? JSON.stringify(data) : undefined,
+        body,
     });
 
     if (response.status >= 500 || response.status === 419) {

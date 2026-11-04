@@ -1,5 +1,6 @@
-import { sendJson, type HttpResult } from './http';
+import { sendForm, sendJson, type HttpResult } from './http';
 import type { DataSource } from './source';
+import type { VoiceRequestView, VoiceSource } from './voice';
 import {
     DataError,
     type Appointment,
@@ -81,6 +82,7 @@ const KNOWN_CODES: ReadonlySet<string> = new Set<DataErrorCode>([
     'RATE_LIMITED',
     'INVALID_PASSWORD',
     'FORBIDDEN',
+    'VOICE_OFF',
 ]);
 
 /**
@@ -434,8 +436,49 @@ export function createHttpSource(
             ),
     };
 
+    /**
+     * Spoken and typed booking requests. Both answer 202 with an id at once; the answer is then asked for until it is ready. A
+     * recording goes up as one multipart request: the audio and how long the browser says it ran.
+     */
+    const deskVoice: VoiceSource = {
+        transcribe: async (audio, seconds) => {
+            const form = new FormData();
+            form.append(
+                'audio',
+                audio,
+                `recording.${audio.type.includes('ogg') ? 'ogg' : audio.type.includes('mp4') ? 'm4a' : 'webm'}`,
+            );
+            form.append('durationSeconds', String(seconds));
+
+            const res = await sendForm(
+                '/api/voice/transcribe',
+                form,
+                fetchImpl,
+            );
+
+            if (res.status === 202 && typeof res.body?.id === 'string') {
+                return { id: res.body.id };
+            }
+
+            throw dataErrorFrom('voice', res);
+        },
+        parseText: async (text) => {
+            const res = await send('POST', '/api/voice/parse-text', { text });
+
+            if (res.status === 202 && typeof res.body?.id === 'string') {
+                return { id: res.body.id };
+            }
+
+            throw dataErrorFrom('voice', res);
+        },
+        get: (id) =>
+            call<VoiceRequestView>('voice', 'GET', `/api/voice/${enc(id)}`),
+    };
+
     return {
         ...mock,
+
+        ...(desk ? { voice: deskVoice } : {}),
 
         clinic: desk ? deskClinic : mock.clinic,
         patients: desk ? deskPatients : mock.patients,

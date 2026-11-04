@@ -38,6 +38,7 @@ import type {
 } from './types';
 import type { PatientActions, PatientViewSource } from './patient-views';
 import type { ViewSource } from './views';
+import type { VoiceSource } from './voice';
 
 /**
  * The only surface the UI is allowed to use for data.
@@ -61,6 +62,12 @@ export interface DataSource {
         get(): Promise<Clinic>;
         settings(): Promise<ClinicSettings>;
     };
+
+    /**
+     * Spoken and typed booking requests, read by the server. Only the receptionist's real source has it; without it (the open demo, the
+     * mock) the booking panel falls back to its sample interpreter.
+     */
+    voice?: VoiceSource;
 
     users: {
         list(): Promise<User[]>;

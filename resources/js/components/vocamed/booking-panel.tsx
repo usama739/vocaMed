@@ -1,6 +1,7 @@
 import {
     CheckCircle2,
     Loader2,
+    MicOff,
     Minus,
     Plus,
     TriangleAlert,
@@ -37,6 +38,10 @@ import {
 } from '@/components/vocamed/voice-capture-button';
 import { useAsyncValue } from '@/hooks/use-async-value';
 import { useShortcut } from '@/hooks/use-shortcut';
+import {
+    MIN_RECORDING_SECONDS,
+    useVoiceRecorder,
+} from '@/hooks/use-voice-recorder';
 import { clockNow } from '@/lib/clock';
 import { SLOT_TOPICS } from '@/lib/live-topics';
 import { useT } from '@/i18n/scope';
@@ -44,28 +49,47 @@ import {
     addDaysToDate,
     data as defaultSource,
     DataError,
+    failureOfError,
+    voiceOutcome,
+    waitForVoice,
     type Appointment,
     type DataSource,
     type Id,
     type IsoDateTime,
     type Patient,
     type Slot,
+    type VoiceCheck,
+    type VoiceFailure,
+    type VoiceOutcome,
 } from '@/lib/data';
 import { cn } from '@/lib/utils';
 
 type Tab = 'voice' | 'manual';
 type Phase = VoiceState | 'review' | 'taken';
 
+/** Why a voice request ended without a draft: a failure, or a request that was not a booking. */
+type VoiceMessage = VoiceFailure | 'notBooking';
+
+const VOICE_MESSAGE = {
+    noSpeech: 'voice.noSpeech',
+    busy: 'voice.busy',
+    notSetUp: 'voice.notSetUp',
+    off: 'voice.off',
+    notBooking: 'voice.notBooking',
+} as const;
+
 /** What the voice step hands to the review card. Every field stays editable before booking. */
 export type ReviewDraft = {
     heard: string;
+    /** The patient the server matched; null for a new patient (the name and phone are what was heard). */
+    patientId?: Id | null;
     patientName: string;
     phone: string;
     doctorId: Id;
     serviceId: Id;
     startsAt: IsoDateTime;
-    /** Fields the speech model was unsure about; highlighted so the receptionist checks them. */
-    lowConfidence: 'patient'[];
+    /** Fields the server was unsure about; highlighted so the receptionist checks them. */
+    lowConfidence: VoiceCheck[];
 };
 
 export type Interpret = (
@@ -117,9 +141,28 @@ export type BookingPanelInitial = {
 
 const DAYS_AHEAD = 3;
 
-function Tabs({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) {
+/** The "please check" tag on a field the server was unsure of. */
+function CheckBadge() {
+    const { t } = useT();
+
+    return (
+        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-warning-line bg-warning-surface px-2.5 py-0.5 text-caption font-bold text-warning-ink">
+            <TriangleAlert aria-hidden="true" className="size-[13px]" />
+            {t('booking.check')}
+        </span>
+    );
+}
+
+function Tabs({
+    tab,
+    order,
+    onChange,
+}: {
+    tab: Tab;
+    order: Tab[];
+    onChange: (tab: Tab) => void;
+}) {
     const { t, isRtl } = useT();
-    const order: Tab[] = ['voice', 'manual'];
     const refs = useRef<Record<Tab, HTMLButtonElement | null>>({
         voice: null,
         manual: null,
@@ -213,11 +256,22 @@ export function BookingPanelBody({
             }).format(clockNow()),
         ),
     ).value;
+    const clinicSettings = useAsyncValue('clinic-settings', () =>
+        source.clinic.settings(),
+    ).value;
 
-    const [tab, setTab] = useState<Tab>(
-        initial.tab ??
-            (initial.doctorId || initial.patient ? 'manual' : 'voice'),
+    // With a real voice service the clinic can switch voice off in its settings (a new clinic starts with it off), and the server then
+    // refuses both ways of asking. The Voice tab stays, so nobody wonders where it went, and says why; the panel opens on Manual instead.
+    // The open demo has no service and keeps its sample interpreter.
+    const voice = source.voice;
+    const voiceAvailable = !voice || clinicSettings?.voiceEnabled !== false;
+    const tabs: Tab[] = ['voice', 'manual'];
+
+    // The person's own choice of tab; until they make one the panel opens on Voice, or on Manual when voice is off.
+    const [chosenTab, setChosenTab] = useState<Tab | null>(
+        initial.tab ?? (initial.doctorId || initial.patient ? 'manual' : null),
     );
+    const activeTab: Tab = chosenTab ?? (voiceAvailable ? 'voice' : 'manual');
     const [phase, setPhase] = useState<Phase>(
         initial.phase === 'review' || initial.phase === 'taken'
             ? 'transcribing'
@@ -229,6 +283,10 @@ export function BookingPanelBody({
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
     const [done, setDone] = useState<string | null>(initial.done ? '' : null);
+    const [voiceMessage, setVoiceMessage] = useState<VoiceMessage | null>(null);
+    /** What voice understood of a request that could not be finished on the review card (shown on the Manual tab). */
+    const [voiceNote, setVoiceNote] = useState<string | null>(null);
+    const waiting = useRef<AbortController | null>(null);
 
     const [manual, setManual] = useState({
         query: '',
@@ -407,12 +465,30 @@ export function BookingPanelBody({
     };
 
     // ---- voice tab ----
+    // The next few days, plus the days around the one the server picked (a request for next Tuesday is not within three days of today).
+    const draftDate = draft
+        ? new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(
+              new Date(draft.startsAt),
+          )
+        : null;
+    const candidateDays =
+        draftDate && !days.includes(draftDate)
+            ? [
+                  ...days,
+                  ...Array.from({ length: DAYS_AHEAD }, (_, i) =>
+                      addDaysToDate(draftDate, i),
+                  ),
+              ]
+            : days;
+
     const candidates = useAsyncValue(
-        ready && draft ? `cand:${draft.doctorId}:${draft.serviceId}` : null,
+        ready && draft
+            ? `cand:${draft.doctorId}:${draft.serviceId}:${draftDate}`
+            : null,
         async () => {
             const found: Slot[] = [];
 
-            for (const date of days) {
+            for (const date of candidateDays) {
                 const slots = await source.slots.list({
                     doctorId: draft?.doctorId as Id,
                     serviceId: draft?.serviceId as Id,
@@ -474,7 +550,87 @@ export function BookingPanelBody({
             });
     }, [phase, draftDoctor, draftService, effectiveStart, heldAt, holdStart]);
 
+    /** What to do with a finished voice request: the review card, the Manual tab for a partial one, or a message. */
+    const applyOutcome = async (outcome: VoiceOutcome) => {
+        if (outcome.kind === 'review') {
+            setDraft({ ...outcome.draft });
+            setPhase('review');
+
+            return;
+        }
+
+        if (outcome.kind === 'partial') {
+            const found = outcome.draft;
+            const patient = found.patientId
+                ? await source.patients.get(found.patientId).catch(() => null)
+                : null;
+
+            setManual((m) => ({
+                ...m,
+                patient,
+                creating: !patient && !!(found.patientName || found.phone),
+                newName: patient ? '' : found.patientName,
+                newPhone: patient ? '' : found.phone,
+                doctorId: found.doctorId ?? m.doctorId,
+                serviceId: found.serviceId ?? m.serviceId,
+                date: found.startsAt
+                    ? new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(
+                          new Date(found.startsAt),
+                      )
+                    : m.date,
+                slotStart: null,
+            }));
+            setVoiceNote(found.heard);
+            setPhase('idle');
+            setChosenTab('manual');
+
+            return;
+        }
+
+        setVoiceMessage(
+            outcome.kind === 'notBooking' ? 'notBooking' : outcome.reason,
+        );
+        setPhase('error');
+    };
+
+    /** Sends a request (a recording or typed text) to the voice service and waits for what it made of it. */
+    const runVoice = async (send: () => Promise<{ id: Id }>) => {
+        if (!voice) {
+            return;
+        }
+
+        waiting.current?.abort();
+        const controller = new AbortController();
+        waiting.current = controller;
+
+        setPhase('transcribing');
+        setError('');
+        setVoiceMessage(null);
+
+        try {
+            const { id } = await send();
+            const view = await waitForVoice(voice, id, {
+                signal: controller.signal,
+            });
+
+            if (!controller.signal.aborted) {
+                await applyOutcome(voiceOutcome(view));
+            }
+        } catch (caught) {
+            if (!controller.signal.aborted) {
+                setVoiceMessage(failureOfError(caught));
+                setPhase('error');
+            }
+        }
+    };
+
     const runInterpret = async (text: string) => {
+        if (voice) {
+            await runVoice(() => voice.parseText(text));
+
+            return;
+        }
+
         setPhase('transcribing');
         setError('');
         const result = await interpret(text, source);
@@ -489,15 +645,71 @@ export function BookingPanelBody({
         setPhase('review');
     };
 
+    const recorder = useVoiceRecorder({
+        onRecorded: ({ blob, seconds }) => {
+            if (!voice) {
+                return;
+            }
+
+            // Too short to hold any words: say so, rather than spend a request on it.
+            if (seconds < MIN_RECORDING_SECONDS) {
+                setVoiceMessage('noSpeech');
+                setPhase('error');
+
+                return;
+            }
+
+            void runVoice(() => voice.transcribe(blob, seconds));
+        },
+        onError: () => {
+            setVoiceMessage(null);
+            setPhase('error');
+        },
+    });
+
+    // What the voice control shows: the microphone's own state wins while it is recording or cannot be used (a browser that cannot record,
+    // or a person who said no), otherwise the panel's own step.
+    const recorderState = recorder.state;
+    const voicePhase: Phase = !voice
+        ? phase
+        : recorderState === 'listening'
+          ? 'listening'
+          : (recorderState === 'denied' || recorderState === 'unsupported') &&
+              phase === 'idle'
+            ? 'denied'
+            : phase;
+
+    // Closing the panel (or leaving the page) stops waiting for an answer nobody will read.
+    useEffect(
+        () => () => {
+            waiting.current?.abort();
+        },
+        [],
+    );
+
     const onMic = () => {
-        if (phase === 'idle' || phase === 'error') {
-            setPhase('listening');
-        } else if (phase === 'listening') {
-            void runInterpret(t('booking.sampleTranscript'));
+        if (voicePhase === 'idle' || voicePhase === 'error') {
+            if (voice) {
+                setVoiceMessage(null);
+                setVoiceNote(null);
+                void recorder.start();
+            } else {
+                setPhase('listening');
+            }
+        } else if (voicePhase === 'listening') {
+            if (voice) {
+                recorder.stop();
+            } else {
+                void runInterpret(t('booking.sampleTranscript'));
+            }
         }
     };
 
-    useShortcut('m', onMic, enableShortcuts && tab === 'voice');
+    useShortcut(
+        'm',
+        onMic,
+        enableShortcuts && activeTab === 'voice' && voiceAvailable,
+    );
 
     // The preview opens the panel already in a review / taken state.
     const seeded = useRef(false);
@@ -542,14 +754,32 @@ export function BookingPanelBody({
         })();
     }, [ready, initial.phase, interpret, source, t]);
 
+    // Picking a time settles the "check the time" warning, whichever control picked it.
     const patchDraft = (patch: Partial<ReviewDraft>) =>
-        setDraft((d) => (d ? { ...d, ...patch } : d));
+        setDraft((d) =>
+            d
+                ? {
+                      ...d,
+                      ...patch,
+                      ...(patch.startsAt && !patch.lowConfidence
+                          ? {
+                                lowConfidence: d.lowConfidence.filter(
+                                    (c) => c !== 'time',
+                                ),
+                            }
+                          : {}),
+                  }
+                : d,
+        );
 
     const resetVoice = () => {
+        waiting.current?.abort();
+        recorder.cancel();
         hold.clear();
         setDraft(null);
         setPhase('idle');
         setError('');
+        setVoiceMessage(null);
     };
 
     const confirmVoice = async () => {
@@ -560,13 +790,14 @@ export function BookingPanelBody({
         setSaving(true);
 
         try {
-            const [existing] = await source.patients.search(draft.phone, 1);
-            const patient =
-                existing ??
-                (await source.patients.create({
-                    name: draft.patientName,
-                    phone: draft.phone,
-                }));
+            // The server matched a patient (by phone, then name); otherwise the phone finds one, or this is a new patient.
+            const patient = draft.patientId
+                ? await source.patients.get(draft.patientId)
+                : ((await source.patients.search(draft.phone, 1))[0] ??
+                  (await source.patients.create({
+                      name: draft.patientName,
+                      phone: draft.phone,
+                  })));
             const appointment = await source.appointments.create({
                 patientId: patient.id,
                 doctorId: draft.doctorId,
@@ -598,6 +829,8 @@ export function BookingPanelBody({
         setPhase('idle');
         setTyped('');
         setError('');
+        setVoiceMessage(null);
+        setVoiceNote(null);
         setManual((m) => ({
             ...m,
             patient: null,
@@ -638,7 +871,7 @@ export function BookingPanelBody({
                         <Button onClick={onClose}>{t('booking.finish')}</Button>
                     </div>
                 </div>
-                <SampleNote />
+                {!voice && <SampleNote />}
             </div>
         );
     }
@@ -647,65 +880,89 @@ export function BookingPanelBody({
 
     return (
         <div className="flex flex-1 flex-col">
-            <Tabs tab={tab} onChange={setTab} />
+            <Tabs tab={activeTab} order={tabs} onChange={setChosenTab} />
 
-            {tab === 'voice' && (
+            {activeTab === 'voice' && (
                 <div
                     role="tabpanel"
                     id="booking-panel-voice"
                     aria-labelledby="booking-tab-voice"
                     className="flex flex-col gap-[18px] p-5"
                 >
-                    {(phase === 'idle' ||
-                        phase === 'listening' ||
-                        phase === 'error' ||
-                        phase === 'denied') && (
-                        <>
-                            <VoiceCaptureButton
-                                state={phase}
-                                onToggle={onMic}
-                                onTypeInstead={() =>
-                                    document
-                                        .getElementById('booking-typed')
-                                        ?.focus()
-                                }
+                    {!voiceAvailable && (
+                        <p
+                            role="status"
+                            className="flex items-start gap-2.5 rounded-lg border border-line bg-surface-subtle px-4 py-3.5 text-control text-ink"
+                        >
+                            <MicOff
+                                aria-hidden="true"
+                                className="mt-1 size-[18px] shrink-0 text-subtle"
                             />
-                            <form
-                                className="flex flex-col gap-2"
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-
-                                    if (typed.trim()) {
-                                        void runInterpret(typed.trim());
-                                    }
-                                }}
-                            >
-                                <label
-                                    htmlFor="booking-typed"
-                                    className="text-label font-semibold text-ink"
-                                >
-                                    {t('booking.typeLabel')}
-                                </label>
-                                <div className="flex gap-2">
-                                    <input
-                                        id="booking-typed"
-                                        type="text"
-                                        value={typed}
-                                        onChange={(event) =>
-                                            setTyped(event.target.value)
-                                        }
-                                        placeholder={t(
-                                            'booking.typePlaceholder',
-                                        )}
-                                        className="h-12 min-w-0 flex-1 rounded-md border border-line-strong bg-white px-3.5 text-body text-ink placeholder:text-subtle"
-                                    />
-                                    <Button type="submit">
-                                        {t('booking.go')}
-                                    </Button>
-                                </div>
-                            </form>
-                        </>
+                            {t('voice.off')}
+                        </p>
                     )}
+                    {voiceAvailable &&
+                        (voicePhase === 'idle' ||
+                            voicePhase === 'listening' ||
+                            voicePhase === 'error' ||
+                            voicePhase === 'denied') && (
+                            <>
+                                <VoiceCaptureButton
+                                    state={voicePhase}
+                                    onToggle={onMic}
+                                    onTypeInstead={() =>
+                                        document
+                                            .getElementById('booking-typed')
+                                            ?.focus()
+                                    }
+                                    errorMessage={
+                                        voiceMessage &&
+                                        voiceMessage !== 'unclear'
+                                            ? t(VOICE_MESSAGE[voiceMessage])
+                                            : undefined
+                                    }
+                                    deniedMessage={
+                                        recorderState === 'unsupported'
+                                            ? t('voice.unsupportedBody')
+                                            : undefined
+                                    }
+                                />
+                                <form
+                                    className="flex flex-col gap-2"
+                                    onSubmit={(event) => {
+                                        event.preventDefault();
+
+                                        if (typed.trim()) {
+                                            void runInterpret(typed.trim());
+                                        }
+                                    }}
+                                >
+                                    <label
+                                        htmlFor="booking-typed"
+                                        className="text-label font-semibold text-ink"
+                                    >
+                                        {t('booking.typeLabel')}
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            id="booking-typed"
+                                            type="text"
+                                            value={typed}
+                                            onChange={(event) =>
+                                                setTyped(event.target.value)
+                                            }
+                                            placeholder={t(
+                                                'booking.typePlaceholder',
+                                            )}
+                                            className="h-12 min-w-0 flex-1 rounded-md border border-line-strong bg-white px-3.5 text-body text-ink placeholder:text-subtle"
+                                        />
+                                        <Button type="submit">
+                                            {t('booking.go')}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </>
+                        )}
 
                     {phase === 'transcribing' && (
                         <div
@@ -763,15 +1020,7 @@ export function BookingPanelBody({
                                         <div className="flex flex-col gap-1.5">
                                             {draft.lowConfidence.includes(
                                                 'patient',
-                                            ) && (
-                                                <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-warning-line bg-warning-surface px-2.5 py-0.5 text-caption font-bold text-warning-ink">
-                                                    <TriangleAlert
-                                                        aria-hidden="true"
-                                                        className="size-[13px]"
-                                                    />
-                                                    {t('booking.check')}
-                                                </span>
-                                            )}
+                                            ) && <CheckBadge />}
                                             <input
                                                 {...control}
                                                 type="text"
@@ -780,7 +1029,14 @@ export function BookingPanelBody({
                                                     patchDraft({
                                                         patientName:
                                                             event.target.value,
-                                                        lowConfidence: [],
+                                                        // Typing a different name makes this a different person than the one matched.
+                                                        patientId: null,
+                                                        lowConfidence:
+                                                            draft.lowConfidence.filter(
+                                                                (c) =>
+                                                                    c !==
+                                                                    'patient',
+                                                            ),
                                                     })
                                                 }
                                                 className={cn(
@@ -801,7 +1057,7 @@ export function BookingPanelBody({
                                     countryCode={clinic?.phoneCountryCode}
                                     value={draft.phone}
                                     onValueChange={(phone) =>
-                                        patchDraft({ phone })
+                                        patchDraft({ phone, patientId: null })
                                     }
                                 />
 
@@ -813,7 +1069,18 @@ export function BookingPanelBody({
                                     <span className="text-label font-semibold text-ink">
                                         {t('booking.doctor')}
                                     </span>
-                                    <div className="flex flex-wrap gap-2">
+                                    {draft.lowConfidence.includes('doctor') && (
+                                        <CheckBadge />
+                                    )}
+                                    <div
+                                        className={cn(
+                                            'flex flex-wrap gap-2',
+                                            draft.lowConfidence.includes(
+                                                'doctor',
+                                            ) &&
+                                                'rounded-md border-2 border-warning-accent p-2',
+                                        )}
+                                    >
                                         {(doctors ?? []).map((doctor) => (
                                             <ChoiceChip
                                                 key={doctor.id}
@@ -828,6 +1095,15 @@ export function BookingPanelBody({
                                                                 doctor.id,
                                                             )[0]?.id ??
                                                             draft.serviceId,
+                                                        // Choosing the doctor settles the service that goes with them too.
+                                                        lowConfidence:
+                                                            draft.lowConfidence.filter(
+                                                                (c) =>
+                                                                    c !==
+                                                                        'doctor' &&
+                                                                    c !==
+                                                                        'service',
+                                                            ),
                                                     })
                                                 }
                                             >
@@ -845,7 +1121,18 @@ export function BookingPanelBody({
                                     <span className="text-label font-semibold text-ink">
                                         {t('booking.service')}
                                     </span>
-                                    <div className="flex flex-wrap gap-2">
+                                    {draft.lowConfidence.includes(
+                                        'service',
+                                    ) && <CheckBadge />}
+                                    <div
+                                        className={cn(
+                                            'flex flex-wrap gap-2',
+                                            draft.lowConfidence.includes(
+                                                'service',
+                                            ) &&
+                                                'rounded-md border-2 border-warning-accent p-2',
+                                        )}
+                                    >
                                         {reviewDoctorOffered.map((service) => (
                                             <ChoiceChip
                                                 key={service.id}
@@ -856,6 +1143,12 @@ export function BookingPanelBody({
                                                 onClick={() =>
                                                     patchDraft({
                                                         serviceId: service.id,
+                                                        lowConfidence:
+                                                            draft.lowConfidence.filter(
+                                                                (c) =>
+                                                                    c !==
+                                                                    'service',
+                                                            ),
                                                     })
                                                 }
                                             >
@@ -873,7 +1166,18 @@ export function BookingPanelBody({
                                     <span className="text-label font-semibold text-ink">
                                         {t('booking.when')}
                                     </span>
-                                    <div className="flex items-center gap-2.5">
+                                    {draft.lowConfidence.includes('time') && (
+                                        <CheckBadge />
+                                    )}
+                                    <div
+                                        className={cn(
+                                            'flex items-center gap-2.5',
+                                            draft.lowConfidence.includes(
+                                                'time',
+                                            ) &&
+                                                'w-fit rounded-md border-2 border-warning-accent p-2',
+                                        )}
+                                    >
                                         <Button
                                             variant="outline"
                                             size="icon"
@@ -984,13 +1288,25 @@ export function BookingPanelBody({
                 </div>
             )}
 
-            {tab === 'manual' && (
+            {activeTab === 'manual' && (
                 <div
                     role="tabpanel"
                     id="booking-panel-manual"
                     aria-labelledby="booking-tab-manual"
                     className="flex flex-col gap-[18px] p-5"
                 >
+                    {voiceNote && (
+                        <p
+                            role="status"
+                            className="flex items-start gap-2.5 rounded-lg border border-warning-line bg-warning-surface px-3.5 py-3 text-control text-warning-ink"
+                        >
+                            <TriangleAlert
+                                aria-hidden="true"
+                                className="mt-1 size-[18px] shrink-0"
+                            />
+                            {t('booking.voicePartial', { heard: voiceNote })}
+                        </p>
+                    )}
                     <PatientPicker
                         source={source}
                         countryCode={clinic?.phoneCountryCode ?? '+92'}
@@ -1184,7 +1500,8 @@ export function BookingPanelBody({
                 </div>
             )}
 
-            <SampleNote />
+            {/* Only the open demo runs on sample data; with the real voice service the panel books for real. */}
+            {!voice && <SampleNote />}
         </div>
     );
 }
