@@ -41,6 +41,9 @@ enum Ability: string
     /** Approve or reject reschedule requests (phase 2). */
     case DecideRequests = 'requests.decide';
 
+    /** Ask for a booking by voice or typed command (the draft is still booked from the review card, which needs `BookAppointments`). */
+    case UseVoice = 'voice.use';
+
     public function access(Role $role): Access
     {
         return match ($this) {
@@ -53,7 +56,8 @@ enum Ability: string
 
             self::BookAppointments,
             self::ManagePatients,
-            self::MarkArrival => match ($role) {
+            self::MarkArrival,
+            self::UseVoice => match ($role) {
                 Role::ClinicAdmin, Role::Receptionist => Access::All,
                 Role::Doctor => Access::None,
             },

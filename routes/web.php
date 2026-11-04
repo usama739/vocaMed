@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\AppointmentsController;
 use App\Http\Controllers\Api\AvailabilityController as BookingAvailabilityController;
 use App\Http\Controllers\Api\LookupsController;
 use App\Http\Controllers\Api\SlotHoldsController;
+use App\Http\Controllers\Api\VoiceController;
 use App\Http\Controllers\Auth\ConfirmEmailController;
 use App\Http\Controllers\Auth\DemoRequestController;
 use App\Http\Controllers\Auth\InvitationController;
@@ -187,6 +188,15 @@ Route::middleware(EnsureStaffRole::for(Role::ClinicAdmin, Role::Receptionist))->
     Route::post('slot-holds', [SlotHoldsController::class, 'store'])->middleware('throttle:booking')->name('holds.store');
     Route::get('slot-holds', [SlotHoldsController::class, 'index'])->name('holds.index');
     Route::delete('slot-holds/{holdId}', [SlotHoldsController::class, 'destroy'])->name('holds.destroy');
+});
+
+// Voice booking for the people who book: a recording or a typed command becomes a draft booking, read back by the person who asked.
+// Each answers 202 with an id; `{voiceRequest}` is asked for until it is ready. The per-person limit comes first so one person's
+// retries never use up the system-wide limit on recordings.
+Route::middleware(EnsureStaffRole::for(Role::ClinicAdmin, Role::Receptionist))->prefix('api/voice')->name('api.voice.')->group(function () {
+    Route::post('transcribe', [VoiceController::class, 'transcribe'])->middleware(['throttle:voice', 'throttle:voice-audio'])->name('transcribe');
+    Route::post('parse-text', [VoiceController::class, 'parseText'])->middleware('throttle:voice')->name('parse-text');
+    Route::get('{voiceRequest}', [VoiceController::class, 'show'])->middleware('throttle:voice-poll')->name('show');
 });
 
 // Developer preview of the shared components (en + ur). Not available in production.

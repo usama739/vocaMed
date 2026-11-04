@@ -128,4 +128,42 @@ return [
         'reminder_grace_minutes' => 60,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Voice booking
+    |--------------------------------------------------------------------------
+    |
+    | A spoken (or typed) request goes through two drivers: speech to text, then text to the fields of a booking. Each is a setting,
+    | so moving from a free provider to a paid one, or to our own server, changes the environment file and no code. Both start on
+    | "fake" (fixed answers, no network). A recording is kept only as an encrypted file on a private disk until it has been
+    | transcribed. A recording may be at most `max_seconds` long and `max_kilobytes` large, and a typed request `max_text_characters`.
+    |
+    | `limits` are requests a minute: per person, per clinic, and for the whole system (`global`, kept under the free provider's own
+    | 20 a minute so a busy moment answers politely instead of showing the provider's error). `poll` is how often one person's screen
+    | may ask "is it ready?".
+    |
+    */
+
+    'voice' => [
+        'speech_driver' => env('SPEECH_DRIVER', 'fake'),
+        'intent_driver' => env('INTENT_DRIVER', 'fake'),
+        'disk' => env('VOICE_DISK', 'local'),
+        'max_seconds' => 15,
+        'max_kilobytes' => 1024,
+        'max_text_characters' => 500,
+        'limits' => ['user' => 10, 'clinic' => 40, 'global' => 15, 'poll' => 200],
+
+        // What the fake drivers answer; tests and a developer without a provider change these.
+        'fake_transcript' => 'Book Ayesha Khan with Dr. Sana tomorrow at ten',
+        'fake_intent' => [
+            'kind' => 'book',
+            'patientName' => 'Ayesha Khan',
+            'patientPhone' => null,
+            'doctorName' => 'Dr. Sana',
+            'serviceName' => null,
+            'date' => null,
+            'time' => '10:00',
+        ],
+    ],
+
 ];

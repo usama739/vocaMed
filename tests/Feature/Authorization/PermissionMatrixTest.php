@@ -33,6 +33,7 @@ class PermissionMatrixTest extends TestCase
         'appointments.consultation' => ['all', 'all', 'own'],
         'availability.edit' => ['all', 'none', 'own'],
         'requests.decide' => ['all', 'none', 'own'],
+        'voice.use' => ['all', 'all', 'none'],
     ];
 
     private const ROLES = [Role::ClinicAdmin, Role::Receptionist, Role::Doctor];

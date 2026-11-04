@@ -17,6 +17,8 @@ use App\PatientLinks\Contracts\PatientLinkDelivery;
 use App\PatientLinks\LogPatientLinkDelivery;
 use App\Support\ActingAs;
 use App\Support\TenantContext;
+use App\Voice\IntentParserManager;
+use App\Voice\SpeechToTextManager;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -58,6 +60,10 @@ class AppServiceProvider extends ServiceProvider
 
         // How bookings are requested (typed now, voice later): the driver is a setting, the engine does not know which.
         $this->app->singleton(BookingIntakeManager::class);
+
+        // Voice booking: which speech provider and which parser run are settings; nothing after them knows which.
+        $this->app->singleton(SpeechToTextManager::class);
+        $this->app->singleton(IntentParserManager::class);
     }
 
     /**
@@ -76,6 +82,15 @@ class AppServiceProvider extends ServiceProvider
 
         // Finding and holding slots: 240 requests a minute per person (a booking panel polls while it is open).
         RateLimiter::for('booking', fn (Request $request) => Limit::perMinute(240)->by('booking:'.(Auth::id() ?? $request->ip())));
+
+        // Voice requests: per person and per clinic, so one busy desk cannot use up everyone's share; recordings also count against one
+        // limit for the whole system, kept under the free speech provider's own 20 a minute. `voice-poll` is the "is it ready?" question.
+        RateLimiter::for('voice', fn (Request $request) => [
+            Limit::perMinute((int) config('vocamed.voice.limits.user'))->by('voice-user:'.(Auth::id() ?? $request->ip())),
+            Limit::perMinute((int) config('vocamed.voice.limits.clinic'))->by('voice-clinic:'.(data_get(Auth::user(), 'clinic_id') ?? $request->ip())),
+        ]);
+        RateLimiter::for('voice-audio', fn () => Limit::perMinute((int) config('vocamed.voice.limits.global'))->by('voice-audio-global'));
+        RateLimiter::for('voice-poll', fn (Request $request) => Limit::perMinute((int) config('vocamed.voice.limits.poll'))->by('voice-poll:'.(Auth::id() ?? $request->ip())));
 
         // Patient links are public (the token is the credential), so each address is slowed down: pages 60 a minute, actions 20, and
         // "send me a new link" 3 for one link from one address.
