@@ -9,7 +9,8 @@ use App\Models\VoiceRequest;
 use App\Support\TenantContext;
 use App\Voice\IntentFailed;
 use App\Voice\IntentParserManager;
-use App\Voice\ParseContext;
+use App\Voice\ParsedIntent;
+use App\Voice\VoiceService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -43,7 +44,7 @@ class ProcessVoiceIntentJob implements ShouldQueue
         return [new RunInClinic];
     }
 
-    public function handle(IntentParserManager $parser): void
+    public function handle(IntentParserManager $parser, VoiceService $voice): void
     {
         $request = VoiceRequest::query()->find($this->voiceRequestId);
 
@@ -60,7 +61,7 @@ class ProcessVoiceIntentJob implements ShouldQueue
         $request->forceFill(['status' => VoiceStatus::Parsing])->save();
 
         try {
-            $intent = $parser->driver()->parse($request->transcript, ParseContext::forClinic($request->clinic));
+            $intent = $parser->driver()->parse($request->transcript, $voice->contextFor($request->clinic));
         } catch (IntentFailed $failed) {
             if ($failed->retryable) {
                 throw $failed;
@@ -71,8 +72,10 @@ class ProcessVoiceIntentJob implements ShouldQueue
             return;
         }
 
-        // `draft` is filled by the resolver (the next step); until then the screen gets the heard words only.
-        $request->forceFill(['parsed_json' => ['fields' => $intent->toArray(), 'draft' => null], 'status' => VoiceStatus::Ready])->save();
+        // A booking is resolved to this clinic's real records for the review card; anything else (cancel, move, look up) has no draft.
+        $draft = $intent->kind === ParsedIntent::BOOK ? $voice->resolve($request->clinic, $request->transcript, $intent)->toArray() : null;
+
+        $request->forceFill(['parsed_json' => ['fields' => $intent->toArray(), 'draft' => $draft], 'status' => VoiceStatus::Ready])->save();
     }
 
     /** Out of tries: the request is failed, and the screen offers the typed box. */

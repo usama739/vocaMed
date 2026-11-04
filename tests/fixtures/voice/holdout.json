@@ -1,0 +1,32 @@
+{
+    "note": "Phrases the parser was NOT tuned on: written before the rules were first run, so their score is the honest estimate of how it does on a sentence it has not seen. When the owner of the parser fixes one, the phrase moves to phrases.json (a fixed phrase is no longer a fair test) and a fresh unseen phrase takes its place here.",
+    "now": "2026-11-01T10:00:00",
+    "timezone": "Asia/Karachi",
+    "doctors": ["Sana", "Laith Garner", "Hamza Ali"],
+    "services": ["Check-up", "Consultation", "Follow-up", "Dental cleaning"],
+    "phrases": [
+        {"lang": "en", "text": "Hi, I need to see Dr Sana tomorrow at 9:30 am, the patient is Mahnoor Javed", "expect": {"patientName": "Mahnoor Javed", "doctorName": "Sana", "date": "2026-11-02", "time": "09:30"}},
+        {"lang": "en", "text": "Please arrange a visit for Danish Iqbal with Dr Laith Garner on 3 November at 1 pm", "expect": {"patientName": "Danish Iqbal", "doctorName": "Laith Garner", "date": "2026-11-03", "time": "13:00"}},
+        {"lang": "en", "text": "Book follow-up for Rubina Kausar with Dr Hamza Ali next Monday at 12 noon", "expect": {"patientName": "Rubina Kausar", "doctorName": "Hamza Ali", "serviceName": "follow-up", "date": "2026-11-02", "time": "12:00"}},
+        {"lang": "en", "text": "Ayesha Siddiqui, Dr Sana, tomorrow, 4:45 pm, check-up", "expect": {"patientName": "Ayesha Siddiqui", "doctorName": "Sana", "serviceName": "check-up", "date": "2026-11-02", "time": "16:45"}},
+        {"lang": "en", "text": "Appointment on the 25th at 11 for Faisal Mahmood with Dr. Sana", "expect": {"patientName": "Faisal Mahmood", "doctorName": "Sana", "date": "2026-11-25", "time": "11:00"}},
+        {"lang": "en", "text": "Reschedule Ali Hassan's appointment to Friday", "expect": {"kind": "unsupported"}},
+        {"lang": "en", "text": "Make a booking for Nimra Aziz with Dr Laith Garner in the afternoon tomorrow at 3", "expect": {"patientName": "Nimra Aziz", "doctorName": "Laith Garner", "date": "2026-11-02", "time": "15:00"}},
+        {"lang": "en", "text": "Dr Hamza at 10 on Wednesday for Salman Khan", "expect": {"patientName": "Salman Khan", "doctorName": "Hamza", "date": "2026-11-04", "time": "10:00"}},
+
+        {"lang": "roman", "text": "Zainab ka appointment lagana hai Dr Laith ke saath kal teen baje", "expect": {"patientName": "Zainab", "doctorName": "Laith", "date": "2026-11-02", "time": "15:00"}},
+        {"lang": "roman", "text": "Dr Sana se parson subah gyarah baje Kashif Mehmood ke liye time dedein", "expect": {"patientName": "Kashif Mehmood", "doctorName": "Sana", "date": "2026-11-03", "time": "11:00"}},
+        {"lang": "roman", "text": "Mera naam Rida Fatima hai, mujhe Dr Hamza se jumeraat ko do baje milna hai", "expect": {"patientName": "Rida Fatima", "doctorName": "Hamza", "date": "2026-11-05", "time": "14:00"}},
+        {"lang": "roman", "text": "kal sham chaar baje Sana madam ke saath Aliya Bano", "expect": {"patientName": "Aliya Bano", "doctorName": "Sana", "date": "2026-11-02", "time": "16:00"}},
+        {"lang": "roman", "text": "Tahir ko monday ko Dr Laith se paanch baje", "expect": {"patientName": "Tahir", "doctorName": "Laith", "date": "2026-11-02", "time": "17:00"}},
+        {"lang": "roman", "text": "Dr Hamza se agle mangal ko subah das baje Rubab Shah ko dikhana hai", "expect": {"patientName": "Rubab Shah", "doctorName": "Hamza", "date": "2026-11-03", "time": "10:00"}},
+
+        {"lang": "ur", "text": "ڈاکٹر ثناء کے ساتھ کل دوپہر ایک بجے عائشہ کا وقت لگائیں", "expect": {"patientName": "عائشہ", "doctorName": "ثناء", "date": "2026-11-02", "time": "13:00"}},
+        {"lang": "ur", "text": "مجھے جمعرات کو ڈاکٹر لیث گارنر سے صبح دس بجے ملنا ہے، نام ہے عمر فاروق", "expect": {"patientName": "عمر فاروق", "doctorName": "لیث گارنر", "date": "2026-11-05", "time": "10:00"}},
+        {"lang": "ur", "text": "پرسوں شام چھ بجے حمزہ علی ڈاکٹر ثناء", "expect": {"patientName": "حمزہ علی", "doctorName": "ثناء", "date": "2026-11-03", "time": "18:00"}},
+        {"lang": "ur", "text": "ڈاکٹر ثناء کے ساتھ بدھ کو دوپہر بارہ بجے کنول جاوید کا وقت چاہیے", "expect": {"patientName": "کنول جاوید", "doctorName": "ثناء", "date": "2026-11-04", "time": "12:00"}},
+
+        {"lang": "mixed", "text": "Sana Rehman ka appointment kal 11 baje Dr. Laith ke saath", "expect": {"patientName": "Sana Rehman", "doctorName": "Laith", "date": "2026-11-02", "time": "11:00"}},
+        {"lang": "mixed", "text": "Hira Nasir ka appointment Dr. Hamza Ali ke saath tomorrow 11 am", "expect": {"patientName": "Hira Nasir", "doctorName": "Hamza Ali", "date": "2026-11-02", "time": "11:00"}}
+    ]
+}

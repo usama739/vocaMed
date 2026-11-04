@@ -89,7 +89,7 @@ class VoiceJobsTest extends TestCase
         $request = $this->fresh($request);
         $this->assertSame(VoiceStatus::Ready, $request->status);
         $this->assertSame('book', $request->parsed_json['fields']['kind'] ?? null);
-        $this->assertNull($request->parsed_json['draft']);
+        $this->assertSame($this->doctor->id, $request->parsed_json['draft']['doctorId']);
         $this->assertNull($request->audio_path);
         $this->assertNotNull($request->purged_at);
     }

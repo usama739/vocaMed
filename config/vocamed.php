@@ -146,7 +146,7 @@ return [
 
     'voice' => [
         'speech_driver' => env('SPEECH_DRIVER', 'fake'),
-        'intent_driver' => env('INTENT_DRIVER', 'fake'),
+        'intent_driver' => env('INTENT_DRIVER', 'rules'),
         'disk' => env('VOICE_DISK', 'local'),
         'max_seconds' => 15,
         'max_kilobytes' => 1024,

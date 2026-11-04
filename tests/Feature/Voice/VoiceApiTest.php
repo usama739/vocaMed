@@ -74,7 +74,18 @@ class VoiceApiTest extends TestCase
                 'status' => 'ready',
                 'transcript' => 'Book Ayesha with Dr. Sana tomorrow at ten',
                 'parsed' => ['kind' => 'book', 'patientName' => 'Ayesha Khan', 'patientPhone' => null, 'doctorName' => 'Dr. Sana', 'serviceName' => null, 'date' => null, 'time' => '10:00'],
-                'draft' => null,
+                // The fake parser always finds Ayesha Khan, Dr. Sana and 10:00; the resolver finds them in the clinic and, with no day said,
+                // takes tomorrow (it is past 10:00 today) and says so.
+                'draft' => [
+                    'heard' => 'Book Ayesha with Dr. Sana tomorrow at ten',
+                    'patientId' => $this->patient->id,
+                    'patientName' => 'Ayesha Khan',
+                    'phone' => $this->patient->phone,
+                    'doctorId' => $this->doctor->id,
+                    'serviceId' => $this->service->id,
+                    'startsAt' => '2026-11-02T05:00:00.000Z',
+                    'lowConfidence' => ['time'],
+                ],
                 'failureCode' => null,
             ]);
     }
