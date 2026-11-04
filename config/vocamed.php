@@ -151,7 +151,38 @@ return [
         'max_seconds' => 15,
         'max_kilobytes' => 1024,
         'max_text_characters' => 500,
-        'limits' => ['user' => 10, 'clinic' => 40, 'global' => 15, 'poll' => 200],
+        'limits' => ['user' => 10, 'clinic' => 40, 'global' => 15, 'poll' => 200, 'llm_minute' => 10, 'llm_day' => 900],
+
+        // The speech provider (driver "whisper_http"): any OpenAI-compatible audio API. Groq's free Whisper now; OpenAI's, or our own server,
+        // later by changing these three settings. `language` is an ISO code such as "ur" or "en" and is only a hint; empty lets the provider
+        // work it out. `prompt_characters` caps the doctor and service names sent as spelling hints (the provider allows 224 tokens).
+        'speech' => [
+            'base_url' => env('SPEECH_BASE_URL', 'https://api.groq.com/openai/v1'),
+            'api_key' => env('SPEECH_API_KEY'),
+            'model' => env('SPEECH_MODEL', 'whisper-large-v3-turbo'),
+            'language' => env('SPEECH_LANGUAGE'),
+            'timeout' => 30,
+            'prompt_characters' => 500,
+        ],
+
+        // The optional language-model parser (drivers "llm" and "rules_llm"): any OpenAI-compatible chat API that can answer in a JSON
+        // schema. It sends the request's text to that provider, so it is off unless INTENT_DRIVER names it.
+        'intent' => [
+            'base_url' => env('INTENT_BASE_URL', 'https://api.groq.com/openai/v1'),
+            'api_key' => env('INTENT_API_KEY', env('SPEECH_API_KEY')),
+            'model' => env('INTENT_MODEL', 'openai/gpt-oss-20b'),
+            'timeout' => 20,
+        ],
+
+        // What the speech provider's free tier allows, kept a little under its own limits so a busy hour answers "try again" here instead
+        // of an error from the provider: audio seconds an hour and a day, and requests a day. A recording under `billed_minimum_seconds`
+        // is billed as that long. Not applied to the fake driver. Raise or set to 0 (no limit) when the provider is a paid one.
+        'budget' => [
+            'audio_seconds_hour' => (int) env('SPEECH_SECONDS_PER_HOUR', 7000),
+            'audio_seconds_day' => (int) env('SPEECH_SECONDS_PER_DAY', 28000),
+            'requests_day' => (int) env('SPEECH_REQUESTS_PER_DAY', 1900),
+            'billed_minimum_seconds' => 10,
+        ],
 
         // What the fake drivers answer; tests and a developer without a provider change these.
         'fake_transcript' => 'Book Ayesha Khan with Dr. Sana tomorrow at ten',

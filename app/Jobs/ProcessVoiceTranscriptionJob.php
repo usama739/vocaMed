@@ -11,6 +11,7 @@ use App\Voice\SpeechFailed;
 use App\Voice\SpeechInput;
 use App\Voice\SpeechToTextManager;
 use App\Voice\VoiceAudioStore;
+use App\Voice\VoiceService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -45,7 +46,7 @@ class ProcessVoiceTranscriptionJob implements ShouldQueue
         return [new RunInClinic];
     }
 
-    public function handle(SpeechToTextManager $speech, VoiceAudioStore $audio): void
+    public function handle(SpeechToTextManager $speech, VoiceAudioStore $audio, VoiceService $voice): void
     {
         $request = VoiceRequest::query()->find($this->voiceRequestId);
 
@@ -64,7 +65,7 @@ class ProcessVoiceTranscriptionJob implements ShouldQueue
         }
 
         try {
-            $text = trim($speech->driver()->transcribe(SpeechInput::forRecording($contents, (string) $request->audio_mime)));
+            $text = trim($speech->driver()->transcribe(SpeechInput::forRecording($contents, (string) $request->audio_mime, prompt: $voice->speechPrompt())));
         } catch (SpeechFailed $failed) {
             if ($failed->retryable) {
                 throw $failed;

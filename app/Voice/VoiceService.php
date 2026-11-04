@@ -9,6 +9,7 @@ use App\Models\Patient;
 use App\Models\Service;
 use App\Support\ClinicClock;
 use App\Support\PhoneNumber;
+use App\Support\TenantContext;
 use App\Voice\Text\NameMatcher;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -43,6 +44,17 @@ class VoiceService
             array_values(array_map('strval', Doctor::query()->where('is_active', true)->orderBy('display_name')->pluck('display_name')->all())),
             array_values(array_map('strval', Service::query()->where('is_active', true)->orderBy('name')->pluck('name')->all())),
         );
+    }
+
+    /**
+     * Spelling hints for the speech provider: this clinic's doctors and services, so "Laith Garner" is written the way the clinic writes it
+     * instead of as something that sounds like it. Cut at a name boundary to fit the provider's limit on how long a hint may be.
+     */
+    public function speechPrompt(): ?string
+    {
+        $context = $this->contextFor(Clinic::query()->findOrFail(app(TenantContext::class)->requireId()));
+
+        return SpeechHints::prompt($context->doctorNames, $context->serviceNames, (int) config('vocamed.voice.speech.prompt_characters', 500));
     }
 
     public function resolve(Clinic $clinic, string $heard, ParsedIntent $intent): VoiceDraft

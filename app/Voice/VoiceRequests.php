@@ -18,11 +18,18 @@ use Throwable;
  */
 class VoiceRequests
 {
-    public function __construct(private readonly VoiceAudioStore $audio) {}
+    public function __construct(private readonly VoiceAudioStore $audio, private readonly SpeechBudget $budget) {}
 
-    /** A recording: stored encrypted, then transcribed and understood by queued jobs. */
+    /**
+     * A recording: stored encrypted, then transcribed and understood by queued jobs. With a real speech provider it first has to fit in
+     * what that provider's free tier allows (a 429 with the wait otherwise); the fake driver costs nothing and is not limited.
+     */
     public function acceptAudio(User $user, UploadedFile $file, float $seconds): VoiceRequest
     {
+        if (config('vocamed.voice.speech_driver') !== 'fake') {
+            $this->budget->reserve($seconds);
+        }
+
         $id = (string) Str::ulid();
         $clinicId = (string) $user->clinic_id;
         $path = $this->audio->put($clinicId, $id, (string) $file->get());

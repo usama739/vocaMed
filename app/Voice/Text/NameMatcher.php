@@ -74,7 +74,54 @@ final class NameMatcher
             $best = max($best, round($similarity * 0.95, 3));
         }
 
-        return $best;
+        return max($best, self::wordByWord($ta, $tb));
+    }
+
+    /**
+     * Every word said is close to some word of the candidate, each spelled a little differently ("Marya Mikbel" for "Maryam Iqbal"): the
+     * average of how close each is. It is never above 0.84, so a match this loose is always shown for a person to check.
+     *
+     * @param  list<string>  $said
+     * @param  list<string>  $of
+     */
+    private static function wordByWord(array $said, array $of): float
+    {
+        $total = 0.0;
+
+        foreach ($said as $word) {
+            $top = 0.0;
+
+            foreach ($of as $candidate) {
+                $top = max($top, self::wordScore($word, $candidate));
+            }
+
+            if ($top < 0.7) {
+                return 0.0;
+            }
+
+            $total += $top;
+        }
+
+        return $said === [] ? 0.0 : min(0.84, $total / count($said));
+    }
+
+    /** How alike two single words are: the same, a near spelling, or the same sounds. */
+    private static function wordScore(string $a, string $b): float
+    {
+        if ($a === $b) {
+            return 1.0;
+        }
+
+        $similarity = 1 - self::distance($a, $b) / max(mb_strlen($a), mb_strlen($b));
+        $score = $similarity >= 0.75 ? round($similarity * 0.95, 3) : 0.0;
+        $sa = self::wordSkeleton($a);
+        $sb = self::wordSkeleton($b);
+
+        if ($sa !== '' && $sa === $sb && strlen($sa) >= 3) {
+            return max($score, 0.85);
+        }
+
+        return $sa !== '' && $sb !== '' && strlen($sa) >= 3 && self::distance($sa, $sb) <= 1 ? max($score, 0.7) : $score;
     }
 
     /** Lower case, one script's look-alikes folded, titles and punctuation removed, words separated by single spaces. */

@@ -32,6 +32,44 @@ class NameMatcherTest extends TestCase
         ];
     }
 
+    /**
+     * What Groq's Whisper really returned for clear English speech of made-up names (a live check on 2026-11-04), against the name that was
+     * said. Each is the same person and must still be found, though a loose one is flagged for a check (below 0.85).
+     *
+     * @return array<string, array{0: string, 1: string, 2: float}>
+     */
+    public static function heardByWhisper(): array
+    {
+        return [
+            'Ayesha as Ahisha' => ['Ahisha Khan', 'Ayesha Khan', 0.7],
+            'Raza as Rasa' => ['Ahmed Rasa', 'Ahmed Raza', 0.7],
+            'Laith with an e' => ['Laithe Garner', 'Laith Garner', 0.7],
+            'Laith as Lath' => ['Lath', 'Laith Garner', 0.7],
+            'both words of Maryam Iqbal off' => ['Marya Mikbel', 'Maryam Iqbal', 0.7],
+        ];
+    }
+
+    #[DataProvider('heardByWhisper')]
+    public function test_names_as_a_speech_model_really_misheard_them_still_find_the_person(string $heard, string $name, float $atLeast)
+    {
+        $score = NameMatcher::score($heard, $name);
+
+        $this->assertGreaterThanOrEqual($atLeast, $score, "$heard vs $name");
+        $this->assertLessThanOrEqual(0.9, $score);
+    }
+
+    public function test_a_loose_word_by_word_match_is_never_trusted_without_a_check()
+    {
+        $this->assertLessThan(0.85, NameMatcher::score('Marya Mikbel', 'Maryam Iqbal'));
+    }
+
+    public function test_one_close_word_is_not_enough_when_another_word_is_a_different_name()
+    {
+        $this->assertLessThan(0.7, NameMatcher::score('Ayesha Khan', 'Bilal Khan'));
+        $this->assertLessThan(0.7, NameMatcher::score('Marya Mikbel', 'Ayesha Khan'));
+        $this->assertLessThan(0.7, NameMatcher::score('Hamza Malik', 'Hamza Ali Khan'));
+    }
+
     #[DataProvider('sameName')]
     public function test_the_same_person_in_another_spelling_or_script_matches(string $heard, string $name, float $atLeast)
     {

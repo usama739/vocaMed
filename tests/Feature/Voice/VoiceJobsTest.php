@@ -114,6 +114,8 @@ class VoiceJobsTest extends TestCase
         $this->assertSame('the-bytes', $seen->contents);
         $this->assertSame('recording.webm', $seen->filename);
         $this->assertSame('audio/webm', $seen->mime);
+        // The clinic's own doctor and service names go along as spelling hints.
+        $this->assertSame('Booking an appointment at a clinic. Doctors: Dr. Sana. Services: Check-up.', $seen->prompt);
     }
 
     public function test_a_provider_that_is_busy_is_tried_again_and_the_request_is_failed_only_after_the_last_try()
@@ -281,9 +283,9 @@ class VoiceJobsTest extends TestCase
         Storage::disk('local')->assertMissing($path);
     }
 
-    public function test_the_drivers_are_settings_and_one_that_does_not_exist_yet_is_refused_plainly()
+    public function test_the_drivers_are_settings_and_one_that_does_not_exist_is_refused_plainly()
     {
-        config(['vocamed.voice.speech_driver' => 'whisper_http']);
+        config(['vocamed.voice.speech_driver' => 'no_such_provider']);
         $this->expectException(InvalidArgumentException::class);
 
         app(SpeechToTextManager::class)->driver();
