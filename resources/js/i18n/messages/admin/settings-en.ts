@@ -62,7 +62,7 @@ const copy = {
         keep7: '7 days',
         keep30: '30 days',
         retentionHint:
-            'Transcripts of bookings stay in the audit log either way.',
+            'The written text of a voice request is kept for 30 days either way, then erased.',
         retentionOff: 'Turn voice booking on to choose how long audio is kept.',
         save: 'Save settings',
         saved: 'Settings saved',

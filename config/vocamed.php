@@ -151,6 +151,13 @@ return [
         'max_seconds' => 15,
         'max_kilobytes' => 1024,
         'max_text_characters' => 500,
+
+        // What is kept, and for how long. A recording is deleted as soon as it has been read unless the clinic chose to keep recordings
+        // (Settings, "Keep voice audio for": 7 or 30 days); a recording the queue never got to is deleted once it is `stale_audio_hours`
+        // old. The written transcript and what was understood are kept `transcript_days` days, then erased (the row stays, so use can still
+        // be counted). `php artisan voice:purge` does this and runs daily.
+        'stale_audio_hours' => 1,
+        'transcript_days' => 30,
         'limits' => ['user' => 10, 'clinic' => 40, 'global' => 15, 'poll' => 200, 'llm_minute' => 10, 'llm_day' => 900],
 
         // The speech provider (driver "whisper_http"): any OpenAI-compatible audio API. Groq's free Whisper now; OpenAI's, or our own server,

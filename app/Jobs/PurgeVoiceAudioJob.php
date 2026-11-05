@@ -4,14 +4,13 @@ namespace App\Jobs;
 
 use App\Jobs\Middleware\RunInClinic;
 use App\Models\VoiceRequest;
-use App\Voice\VoiceAudioStore;
+use App\Voice\VoicePurger;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
 /**
- * Deletes a request's recording and notes when. Started as soon as the recording has been read (or has failed), so audio never waits
- * around; running it again is harmless. A daily sweep for recordings this job missed (a queue that was down), and keeping recordings
- * longer when a clinic's retention setting asks, arrive in the closing step.
+ * Deletes a request's recording as soon as it has been read (or has failed), unless the clinic keeps recordings for a few days and this
+ * one was read successfully: then it waits for the daily sweep (`voice:purge`). Running it again is harmless.
  */
 class PurgeVoiceAudioJob implements ShouldQueue
 {
@@ -29,16 +28,12 @@ class PurgeVoiceAudioJob implements ShouldQueue
         return [new RunInClinic];
     }
 
-    public function handle(VoiceAudioStore $audio): void
+    public function handle(VoicePurger $purger): void
     {
         $request = VoiceRequest::query()->find($this->voiceRequestId);
 
-        if ($request === null || $request->audio_path === null) {
-            return;
+        if ($request !== null) {
+            $purger->afterReading($request);
         }
-
-        $audio->delete($request->audio_path);
-
-        $request->forceFill(['audio_path' => null, 'purged_at' => now()])->save();
     }
 }

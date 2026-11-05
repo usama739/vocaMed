@@ -12,6 +12,9 @@ Artisan::command('inspire', function () {
 // Reminders before visits: due ones are filed every minute (each only once), and a queue worker sends them.
 Schedule::command('messages:reminders')->everyMinute()->withoutOverlapping();
 
+// Voice requests: recordings past what their clinic chose to keep are deleted and old transcripts erased, every night.
+Schedule::command('voice:purge')->dailyAt('03:00')->withoutOverlapping();
+
 // Telescope (developer machine only) keeps two days of entries.
 if (app()->environment('local') && class_exists(Telescope::class)) {
     Schedule::command('telescope:prune --hours=48')->daily();
