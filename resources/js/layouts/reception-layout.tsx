@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
     ReceptionRuntimeContext,
@@ -136,11 +136,6 @@ export default function ReceptionLayout({ children }: { children: ReactNode }) {
                     user={{ name: me.name, initials: initialsOf(me.name) }}
                     clinicName={clinicName}
                     onNewBooking={() => openBooking()}
-                    onSearch={(query) =>
-                        router.visit(
-                            `/reception/patients?q=${encodeURIComponent(query)}`,
-                        )
-                    }
                     banner={reconnecting ? <ReconnectingBanner /> : undefined}
                 >
                     {children}

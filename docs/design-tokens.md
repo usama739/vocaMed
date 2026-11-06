@@ -212,6 +212,14 @@ ring, not two. Do not add per-component focus styles.
   the preview page.
 - The sidebar is 272px wide; the booking panel is 480px; the app card sits on `canvas` with a
   12px gutter. Page content padding is 28px; cards use 16–20px.
+- **Compact density on desktop.** Those are the touch sizes. Staff screens (everything inside
+  `ClinicShell`) on a window 1024px or wider with a mouse (`pointer: fine`) switch to a compact scale:
+  `ClinicShell` sets `data-density="compact"` on `<html>`, and a block in `app.css` lowers `--spacing`
+  from 4px to 3.5px (every height, padding, gap and width utility scales by 7/8: buttons 48 → 42px, nav
+  rows 44 → 38.5px, sidebar 272 → 238px) and steps the type scale down one notch (body 15, control 14,
+  label 13, small 12, caption 12, lead 17, title 18, page title 24). Tablets, phones, narrow windows,
+  the public pages, sign-in and the patient pages keep the sizes above. To make it denser or looser change
+  those values only; the e2e tap-target check uses a 38px floor in compact mode (WCAG 2.2 asks for 24px).
 - Motion respects `prefers-reduced-motion` (the recording pulse and spinners stop).
 
 ## Language and direction
@@ -230,6 +238,7 @@ and why.
 | ------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Language buttons 38px, "Show/Hide" password button 40px | 44px                                       | Tap-target rule                                                                                                                                             |
 | Up/down chevron beside the clinic name in the sidebar   | Omitted                                    | It implies a clinic switcher; the spec has none                                                                                                             |
+| Search box with a `/` hint under the clinic name in the sidebar | Omitted (project owner's call) | Every list page has its own search; `/` still focuses the search on Patients and Appointments |
 | Toasts are an inline banner at the top of the page      | Floating, bottom-centre, 44px dismiss      | Toasts must be reachable from anywhere (including the slide-over) without layout shift                                                                      |
 | Confirm dialog sits near the top                        | Centred                                    | Radix default; same card, scrim and shadow                                                                                                                  |
 | Review card steps time by 30 minutes                    | Steps through the doctor's real free slots | A time that is not a free slot cannot be booked                                                                                                             |
@@ -247,5 +256,5 @@ Decisions made where the spec and the design disagreed (confirmed with the proje
 
 Bracketed text (`[Clinic name]`, `[User name]`, `[Patient name]`) is a placeholder the server will
 fill in; it stays bracketed in every language. Names, phone numbers and times on `/components`
-and in `resources/js/lib/data` are sample data and are labelled "Sample data" wherever they appear.
-No testimonials, statistics or logos are used anywhere.
+and in `resources/js/lib/data` are sample data. The product pages no longer print a "Sample data"
+label (the landing page's example windows and the `/components` page still say so). No testimonials, statistics or logos are used anywhere.

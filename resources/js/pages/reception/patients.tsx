@@ -13,7 +13,6 @@ import {
     PageError,
     PageHeader,
     PatientAvatar,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/vocamed/data-table';
@@ -232,8 +231,6 @@ export default function Patients() {
                         }
                     />
                 )}
-
-                <SampleNote />
             </PageBody>
 
             <NewPatientDialog

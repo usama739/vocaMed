@@ -47,7 +47,8 @@ describe('Doctor schedule', () => {
         expect(
             within(grid).queryByRole('button', { name: /^Book/ }),
         ).toBeNull();
-        expect(screen.getByText('Read only · Sample data')).toBeInTheDocument();
+        expect(screen.getByText('Read only')).toBeInTheDocument();
+        expect(screen.queryByText(/Sample data/)).toBeNull();
     });
 
     it('does not show other doctors’ patients', async () => {

@@ -17,7 +17,6 @@ import {
     PageHeader,
     PageLoading,
     PatientAvatar,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { useReception } from '@/components/reception/runtime';
 import { Button } from '@/components/ui/button';
@@ -504,8 +503,6 @@ export default function PatientProfile({ id }: { id: string }) {
                         </div>
                     </>
                 )}
-
-                <SampleNote />
             </PageBody>
         </>
     );

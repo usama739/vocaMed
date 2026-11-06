@@ -1,6 +1,4 @@
 import { Link } from '@inertiajs/react';
-import { Search } from 'lucide-react';
-import { useId, type Ref } from 'react';
 import { BrandMark } from '@/components/vocamed/brand-mark';
 import { NAV, ROLE_HOME } from '@/components/vocamed/nav-config';
 import { useT } from '@/i18n/scope';
@@ -11,8 +9,6 @@ export function RoleSidebar({
     role,
     active,
     clinicName,
-    searchRef,
-    onSearch,
     badges,
     onNavigate,
     className,
@@ -22,17 +18,13 @@ export function RoleSidebar({
     active?: string;
     /** Defaults to the bracketed placeholder until the clinic name comes from the server. */
     clinicName?: string;
-    searchRef?: Ref<HTMLInputElement>;
     /** A count shown beside a nav item, by its `key` (the doctor's pending requests). */
     badges?: Record<string, number>;
-    /** Receptionist quick lookup: called with the typed text when Enter is pressed. */
-    onSearch?: (query: string) => void;
     /** Called after a link is chosen; the mobile drawer uses it to close itself. */
     onNavigate?: () => void;
     className?: string;
 }) {
     const { t } = useT();
-    const searchId = useId();
 
     return (
         <nav
@@ -57,48 +49,6 @@ export function RoleSidebar({
                     </span>
                 </span>
             </Link>
-
-            <form
-                role="search"
-                className="relative"
-                onSubmit={(event) => {
-                    event.preventDefault();
-                    const input = event.currentTarget.elements.namedItem(
-                        'q',
-                    ) as HTMLInputElement | null;
-                    const query = input?.value.trim() ?? '';
-
-                    if (query && onSearch) {
-                        onSearch(query);
-                        onNavigate?.();
-                        if (input) {
-                            input.value = '';
-                        }
-                    }
-                }}
-            >
-                <label htmlFor={searchId} className="sr-only">
-                    {t('shell.searchMenu')}
-                </label>
-                <Search
-                    aria-hidden="true"
-                    className="pointer-events-none absolute start-3 top-3.5 size-[18px] text-subtle"
-                />
-                <input
-                    id={searchId}
-                    name="q"
-                    ref={searchRef}
-                    type="search"
-                    placeholder={t('shell.searchMenu')}
-                    className="h-11 w-full rounded-md border border-line bg-white ps-10 pe-10 text-control text-ink shadow-xs placeholder:text-subtle"
-                />
-                <kbd
-                    aria-hidden="true"
-                    className="pointer-events-none absolute end-2.5 top-2.5 inline-flex h-6 min-w-[22px] items-center justify-center rounded-xs border border-line-strong bg-surface-subtle px-1.5 font-sans text-caption font-semibold text-subtle"
-                >
-                    /
-                </kbd>
-            </form>
 
             <ul className="flex flex-col gap-1">
                 {NAV[role].map((entry) => {

@@ -41,7 +41,7 @@ describe('Today', () => {
         await screen.findByRole('region', { name: 'Dr. Sana Malik' });
 
         expect(screen.getByText(/Monday, 26 October/)).toBeInTheDocument();
-        expect(screen.getAllByText('Sample data').length).toBeGreaterThan(0);
+        expect(screen.queryByText(/Sample data/)).toBeNull();
         expect(summary('Booked or confirmed')).toBe('5');
         expect(summary('Arrived')).toBe('1');
         expect(summary('Done')).toBe('1');

@@ -208,28 +208,6 @@ test.describe('the shell around every page', () => {
         await expect(panel).toBeHidden();
     });
 
-    test('/ searches patients from the sidebar and opens the Patients page with the text', async ({
-        page,
-    }) => {
-        await gotoIn(page, url('/reception'), 'en');
-        await expect(page.getByText('Dr. Sana Malik').first()).toBeVisible();
-
-        await page.keyboard.press('/');
-        await expect(
-            page.getByRole('searchbox', { name: 'Search' }),
-        ).toBeFocused();
-        await page.keyboard.type('Zainab');
-        await page.keyboard.press('Enter');
-
-        await expect(page).toHaveURL(/\/reception\/patients\?q=Zainab/);
-        await expect(
-            page.getByRole('searchbox', { name: 'Search by phone or name' }),
-        ).toHaveValue('Zainab');
-        await expect(
-            page.getByRole('heading', { level: 2, name: 'Search results' }),
-        ).toBeVisible();
-    });
-
     test('the language switch mirrors the page and keeps you where you are', async ({
         page,
     }) => {

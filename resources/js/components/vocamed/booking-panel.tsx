@@ -871,7 +871,6 @@ export function BookingPanelBody({
                         <Button onClick={onClose}>{t('booking.finish')}</Button>
                     </div>
                 </div>
-                {!voice && <SampleNote />}
             </div>
         );
     }
@@ -1499,20 +1498,7 @@ export function BookingPanelBody({
                     </Button>
                 </div>
             )}
-
-            {/* Only the open demo runs on sample data; with the real voice service the panel books for real. */}
-            {!voice && <SampleNote />}
         </div>
-    );
-}
-
-function SampleNote() {
-    const { t } = useT();
-
-    return (
-        <p className="mx-5 mt-auto mb-5 text-small text-subtle">
-            {t('booking.sample')}
-        </p>
     );
 }
 

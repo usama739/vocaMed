@@ -1,5 +1,5 @@
 import { Menu } from 'lucide-react';
-import { useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { RoleSidebar } from '@/components/vocamed/role-sidebar';
@@ -27,7 +27,6 @@ export function ClinicShell({
     user,
     clinicName,
     onNewBooking,
-    onSearch,
     badges,
     onLocaleChange,
     onSignOut,
@@ -41,8 +40,6 @@ export function ClinicShell({
     user: ShellUser;
     clinicName?: string;
     onNewBooking?: () => void;
-    /** Sidebar quick search (Enter): the receptionist console opens Patients with the text. */
-    onSearch?: (query: string) => void;
     /** Counts beside sidebar items, by nav key. */
     badges?: Record<string, number>;
     onLocaleChange?: (locale: Locale) => void;
@@ -55,18 +52,27 @@ export function ClinicShell({
 }) {
     const { t, locale, dir } = useT();
     const [menuOpen, setMenuOpen] = useState(false);
-    const searchRef = useRef<HTMLInputElement>(null);
     const receptionist = role === 'receptionist';
+
+    // Staff screens use the compact scale on a desktop with a mouse (see `data-density` in app.css). It is set on <html> so the
+    // dialogs and the booking slide-over, which render outside this shell, follow it too. Set before paint so nothing jumps.
+    useLayoutEffect(() => {
+        if (embedded) {
+            return;
+        }
+
+        const root = document.documentElement;
+        root.dataset.density = 'compact';
+
+        return () => {
+            delete root.dataset.density;
+        };
+    }, [embedded]);
 
     useShortcut(
         'n',
         () => onNewBooking?.(),
         receptionist && !embedded && !!onNewBooking,
-    );
-    useShortcut(
-        '/',
-        () => searchRef.current?.focus(),
-        receptionist && !embedded,
     );
 
     return (
@@ -85,7 +91,7 @@ export function ClinicShell({
 
             <aside
                 className={cn(
-                    '-my-3 -ms-3 hidden w-[272px] shrink-0 lg:block',
+                    '-my-3 -ms-3 hidden w-68 shrink-0 lg:block',
                     embedded
                         ? 'h-[calc(100%+1.5rem)]'
                         : 'lg:sticky lg:top-0 lg:h-screen',
@@ -95,8 +101,6 @@ export function ClinicShell({
                     role={role}
                     active={active}
                     clinicName={clinicName}
-                    searchRef={searchRef}
-                    onSearch={onSearch}
                     badges={badges}
                 />
             </aside>
@@ -146,7 +150,6 @@ export function ClinicShell({
                         role={role}
                         active={active}
                         clinicName={clinicName}
-                        onSearch={onSearch}
                         badges={badges}
                         onNavigate={() => setMenuOpen(false)}
                     />

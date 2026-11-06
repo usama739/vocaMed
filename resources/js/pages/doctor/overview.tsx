@@ -9,7 +9,6 @@ import {
     PageError,
     PageHeader,
     PageLoading,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { SummaryStrip } from '@/components/reception/stat-card';
 import { Button } from '@/components/ui/button';
@@ -421,9 +420,8 @@ export default function DoctorOverview() {
                 )}
 
                 <p className="text-label text-subtle">
-                    {t('doctor.overview.note')} · {t('common.sample')}
+                    {t('doctor.overview.note')}
                 </p>
-                <SampleNote className="sr-only" />
             </PageBody>
 
             {clinic && data && (

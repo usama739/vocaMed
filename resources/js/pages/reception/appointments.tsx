@@ -10,7 +10,6 @@ import {
     PageBody,
     PageError,
     PageHeader,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { useReception } from '@/components/reception/runtime';
 import { Button } from '@/components/ui/button';
@@ -428,7 +427,6 @@ export default function Appointments() {
                     pageCount={pageCount}
                     onPageChange={(next) => setParams({ page: String(next) })}
                 />
-                <SampleNote />
             </PageBody>
 
             <ConfirmDialog

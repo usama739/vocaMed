@@ -21,7 +21,6 @@ import {
     PageBody,
     PageError,
     PageLoading,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { useReception } from '@/components/reception/runtime';
 import { Button } from '@/components/ui/button';
@@ -458,9 +457,8 @@ export default function CalendarPage() {
                 )}
 
                 <p className="text-label text-subtle">
-                    {t('reception.calendar.hint')} · {t('common.sample')}
+                    {t('reception.calendar.hint')}
                 </p>
-                <SampleNote className="sr-only" />
             </PageBody>
 
             <ConfirmDialog

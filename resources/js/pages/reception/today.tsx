@@ -8,7 +8,6 @@ import {
     PageError,
     PageHeader,
     PageLoading,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { useReception } from '@/components/reception/runtime';
 import { SummaryStrip } from '@/components/reception/stat-card';
@@ -195,8 +194,6 @@ export default function Today() {
                     lead={
                         <>
                             {data ? formatLongDate(data.today, locale) : ' '}
-                            {' · '}
-                            <span dir="ltr">{t('common.sample')}</span>
                             {clinicZone && clinicZone !== browserZone && (
                                 <>
                                     {' · '}
@@ -295,8 +292,6 @@ export default function Today() {
                         ))}
                     </>
                 )}
-
-                <SampleNote />
             </PageBody>
         </>
     );

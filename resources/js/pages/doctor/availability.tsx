@@ -8,7 +8,6 @@ import {
     PageError,
     PageHeader,
     PageLoading,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { Button } from '@/components/ui/button';
 import { notify } from '@/components/vocamed/toast';
@@ -97,8 +96,6 @@ export default function Availability() {
                         timezone={view.clinic.timezone}
                     />
                 )}
-
-                <SampleNote />
             </PageBody>
         </>
     );

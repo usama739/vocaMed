@@ -14,7 +14,6 @@ import {
     PageBody,
     PageError,
     PageLoading,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { Button } from '@/components/ui/button';
 import { BADGE_SPEC } from '@/components/vocamed/status-badge';
@@ -219,9 +218,8 @@ export default function DoctorSchedule() {
                 )}
 
                 <p className="text-label text-subtle">
-                    {t('doctor.schedule.readonly')} · {t('common.sample')}
+                    {t('doctor.schedule.readonly')}
                 </p>
-                <SampleNote className="sr-only" />
             </PageBody>
 
             {data && (

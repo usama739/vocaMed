@@ -10,7 +10,6 @@ import {
     PageBody,
     PageError,
     PageHeader,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { Button } from '@/components/ui/button';
 import { formatClock } from '@/components/vocamed/booking/format';
@@ -307,7 +306,6 @@ export default function Notifications() {
                         }
                     />
                 )}
-                <SampleNote />
             </PageBody>
         </>
     );

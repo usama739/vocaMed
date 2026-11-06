@@ -14,7 +14,6 @@ import {
     PageHeader,
     PageLoading,
     PatientAvatar,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/vocamed/confirm-dialog';
@@ -454,8 +453,6 @@ function DoctorForm({ id }: { id: string }) {
                             )}
                     </>
                 )}
-
-                <SampleNote />
             </PageBody>
 
             <ConfirmDialog

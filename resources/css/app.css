@@ -409,6 +409,26 @@
     }
 }
 
+/*
+ * Compact density for the staff screens (ClinicShell sets data-density on <html>), on a desktop with a mouse: 1024px and wider
+ * with a fine pointer. The design's 44-52px controls and 16px text suit touch; with a mouse they make every screen feel oversized.
+ * `--spacing` is the unit behind every height, padding, gap and width utility, so one value scales them all by 7/8 (a 48px button
+ * becomes 42px, a 44px nav row 38.5px, the 272px sidebar 238px), and the type scale steps down one notch. Tablets and phones, and
+ * windows narrower than 1024px, keep the large touch targets. To make it denser or looser change these numbers only.
+ */
+@media (min-width: 1024px) and (pointer: fine) {
+    html[data-density='compact'] {
+        --spacing: 0.21875rem; /* 3.5px; 4px normally */
+        --text-small: 0.75rem; /* 12px  (13) */
+        --text-label: 0.8125rem; /* 13px  (14) */
+        --text-control: 0.875rem; /* 14px  (15) */
+        --text-body: 0.9375rem; /* 15px  (16) */
+        --text-lead: 1.0625rem; /* 17px  (18) */
+        --text-title: 1.125rem; /* 18px  (20) */
+        --text-heading: 1.5rem; /* 24px  (26) */
+    }
+}
+
 /* Scroll-in: sections and cards fade up once as they enter the viewport (see <Reveal>). */
 .reveal {
     opacity: 0;

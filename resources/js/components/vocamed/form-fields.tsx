@@ -59,7 +59,9 @@ export function FormField({
         // visually while coming AFTER the control in the DOM: Tab goes label, field, then the link.
         <div
             className={cn(
-                'grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5',
+                // content-start: beside a taller field (one with a hint) the grid is stretched, and without it the extra height is
+                // shared out between the label and the control, pushing them down.
+                'grid grid-cols-[1fr_auto] content-start items-center gap-x-3 gap-y-1.5',
                 className,
             )}
         >

@@ -36,9 +36,16 @@ export async function setLocaleCookie(
         .addCookies([{ name: 'locale', value: locale, url: baseURL }]);
 }
 
-/** Interactive elements smaller than 44px in either direction (checkbox boxes are judged by their label). */
+/**
+ * Interactive elements smaller than 44px in either direction (checkbox boxes are judged by their label). Staff screens on a desktop
+ * with a mouse use the compact scale (`data-density`, see app.css), where the 44px targets are 38.5px, so the floor there is 38px.
+ */
 export async function smallTargets(page: Page): Promise<string[]> {
     return page.evaluate(() => {
+        const compact =
+            document.documentElement.dataset.density === 'compact' &&
+            matchMedia('(min-width: 1024px) and (pointer: fine)').matches;
+        const floor = compact ? 38 : 43.5;
         const selector =
             'button, a[href], input:not([type=hidden]), select, textarea, [role=tab], [role=checkbox], [role=combobox]';
         const bad: string[] = [];
@@ -62,7 +69,7 @@ export async function smallTargets(page: Page): Promise<string[]> {
             const label = el.closest('label');
             const box = label ? label.getBoundingClientRect() : r;
 
-            if (box.height < 43.5 || box.width < 43.5) {
+            if (box.height < floor || box.width < floor) {
                 const name = (
                     el.getAttribute('aria-label') ||
                     el.textContent ||

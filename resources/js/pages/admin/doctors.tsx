@@ -8,7 +8,6 @@ import {
     PageError,
     PageHeader,
     PatientAvatar,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/vocamed/confirm-dialog';
@@ -406,8 +405,6 @@ export default function Doctors() {
                         />
                     </div>
                 )}
-
-                <SampleNote />
             </PageBody>
 
             <ConfirmDialog

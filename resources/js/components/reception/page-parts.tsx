@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { initialsOf } from '@/components/reception/format';
 import { EmptyState, ErrorState } from '@/components/vocamed/states';
-import { useT } from '@/i18n/scope';
 import { cn } from '@/lib/utils';
 
 /** Every reception page starts the same way: a title, a lead line and the page's main actions. */
@@ -39,17 +38,6 @@ export function PageHeader({
                 </div>
             )}
         </div>
-    );
-}
-
-/** Sample data stays labelled as sample, on every page. */
-export function SampleNote({ className }: { className?: string }) {
-    const { t } = useT();
-
-    return (
-        <p className={cn('text-label text-subtle', className)}>
-            {t('common.sample')}
-        </p>
     );
 }
 

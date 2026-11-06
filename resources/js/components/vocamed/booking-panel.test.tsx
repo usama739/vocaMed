@@ -75,7 +75,7 @@ describe('BookingPanelBody · manual tab', () => {
         expect(
             await screen.findByText('Booking confirmed'),
         ).toBeInTheDocument();
-        expect(container).toHaveTextContent('Sample data. Nothing is saved.');
+        expect(container).not.toHaveTextContent('Sample data');
 
         const booked = await source.appointments.list({
             sort: '-startsAt',

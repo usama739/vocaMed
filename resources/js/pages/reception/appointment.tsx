@@ -21,7 +21,6 @@ import {
     PageBody,
     PageError,
     PageLoading,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { useReception } from '@/components/reception/runtime';
 import { Button } from '@/components/ui/button';
@@ -418,8 +417,6 @@ export default function AppointmentDetail({ id }: { id: string }) {
                             </div>
                         </>
                     )}
-
-                <SampleNote />
             </PageBody>
 
             <ConfirmDialog

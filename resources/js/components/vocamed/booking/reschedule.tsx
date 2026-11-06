@@ -289,10 +289,6 @@ export function RescheduleBody({
                 )}
                 {t('booking.confirmMove')}
             </Button>
-
-            <p className="mt-auto text-small text-subtle">
-                {t('booking.sample')}
-            </p>
         </div>
     );
 }

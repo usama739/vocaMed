@@ -11,7 +11,6 @@ import {
     PageError,
     PageHeader,
     PageLoading,
-    SampleNote,
 } from '@/components/reception/page-parts';
 import { useReception } from '@/components/reception/runtime';
 import { Button } from '@/components/ui/button';
@@ -290,9 +289,8 @@ export default function Requests() {
                 )}
 
                 <p className="text-label text-subtle">
-                    {t('doctor.requests.p2')} · {t('common.sample')}
+                    {t('doctor.requests.p2')}
                 </p>
-                <SampleNote className="sr-only" />
             </PageBody>
         </>
     );

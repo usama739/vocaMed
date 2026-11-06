@@ -348,7 +348,7 @@ export default function Templates() {
                                 id="template-panel"
                                 role="tabpanel"
                                 aria-labelledby={`template-tab-${kind}`}
-                                className="flex min-w-0 flex-[1_1_520px] animate-rise flex-col gap-[18px] rounded-xl border border-line bg-white p-6 shadow-soft motion-reduce:animate-none"
+                                className="flex min-w-0 shrink grow basis-130 animate-rise flex-col gap-4.5 rounded-xl border border-line bg-white p-6 shadow-soft motion-reduce:animate-none"
                             >
                                 <div className="flex flex-wrap gap-x-7 gap-y-4">
                                     <Segmented
@@ -424,7 +424,7 @@ export default function Templates() {
                                     >
                                         <TriangleAlert
                                             aria-hidden="true"
-                                            className="mt-0.5 size-[18px] shrink-0"
+                                            className="mt-0.5 size-4.5 shrink-0"
                                         />
                                         <span>
                                             {t('admin.templates.waNote')}
@@ -464,7 +464,7 @@ export default function Templates() {
                                             />
                                         )}
                                     </FormField>
-                                    <div className="flex flex-wrap justify-between gap-2 text-[13.5px] text-subtle">
+                                    <div className="flex flex-wrap justify-between gap-2 text-label text-subtle">
                                         <span>
                                             {channel === 'sms'
                                                 ? `${t('admin.templates.counter', { count: sms.length })} · ${t('admin.templates.parts', { count: sms.parts })}`
@@ -493,7 +493,7 @@ export default function Templates() {
                                                 type="button"
                                                 dir="ltr"
                                                 onClick={() => insert(variable)}
-                                                className="min-h-11 rounded-full border border-[#c9d6ee] bg-brand-tint px-3.5 font-mono text-[14px] font-semibold text-brand-deep transition-colors hover:bg-brand-wash"
+                                                className="min-h-11 rounded-full border border-[#c9d6ee] bg-brand-tint px-3.5 font-mono text-label font-semibold text-brand-deep transition-colors hover:bg-brand-wash"
                                             >
                                                 {`{${variable}}`}
                                             </button>
@@ -546,7 +546,7 @@ export default function Templates() {
 
                             <section
                                 aria-labelledby="template-preview"
-                                className="flex min-w-0 flex-[1_1_340px] animate-rise flex-col gap-5 [animation-delay:60ms] motion-reduce:animate-none"
+                                className="flex min-w-0 shrink grow basis-85 animate-rise flex-col gap-5 [animation-delay:60ms] motion-reduce:animate-none"
                             >
                                 <div className="flex flex-col gap-3.5 rounded-xl border border-line bg-surface-subtle p-6 shadow-soft">
                                     <div className="flex flex-col gap-0.5">
@@ -556,7 +556,7 @@ export default function Templates() {
                                         >
                                             {t('admin.templates.previewTitle')}
                                         </h2>
-                                        <span className="text-[13.5px] text-subtle">
+                                        <span className="text-label text-subtle">
                                             {t('admin.templates.previewSub')}
                                         </span>
                                     </div>
@@ -619,7 +619,7 @@ export default function Templates() {
                                         >
                                             <CircleCheck
                                                 aria-hidden="true"
-                                                className="size-[18px]"
+                                                className="size-4.5"
                                             />
                                             <span dir="auto">
                                                 {t('admin.templates.testDone', {
